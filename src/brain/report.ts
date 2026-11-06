@@ -65,12 +65,12 @@ export async function sessionReport(p: Person, sessionId?: string): Promise<Repo
       {
         role: 'system',
         content:
-          'You review interviews whose goal is to capture a person\'s tacit knowledge: their cases, judgement calls and why, rules of thumb, exceptions, what they notice that others miss. Textbook knowledge has no value. Be specific and terse.',
+          'You review conversations whose goal is to learn a person well enough that a digital twin could answer, decide and react like them: their stories, choices and why, values and beliefs, rules of thumb and exceptions, how they react and talk. Anything a generic model would guess about them has no value. Be specific and terse. Refer to the person by name or "they".',
       },
       {
         role: 'user',
         content: `Transcript:\n${transcript}\n\nWhat the interviewer captured:\n${captured || '(nothing)'}\n\nReturn ONLY JSON:
-{"headline": "<one sentence: how much of this person's real know-how was captured>",
+{"headline": "<one sentence: how much of what makes this person themselves was captured>",
  "strongest": ["<up to 3 most valuable captured pieces, short>"],
  "gaps": [{"thread": "<topic>", "missing": "<what is still missing: e.g. a decision without its why, an outcome, the exception>"}],
  "nextQuestions": ["<up to 4 questions for next time, spoken style, each targeting a gap>"],

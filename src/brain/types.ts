@@ -42,16 +42,17 @@ export type Move =
 export type Angle = 'case' | 'contrast' | 'options' | 'novice' | 'example_answer' | 'timeline';
 
 export type ItemKind =
-  | 'case' // a specific episode
-  | 'decision' // a judgement call (with why)
-  | 'rule' // rule of thumb
-  | 'exception' // when the rule doesn't hold
+  | 'story' // a specific episode they lived
+  | 'decision' // a choice they made, with why
+  | 'value' // what they put first when things conflict
+  | 'belief' // a view or opinion, esp. where they differ from most people
+  | 'rule' // how they do or judge something
+  | 'exception' // when their rule doesn't hold
   | 'cue' // what they notice that others miss
-  | 'disagreement' // where they differ from common advice
-  | 'outcome'
-  | 'howto'
-  | 'person'
-  | 'context';
+  | 'reaction' // how they respond to people / situations
+  | 'style' // how they talk or come across
+  | 'relationship' // a person who matters and how
+  | 'fact'; // background
 
 export type Item = {
   id: string;
@@ -76,7 +77,7 @@ export type Thread = {
   anglesTried: Angle[];
   turns: number;
   emptyTurns: number; // consecutive person turns that added no new item
-  gaps: string[]; // what's still missing on this thread (e.g. "why she chose X")
+  gaps: string[]; // what's still missing on this thread (e.g. "why they chose X")
   createdAt: number;
 };
 

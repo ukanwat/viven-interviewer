@@ -180,6 +180,7 @@ function validate(out: TurnOut, p: Person): string | undefined {
     return `Dig budget for "${t.title}" is spent (${POLICY.maxDigs} angles tried). Move must be "switch" (or "wrap").`;
   if (move === 'dig' && t && out.next.angle && t.anglesTried.includes(out.next.angle as Angle))
     return `Angle "${out.next.angle}" was already tried on this thread. Pick a different angle: ${ALL_ANGLES.filter((a) => !t.anglesTried.includes(a)).join(', ')}.`;
+  if ((out.next.question?.match(/[?？]/g)?.length ?? 0) > 1) return 'That is two questions. Ask exactly ONE question (one question mark).';
   if (move !== 'wrap') {
     const q = out.next.question?.trim();
     if (!q) return 'Missing question.';
@@ -242,7 +243,13 @@ export async function personTurn(
   }
   if (!out) throw new Error('Brain returned no usable output');
   // Last resort: if the model still breaks a hard cap, code decides.
-  const stillBad = validate(out, p);
+  let stillBad = validate(out, p);
+  if (stillBad?.startsWith('That is two questions')) {
+    // Keep only the first question rather than throwing the whole move away.
+    const q = out.next.question;
+    out.next.question = q.slice(0, q.search(/[?？]/) + 1);
+    stillBad = validate(out, p);
+  }
   if (stillBad) out = forceSafe(out, p, stillBad);
 
   personTurnRec.label = out.read.label;
@@ -384,8 +391,12 @@ async function speak(p: Person, sessionId: string, channel: Channel, instr: stri
     { model: MODELS.brain, temperature: 0.6, maxTokens: 600, signal: opts.signal },
   );
   const next = out.next;
+  // Same one-question rule as normal turns: keep only the first question.
+  const qi = next.question?.search(/[?？]/) ?? -1;
+  if (qi >= 0) next.question = next.question.slice(0, qi + 1);
+  if ((next.ack?.match(/[?？]/g)?.length ?? 0) > 0 && next.question) next.ack = next.ack!.replace(/[^.!]*[?？]/g, '').trim();
   if (move === 'open' && !p.activeThreadId) {
-    const t = makeThread(p, p.topicHint || 'Finding their expertise');
+    const t = makeThread(p, p.topicHint || 'Getting to know them');
     p.activeThreadId = t.id;
   }
   if (move === 'resume' && next.target) {

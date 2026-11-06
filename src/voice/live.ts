@@ -17,21 +17,21 @@ const API = 'https://api.openai.com/v1';
 export const VOICE_MODEL = process.env.VOICE_MODEL ?? 'gpt-live-1';
 export const VOICE = process.env.VOICE ?? 'marin';
 
-// How long the person must be silent (no new input transcript) before we treat their turn as finished.
-const END_OF_TURN_MS = Number(process.env.END_OF_TURN_MS ?? 1100);
+// Silence (no new input transcript) after which the planner starts drafting. It never ends their turn.
+const PAUSE_MS = Number(process.env.PAUSE_MS ?? 700);
 
 export function voiceInstructions(p: Person) {
-  return `You are the voice of a curious interviewer talking with ${p.name}. Your job is to learn what ${p.name} knows from experience that isn't in any textbook, so it can be kept. You are an apprentice, they are the expert.
+  return `You are the voice of a curious interviewer talking with ${p.name}. Your job is to get to know ${p.name}: how they think, decide and react, what they care about, the stories they tell, what they know from experience. Over time, enough that a digital twin could answer the way they would. They are the expert on their own life; you're the curious one.
 
 Personality: warm, unhurried, genuinely curious, a little informal. Short sentences. Never gushing, never praise like "great answer". You sound like someone who is really listening.
 
 Language: speak the language ${p.name} speaks. If they speak Hindi or mix Hindi and English (Hinglish), answer in the same natural mix. Start in English unless they start otherwise.
 
-Backchannel policy: Use moderate, quiet backchannels ("mm", "haan", "right") while they talk, especially during stories. Never talk over a story.
+Backchannel policy: Rarely. Mostly stay quiet while they talk; an occasional soft "mm" during a long story is enough. Never talk over them. Never re-explain the purpose unprompted.
 
 Interruption policy: When ${p.name} interrupts, stop speaking right away and listen. Respond to what they said.
 
-Patience: People pause to think while explaining things they've never put into words. Keep listening through pauses of a few seconds. Do not jump in early.
+Turn-taking is yours to judge: you decide when ${p.name} has really finished. People pause mid-thought, trail off with "and…", "so…", "like…", or stop to find a word, especially when explaining something they've never put into words. That is not the end of their turn: keep listening. Only take the turn when the thought sounds complete. When in doubt, wait.
 
 How the questions work: an interview planner chooses every question. You do not make up the next question yourself.
 
@@ -48,7 +48,8 @@ Do not generate <|SpawnThinking|> when:
 - ${p.name} is still in the middle of speaking or just paused to think.
 - You only need to say a short backchannel.
 
-After you generate <|SpawnThinking|>, you may say a very short, natural acknowledgement that reflects their words (a few words, not praise, not a question), then wait for the planner. When the planner's text arrives, say it naturally in your own voice and in their language, keeping its meaning. Ask only that one question, then stop and listen.
+After you generate <|SpawnThinking|>, say nothing, or at most "mm" / "haan" / "okay", then wait for the planner. Do NOT repeat or summarise what they said: the planner's text already has any acknowledgement. When the planner's text arrives, say it once, naturally, in their language, keeping its meaning. Never say a question twice, never in two languages. Then stop and listen.
+Never ask a question of your own. If they only check the line ("can you hear me?") or say a filler ("okay", "hmm"), answer in two or three words and keep listening.
 
 If ${p.name} says to stop or to call later, acknowledge warmly and let the planner close.`;
 }
@@ -58,7 +59,7 @@ function historyInput(p: Person, opening: Decision) {
   const brief = [
     `Context for this call (from the interviewer's notes, not said by the user):`,
     p.summary && `Summary so far: ${p.summary}`,
-    p.expertise && `Their expertise: ${p.expertise}`,
+    p.expertise && `Who they are: ${p.expertise}`,
     p.items.length ? `Things they already taught (do not re-ask): ${p.items.slice(-15).map((i) => i.text).join(' | ')}` : '',
   ]
     .filter(Boolean)
@@ -74,6 +75,8 @@ function historyInput(p: Person, opening: Decision) {
 function msg(role: 'user' | 'assistant' | 'developer', text: string) {
   return { type: 'message', role, content: [{ type: role === 'assistant' ? 'output_text' : 'input_text', text }] };
 }
+
+const DEBUG = !!process.env.LIVE_DEBUG;
 
 type Notify = (event: Record<string, unknown>) => void;
 
@@ -137,16 +140,31 @@ export async function startCall(opts: {
     if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ event_id: randomUUID(), ...event }));
   };
 
-  // ---- turn segmentation ----
-  let userBuf = '';
+  // ---- turn-taking ----
+  // The voice model decides when the person has finished (it hears pauses, tone, interruptions):
+  // it opens a delegation. That is the only moment a planner line is spoken. Silence in the
+  // transcript only starts a speculative plan early, on a copy of memory; if they keep talking,
+  // the draft is thrown away.
+  let userBuf = ''; // everything they've said since the last committed turn
   let agentBuf = '';
-  let endTimer: ReturnType<typeof setTimeout> | undefined;
-  let brainQueue: Promise<void> = Promise.resolve();
-  let latest: { decision: Pick<Decision, 'move' | 'say'>; delivered: boolean } | undefined;
-  const pendingDelegations: string[] = [];
+  let pauseTimer: ReturnType<typeof setTimeout> | undefined;
+  let commitQueue: Promise<void> = Promise.resolve();
+  let pendingDelegation: string | undefined;
   let closing = false;
   let greeted = false;
   let wrapTimer: ReturnType<typeof setTimeout> | undefined;
+
+  type Plan = {
+    text: string;
+    copy: Person;
+    version: number;
+    abort: AbortController;
+    early?: Pick<Decision, 'move' | 'say'>;
+    done: Promise<Decision | undefined>;
+    onEarly?: () => void;
+  };
+  let draft: Plan | undefined;
+  let memVersion = 0; // bumps each time a plan's memory is adopted; older drafts are stale
 
   const flushAgent = () => {
     const text = agentBuf.trim();
@@ -158,61 +176,121 @@ export async function startCall(opts: {
     }
   };
 
-  const finishUserTurn = () => {
-    clearTimeout(endTimer);
-    const text = userBuf.trim();
-    userBuf = '';
-    if (!text || closing) return;
-    flushAgent();
-    notify({ type: 'turn_end', role: 'person', text });
-    const run = async () => {
-      notify({ type: 'thinking', on: true });
-      const t0 = Date.now();
-      try {
-        let early = false;
-        const d = await brain.personTurn(p, text, 'voice', session.id, {
-          onEarly: (e) => {
-            early = true;
-            latest = { decision: { move: e.move, say: e.say }, delivered: false };
-            notify({ type: 'early', move: e.move, say: e.say, ms: Date.now() - t0 });
-            deliver();
-          },
-        });
-        store.save(p);
-        if (!early) latest = { decision: d, delivered: false };
-        notify({ type: 'brain', decision: d, ms: Date.now() - t0, person: publicPerson(p) });
-        deliver();
-        if (d.move === 'wrap') scheduleWrapClose();
-        maybeSummarise();
-      } catch (e) {
-        console.error('brain error', (e as Error).message);
-        notify({ type: 'error', message: 'The planner had a hiccup; the conversation continues.' });
-      } finally {
-        notify({ type: 'thinking', on: false });
-      }
-    };
-    brainQueue = brainQueue.then(run, run);
+  // Mic checks and fillers aren't answers: the voice model handles them on its own.
+  const FILLER = /^(hello+|hi|hey|haan|han|hmm+|um+|uh+|okay|ok|yeah|yes|ya|right|so|achha|accha|theek hai|can you hear me|are you there|hello can you hear me)$/i;
+  const isFiller = (t: string) => FILLER.test(t.toLowerCase().replace(/[,.?!]/g, ' ').replace(/\s+/g, ' ').trim());
+
+  const plan = (text: string): Plan => {
+    const copy = structuredClone(p) as Person;
+    const abort = new AbortController();
+    const pl: Plan = { text, copy, version: memVersion, abort, done: Promise.resolve(undefined) };
+    const t0 = Date.now();
+    pl.done = brain
+      .personTurn(copy, text, 'voice', session.id, {
+        signal: abort.signal,
+        onEarly: (e) => {
+          pl.early = { move: e.move, say: e.say };
+          notify({ type: 'early', move: e.move, say: e.say, ms: Date.now() - t0 });
+          pl.onEarly?.();
+        },
+      })
+      .then((d) => {
+        notify({ type: 'planned', ms: Date.now() - t0 });
+        return d;
+      })
+      .catch((e) => {
+        if (!abort.signal.aborted) console.error('brain error', (e as Error).message);
+        return undefined;
+      });
+    return pl;
   };
 
-  // Send the brain's latest decision to the voice model. Prefer answering a delegation (spoken);
-  // otherwise leave it as quiet context so the next spawn uses it.
-  const deliver = () => {
-    if (!latest || latest.delivered) return;
-    const d = latest.decision;
-    const content = spokenGuidance(d, p);
-    const delegationId = pendingDelegations.shift();
-    if (delegationId) {
-      send({ type: 'session.commentary.append', delegation_id: delegationId, content });
-      latest.delivered = true;
-      notify({ type: 'delivered', via: 'delegation' });
-    } else {
-      send({
-        type: 'session.thinking.append',
-        delegation_id: null,
-        content: `Planner's next step, to use at the next pause: ${content}`,
-      });
-      notify({ type: 'delivered', via: 'thinking' });
+  const dropDraft = () => {
+    draft?.abort.abort();
+    draft = undefined;
+  };
+
+  // They paused: start thinking now, so the answer is ready when the voice hands over.
+  const onPause = () => {
+    const text = userBuf.trim();
+    if (!text || closing || isFiller(text) || draft?.text === text) return;
+    dropDraft();
+    draft = plan(text);
+  };
+
+  const speak = (d: Pick<Decision, 'move' | 'say'>) => {
+    if (!pendingDelegation) return false;
+    send({ type: 'session.commentary.append', delegation_id: pendingDelegation, content: spokenGuidance(d, p) });
+    pendingDelegation = undefined;
+    notify({ type: 'delivered', via: 'delegation' });
+    return true;
+  };
+
+  // The voice model says it's the planner's turn: commit what they said and answer it.
+  const commitTurn = () => {
+    clearTimeout(pauseTimer);
+    const text = userBuf.trim();
+    userBuf = '';
+    if (!text || closing) {
+      if (pendingDelegation) send({ type: 'session.thinking.append', delegation_id: pendingDelegation, content: 'Nothing new from the planner. Respond in a few words and keep listening.' });
+      pendingDelegation = undefined;
+      return;
     }
+    if (isFiller(text)) {
+      notify({ type: 'turn_end', role: 'person', text, filler: true });
+      if (pendingDelegation) send({ type: 'session.thinking.append', delegation_id: pendingDelegation, content: 'Nothing new from the planner. Reply in two or three words and keep listening.' });
+      pendingDelegation = undefined;
+      dropDraft();
+      return;
+    }
+    flushAgent();
+    notify({ type: 'turn_end', role: 'person', text });
+    const pl = draft?.text === text && draft.version === memVersion ? draft : plan(text);
+    if (draft && draft !== pl) dropDraft();
+    draft = undefined;
+    notify({ type: 'thinking', on: true });
+    // Speak as soon as the move is known.
+    const tryEarly = () => pl.early && pendingDelegation && !recentlySaid(pl.early) && speak(pl.early);
+    pl.onEarly = tryEarly;
+    tryEarly();
+    const commit = async () => {
+      let d = await pl.done;
+      // A previous turn was adopted while this one was planning on older memory: plan again.
+      if (pl.version !== memVersion) {
+        const again = plan(text);
+        again.onEarly = () => again.early && pendingDelegation && !recentlySaid(again.early) && speak(again.early);
+        d = await again.done;
+        pl.copy = again.copy;
+        pl.early = pl.early ?? again.early;
+      }
+      notify({ type: 'thinking', on: false });
+      if (!d) {
+        notify({ type: 'error', message: 'The planner had a hiccup; the conversation continues.' });
+        if (pendingDelegation) send({ type: 'session.thinking.append', delegation_id: pendingDelegation, content: 'The planner has nothing yet. Ask them to go on, in a few words.' });
+        pendingDelegation = undefined;
+        return;
+      }
+      // Adopt the copy's memory (the person turn, items, threads) as the real one.
+      // Agent lines spoken meanwhile were recorded on p; carry them over.
+      const spokenSince = p.turns.filter((t) => !pl.copy.turns.some((u) => u.id === t.id));
+      Object.assign(p, pl.copy);
+      p.turns.push(...spokenSince);
+      memVersion++;
+      store.save(p);
+      if (!pl.early && !recentlySaid(d)) speak(d);
+      notify({ type: 'brain', decision: d, person: publicPerson(p) });
+      if (d.move === 'wrap') scheduleWrapClose();
+      maybeSummarise();
+    };
+    commitQueue = commitQueue.then(commit, commit);
+  };
+
+  const recentlySaid = (d: Pick<Decision, 'move' | 'say'>) => {
+    if (d.move === 'wrap') return false;
+    const recent = p.turns.filter((t) => t.role === 'agent' && t.sessionId === session.id).slice(-3);
+    const hit = recent.some((t) => brain.similarity(t.text, d.say) > 0.6);
+    if (hit) notify({ type: 'dropped', why: 'repeat' });
+    return hit;
   };
 
   const scheduleWrapClose = () => {
@@ -235,6 +313,7 @@ export async function startCall(opts: {
     } catch {
       return;
     }
+    if (DEBUG && !e.type?.endsWith('.delta')) console.log('live <-', e.type, JSON.stringify(e).slice(0, 300));
     switch (e.type) {
       case 'session.started':
         notify({ type: 'live', status: 'started' });
@@ -248,8 +327,10 @@ export async function startCall(opts: {
         if (agentBuf && !userBuf) flushAgent();
         userBuf += e.delta;
         notify({ type: 'transcript', role: 'person', delta: e.delta });
-        clearTimeout(endTimer);
-        endTimer = setTimeout(finishUserTurn, END_OF_TURN_MS);
+        // Still talking: any draft is out of date.
+        if (draft && draft.text !== userBuf.trim()) dropDraft();
+        clearTimeout(pauseTimer);
+        pauseTimer = setTimeout(onPause, PAUSE_MS);
         break;
       case 'session.output_transcript.delta':
         agentBuf += e.delta;
@@ -259,16 +340,11 @@ export async function startCall(opts: {
         const did = e.delegation?.id;
         if (!did) break;
         notify({ type: 'delegation' });
-        // The person finished; don't wait for the silence timer.
-        if (userBuf.trim()) finishUserTurn();
-        if (latest && !latest.delivered) {
-          pendingDelegations.push(did);
-          deliver();
-        } else {
-          pendingDelegations.push(did);
-          // Cancel the automatic filler while the brain works.
-          send({ type: 'session.thinking.append', delegation_id: did, content: 'Planner is choosing the next question.' });
-        }
+        if (pendingDelegation) send({ type: 'session.thinking.append', delegation_id: pendingDelegation, content: 'Superseded.' });
+        pendingDelegation = did;
+        // Hold the automatic filler while the planner works.
+        send({ type: 'session.thinking.append', delegation_id: did, content: 'The planner is choosing what to ask. Say nothing more yet.' });
+        commitTurn();
         break;
       }
       case 'session.usage.updated':
@@ -292,10 +368,14 @@ export async function startCall(opts: {
   const finalize = (reason: string) => {
     if (finalized) return;
     finalized = true;
-    clearTimeout(endTimer);
+    clearTimeout(pauseTimer);
     clearTimeout(wrapTimer);
-    if (userBuf.trim()) finishUserTurn();
-    void brainQueue.finally(async () => {
+    // Keep what they said last even though nobody will answer it.
+    const last = userBuf.trim();
+    userBuf = '';
+    dropDraft();
+    if (last && !isFiller(last)) p.turns.push({ id: randomUUID().slice(0, 8), role: 'person', text: last, channel: 'voice', sessionId: session.id, at: Date.now() });
+    void commitQueue.finally(async () => {
       flushAgent();
       brain.endSession(p, session.id, reason === 'done' ? 'done' : reason);
       store.save(p);
@@ -311,11 +391,6 @@ export async function startCall(opts: {
     async hangup(reason) {
       if (closing) return;
       closing = true;
-      if (userBuf.trim()) {
-        closing = false;
-        finishUserTurn();
-        closing = true;
-      }
       send({ type: 'session.close' });
       setTimeout(() => {
         if (!finalized) {
@@ -326,9 +401,11 @@ export async function startCall(opts: {
     },
     typed(text) {
       // Typed text during a call: treat as a person turn.
+      // Typed text during a call is a complete turn; tell the voice so it hands over.
       userBuf += (userBuf ? ' ' : '') + text;
       notify({ type: 'transcript', role: 'person', delta: text + ' ' });
-      finishUserTurn();
+      send({ type: 'session.thinking.append', delegation_id: null, content: `${p.name} typed: "${text.slice(0, 600)}". Treat it as what they said.` });
+      onPause();
     },
   };
 
