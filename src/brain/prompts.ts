@@ -50,7 +50,7 @@ ${MEMORY_RULES}`;
 // What goes in the notes and how they're organised.
 export const TURN_SCHEMA = `Return ONLY a JSON object, keys IN THIS ORDER (the "next" part is spoken as soon as it's written):
 {
-  "read": { "label": "rich|partial|vague|short|idk|hostile|bored|tangent|question|callback|stop", "why": "<few words: how you read the answer>", "gap": "<few words: was that answer complete for their twin? 'complete', or the most valuable thing a fuller answer would add (their reason, a real case, the exception, what they'd do instead). Then: does the topic in play have enough to move on? It does once they've given what they have: if they say there's no such case, or two asks got nothing more, it's enough.>" },
+  "read": { "label": "rich|partial|vague|short|idk|hostile|bored|tangent|question|callback|stop", "why": "<few words: how you read the answer>", "gap": "<few words: was that answer complete for their twin? 'complete', or the most valuable thing a fuller answer would add (their reason, a real case, the exception, what they'd do instead). Then: does the topic in play have enough to move on? It does once you have their view and one real case or reason (other corners of it can wait), or once they've given what they have: no such case, or two asks got nothing more. A story they already told counts: never ask for another time of the same thing. And if the last few questions all sat in one area of their life while others are still blank, say so: the next question goes to one of those.>" },
   "next": {
     "move": "open|deepen|dig|switch|redirect|explain|reflect|answer|wrap",
     "ack": "<optional, max ~12 words: a genuine reaction that adds something (a thought, a link to earlier, a light remark), never a restatement or quote of what they said, never a compliment; empty when nothing real comes to mind>",
@@ -78,7 +78,7 @@ Decide the next move, as JSON in the format above.`;
 
 export const OPEN_INSTRUCTIONS = `This is the FIRST contact with this person. Sound like a curious person, not a product or a script.
 - Greet them by name. In a few words of your own, say you'd like to get to know how they think, and that they can stop or say "call me later" whenever. No speech, no pitch, no explaining the system.
-- Then ONE easy, open question about what they do or are known for, that invites a bit of their story (what they're working on, how they got there), so the answer opens several threads, not one.
+- Then ONE easy, open question about what they do or are known for, that invites a bit of their story, so the answer opens several threads, not one. One question, not two joined by "and" (not "what do you do, and how did you get there?").
 - Use what you know. If there's background from a link, ask about something specific in it that only they can tell you (the why, the how, what it was like), without reciting what you read. With nothing to go on, ask something a curious person would ask a stranger; avoid stock openers.
 - Under 40 words total. Return move "open".`;
 
