@@ -9,13 +9,15 @@ const pct = (x: number | null | undefined) => (x == null || !Number.isFinite(x) 
 const cluster = (i: GradedItem) => i.persona ?? i.id;
 
 export function summarise(set: GradedSet) {
-  const out: string[] = [`# ${set.label}`, `${set.items.length} conversations · judge ${set.judge} · ${set.at.slice(0, 16)}`, '', '| metric | mean | 95% CI (by person) | what |', '|---|---|---|---|'];
+  const out: string[] = [`# ${set.label}`, `${set.items.length} conversations · judge ${set.judge} · ${set.at.slice(0, 16)}`, '', '| metric | mean | 95% CI (by person) | worst person | what |', '|---|---|---|---|---|'];
   for (const [k, m] of Object.entries(METRICS)) {
     const by = new Map<string, number[]>();
     for (const i of set.items) if (i.metrics[k] != null) by.set(cluster(i), [...(by.get(cluster(i)) ?? []), i.metrics[k]!]);
     if (!by.size) continue;
     const ci = clusterCI([...by.values()]);
-    out.push(`| ${k}${m.guard ? ' (guard)' : ''} | ${pct(ci.mean)} | ${pct(ci.lo)} – ${pct(ci.hi)} | ${m.what} |`);
+    // Worst case matters as much as the mean: one person badly served is a failure the average hides.
+    const per = [...by.values()].map((v) => v.reduce((s, x) => s + x, 0) / v.length);
+    out.push(`| ${k}${m.guard ? ' (guard)' : ''} | ${pct(ci.mean)} | ${pct(ci.lo)} – ${pct(ci.hi)} | ${pct(m.up ? Math.min(...per) : Math.max(...per))} | ${m.what} |`);
   }
   out.push('', '## Per conversation', '', `| conversation | ${Object.keys(METRICS).join(' | ')} |`, `|---|${Object.keys(METRICS).map(() => '---').join('|')}|`);
   for (const i of set.items) out.push(`| ${i.id} | ${Object.keys(METRICS).map((k) => pct(i.metrics[k])).join(' | ')} |`);

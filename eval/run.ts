@@ -131,7 +131,8 @@ if (mode === 'sim') {
   done();
 } else if (mode === 'improve') {
   // The failures, gathered from a graded set, for one small generic edit. Nothing is applied: the
-  // edit goes into a branch and through `compare`, and only a win is kept.
+  // edit goes into a branch and through `compare`, and only a win is kept. Prompt optimisers overfit (TextGrad: 91–96% on
+  // validation, 62–69% on test; logs/eval-research.md), so propose from one set of people and confirm on others.
   const set = JSON.parse(readFileSync(files[0], 'utf8')) as GradedSet;
   const bad: string[] = [];
   for (const i of set.items) {
@@ -145,7 +146,7 @@ if (mode === 'sim') {
     for (const t of d.coverage?.asks ?? []) if (t.grade === 'invented' || t.grade === 'abstain') bad.push(`${i.id} coverage ${t.grade}: "${t.q}"`);
   }
   const ask = `Below is the interviewer's system prompt, then the failures an eval found across ${set.items.length} conversations.
-Propose ONE small, generic edit to the prompt (a sentence added, changed or removed) most likely to fix the most common failure without causing others. No narrow examples that would be parroted; prefer giving the model judgement over rules.
+Propose ONE small, generic edit to the prompt (a sentence added, changed or removed) most likely to fix the most common failure without causing others. No narrow examples that would be parroted, and never name a topic, person or detail from these conversations (the edit must help people we haven't seen); prefer giving the model judgement over rules; shorter is better.
 Return: the failure pattern you target (with counts), the exact old text and new text, and what might get worse.
 
 == Prompt ==
