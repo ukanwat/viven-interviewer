@@ -344,6 +344,7 @@ function renderPerson(p, first = false) {
   renderNotebook($('learned'), p, { marks: state.marks, open: state.openNotes });
   $('openBox').classList.toggle('hidden', !p.open?.length);
   $('openList').innerHTML = (p.open ?? []).map((x) => `<li>${esc(x)}</li>`).join('');
+  renderSources(p);
   clearTimeout(state.markTimer);
   state.markTimer = setTimeout(() => {
     state.marks = {};
@@ -412,4 +413,98 @@ $('again').addEventListener('click', () => {
   $('name').value = state.person.name;
   show('start');
   lookup();
+});
+
+// ---------- connected tools (optional) ----------
+// A tool opens its own sign-in in a popup, so a call keeps going. The server reads it afterwards.
+let toolPresets = [];
+api('/api/status')
+  .then((s) => {
+    toolPresets = s.tools ?? [];
+    document.querySelectorAll('[data-tools]').forEach(renderToolButtons);
+  })
+  .catch(() => {});
+
+function renderToolButtons(el) {
+  const on = new Set((state.person?.connections ?? []).filter((c) => c.status !== 'failed' && c.status !== 'pending').map((c) => c.id));
+  el.innerHTML =
+    toolPresets.map((t) => `<button type="button" class="pill${on.has(t.id) ? ' on' : ''}" data-server="${esc(t.id)}" title="${esc(t.what)}">${on.has(t.id) ? '✓ ' : ''}${esc(t.label)}</button>`).join('') +
+    `<form><input name="url" type="url" placeholder="Other MCP server (https://…)" aria-label="Other MCP server URL" /><button class="pill" type="submit">Connect</button></form>`;
+  el.querySelectorAll('[data-server]').forEach((b) => b.addEventListener('click', () => connectTool(b.dataset.server)));
+  el.querySelector('form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const url = e.target.url.value.trim();
+    if (url) connectTool(url);
+  });
+}
+
+function connectTool(server) {
+  const name = state.person?.name ?? $('name').value.trim();
+  if (!name) {
+    $('name').focus();
+    return;
+  }
+  const q = new URLSearchParams({ name, server, ...(code ? { code } : {}) });
+  window.open(`/api/connect?${q}`, 'connect-tool', 'width=520,height=720');
+}
+
+window.addEventListener('message', (e) => {
+  if (e.origin !== location.origin || e.data?.type !== 'source-connected') return;
+  refreshSources();
+});
+
+let srcTimer;
+async function refreshSources() {
+  clearTimeout(srcTimer);
+  srcTimer = undefined;
+  const name = state.person?.name ?? $('name').value.trim();
+  if (!name) return;
+  try {
+    const r = await api(`/api/lookup?name=${encodeURIComponent(name)}`);
+    if (!r.person) return;
+    if (state.person) renderPerson({ ...state.person, connections: r.person.connections, sources: r.person.sources });
+    else {
+      state.startPerson = r.person;
+      document.querySelectorAll('[data-tools]').forEach((el) => renderToolButtonsFor(el, r.person));
+    }
+    if ((r.person.connections ?? []).some((c) => c.status === 'reading')) srcTimer = setTimeout(refreshSources, 4000);
+  } catch {}
+}
+function renderToolButtonsFor(el, person) {
+  const keep = state.person;
+  state.person = person;
+  renderToolButtons(el);
+  state.person = keep;
+}
+
+function renderSources(p) {
+  const conns = p.connections ?? [];
+  const notes = p.sources ?? [];
+  const label = (id) => conns.find((c) => c.id === id)?.label ?? id;
+  const status = conns
+    .map((c) => {
+      const s = c.status === 'reading' ? 'reading…' : c.status === 'ready' ? `read ${c.lastRead ? new Date(c.lastRead).toLocaleDateString() : ''}` : c.status === 'pending' ? 'waiting for sign-in' : `couldn't read${c.error ? `: ${c.error}` : ''}`;
+      return `<div class="src-conn">${esc(c.label)} · ${esc(s)}</div>`;
+    })
+    .join('');
+  $('srcHint').classList.toggle('hidden', notes.length > 0);
+  $('srcList').innerHTML =
+    status +
+    notes
+      .sort((a, b) => a.path.localeCompare(b.path))
+      .map((n) => `<div class="src-note"><b>${esc(n.title)}</b><span>${esc(n.summary)}</span><div class="muted" style="font-size:11.5px;margin-top:3px">${esc(label(n.from))}</div><button class="x" type="button" data-strike="${esc(n.path)}" title="Strike this">×</button></div>`)
+      .join('');
+  $('srcList').querySelectorAll('[data-strike]').forEach((b) =>
+    b.addEventListener('click', async () => {
+      const r = await api('/api/sources/strike', { id: p.id, path: b.dataset.strike }).catch(() => null);
+      if (r?.person) renderPerson(r.person);
+    }),
+  );
+  document.querySelectorAll('[data-tools]').forEach(renderToolButtons);
+  if (conns.some((c) => c.status === 'reading') && !srcTimer) srcTimer = setTimeout(refreshSources, 4000);
+}
+
+$('connectBtn').addEventListener('click', () => {
+  const open = $('connectPanel').classList.toggle('hidden') === false;
+  $('connectBtn').setAttribute('aria-expanded', String(open));
 });

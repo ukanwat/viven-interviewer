@@ -21,6 +21,11 @@
         <input id="link" type="url" placeholder="Website or profile (optional)" aria-label="A link about you (optional)" autocomplete="url" />
         <p class="hint">It helps me ask better questions. I'll only treat what you say as true.</p>
       </details>
+      <details id="toolsBox" class="link-box">
+        <summary>Connect a tool you use</summary>
+        <div class="tool-list" data-tools></div>
+        <p class="hint">Optional. An assistant reads it to get the gist of what you do, not private details. You can see and strike what it notes; nothing is written back.</p>
+      </details>
       <div id="lab" class="lab hidden">
         <label>Topic hint <span class="muted">(lab)</span><input id="topic" /></label>
         <label>Sealed facts <span class="muted">(lab, one per line, never shown to the interviewer)</span><textarea id="golden" rows="3"></textarea></label>
@@ -64,6 +69,12 @@
         <p id="whoLine" class="who-line"></p>
         <details id="bgBox" class="bg-box hidden"><summary>From your link · not something you said</summary><p id="bg"></p></details>
         <div id="learned" class="nb"></div>
+        <section id="srcBox" class="src-box">
+          <div class="src-head"><h3>From your tools</h3><button id="connectBtn" class="pill" type="button" aria-expanded="false">Connect</button></div>
+          <div id="connectPanel" class="tool-list hidden" data-tools></div>
+          <p id="srcHint" class="hint">Optional: connect a tool and an assistant reads it for context. Not something you said.</p>
+          <div id="srcList"></div>
+        </section>
         <div id="openBox" class="open-box hidden">
           <h3>Still want to learn</h3>
           <ul id="openList"></ul>

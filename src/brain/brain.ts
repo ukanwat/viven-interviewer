@@ -1,3 +1,4 @@
+import { connectedLabels, renderSources } from './sources.ts';
 import { randomUUID } from 'node:crypto';
 import { chat, chatJson, chatStream, completedObject, MODELS, type Msg } from './llm.ts';
 import {
@@ -78,6 +79,10 @@ export function renderContext(p: Person, sessionId?: string): string {
   lines.push(`Today: ${new Date().toISOString().slice(0, 10)}, conversation ${p.sessions.length || 1}.`);
   if (p.background?.brief)
     lines.push(`\n== Background from a link they gave (public web, NOT said by them) ==\n${p.background.brief}\nThey shared this link so you'd know a bit about them: use it to ask more specific questions (you can say you had a look). It may be out of date or incomplete, so ask rather than assume, and never put it in the notes: only what they say counts.`);
+  const tools = connectedLabels(p);
+  lines.push(tools.length ? `Tools they connected: ${tools.join(', ')}.` : 'Tools they connected: none (optional).');
+  const src = renderSources(p);
+  if (src) lines.push(`\n== Notes from their connected tools (read by an assistant, NOT said by them) ==\n${src}\nThis shows what's in their tools, possibly out of date. Use it to ask about the why and what isn't written down; say where you saw it. Never copy it into their notes: only what they say counts.`);
   if (p.summary) lines.push(`\n== Running summary ==\n${p.summary}`);
   lines.push(`\n== Their notes (what we know; don't re-ask it) ==\n${renderNotes(p)}`);
   if (p.open?.length) lines.push(`\n== Still most worth learning ==\n${p.open.map((x) => `- ${x}`).join('\n')}`);

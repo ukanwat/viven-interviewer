@@ -78,6 +78,10 @@ export type Person = {
   language: 'english' | 'hindi' | 'hinglish' | string;
   summary: string; // rolling, for context + resume
   background?: { url: string; brief: string; at: number }; // from a link they gave; not said by them
+  // Tools they chose to connect (MCP). Tokens never leave the server; see publicPerson.
+  connections?: Connection[];
+  // What an agent found reading those tools: a separate notebook, NOT said by them.
+  sources?: Record<string, SourceNote>;
   turns: Turn[];
   notes: Record<string, Note>;
   folders?: Record<string, string>; // folder path -> one-line description
@@ -105,3 +109,20 @@ export type Decision = {
   reason: string; // why this move, for the thinking panel
   changes: NoteChange[];
 };
+
+export type Connection = {
+  id: string; // preset id or host
+  label: string;
+  url: string;
+  status: 'pending' | 'reading' | 'ready' | 'failed';
+  error?: string;
+  connectedAt?: number;
+  lastRead?: number; // the agent catches up on what changed since this
+  summary?: string; // the agent's one-paragraph take after its last read
+  // Server-only.
+  oauth?: { tokenEndpoint: string; clientId: string; clientSecret?: string; resource: string };
+  tokens?: { access: string; refresh?: string; expiresAt?: number };
+  pending?: { state: string; verifier: string; redirectUri: string; at: number };
+};
+
+export type SourceNote = { path: string; title: string; summary: string; body: string; from: string; updatedAt: number };

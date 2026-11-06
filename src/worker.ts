@@ -1,11 +1,13 @@
 // Cloudflare Workers entry: a thin adapter over the same Room/brain/voice code the Node server runs.
 // One Durable Object per person (serial, holds live calls); people and chats in D1 (SQLite).
+import { PRESETS } from './brain/mcp.ts';
 import { DurableObject } from 'cloudflare:workers';
 import { Room, personRow } from './room.ts';
 import { personId } from './brain/ids.ts';
 import { MODELS } from './brain/llm.ts';
 import type { Connect } from './voice/live.ts';
 import type { Person } from './brain/types.ts';
+import { connectedPage } from './brain/connected-page.ts';
 
 type Env = { DB: D1Database; ROOMS: DurableObjectNamespace<PersonRoom>; ASSETS: Fetcher; PASSCODE?: string };
 
@@ -112,10 +114,6 @@ export default {
   async fetch(req: Request, env: Env): Promise<Response> {
     const url = new URL(req.url);
     const path = url.pathname;
-    if (path !== '/ws' && !path.startsWith('/api/')) return env.ASSETS.fetch(req);
-    if (env.PASSCODE && req.headers.get('x-passcode') !== env.PASSCODE && url.searchParams.get('code') !== env.PASSCODE)
-      return Response.json({ error: 'passcode required' }, { status: 401 });
-
     const toRoom = (id: string, init: RequestInit) => {
       const stub = env.ROOMS.get(env.ROOMS.idFromName(id));
       const headers = new Headers(init.headers);
@@ -124,14 +122,33 @@ export default {
     };
     const api = (id: string, route: string, body: unknown = {}) => toRoom(id, { method: 'POST', body: JSON.stringify({ route, body }) });
 
+    if (path !== '/ws' && !path.startsWith('/api/')) return env.ASSETS.fetch(req);
+    // The sign-in redirect from a tool they connect: no passcode (it comes from the tool), the state names the person.
+    if (path === '/api/oauth/callback') {
+      const state = url.searchParams.get('state') ?? '';
+      const id = state.split('.')[0];
+      const fail = url.searchParams.get('error_description') ?? url.searchParams.get('error');
+      if (!id || fail) return connectedPage(false, fail ?? 'Sign-in was cancelled.');
+      const r = await api(id, 'connect/finish', { state, code: url.searchParams.get('code') ?? '' });
+      const j: any = await r.json();
+      return connectedPage(r.ok, r.ok ? j.label : j.error);
+    }
+    if (env.PASSCODE && req.headers.get('x-passcode') !== env.PASSCODE && url.searchParams.get('code') !== env.PASSCODE)
+      return Response.json({ error: 'passcode required' }, { status: 401 });
+
     try {
       if (path === '/ws') {
         if (req.headers.get('Upgrade') !== 'websocket') return new Response('expected websocket', { status: 426 });
         return toRoom(personId(url.searchParams.get('name') ?? ''), { headers: req.headers });
       }
-      if (path === '/api/status') return Response.json({ models: MODELS });
+      if (path === '/api/status') return Response.json({ models: MODELS, tools: PRESETS });
       if (path === '/api/people') return Response.json({ people: await listPeople(env.DB) });
       if (path.startsWith('/api/person/')) return api(decodeURIComponent(path.slice('/api/person/'.length)), 'person');
+      if (path === '/api/connect') {
+        const r = await api(personId(url.searchParams.get('name') ?? ''), 'connect/start', { name: url.searchParams.get('name') ?? '', server: url.searchParams.get('server') ?? '', redirectUri: `${url.origin}/api/oauth/callback` });
+        const j: any = await r.json();
+        return r.ok ? Response.redirect(j.url, 302) : connectedPage(false, j.error);
+      }
       if (path === '/api/lookup') return api(personId(url.searchParams.get('name') ?? ''), 'lookup');
       if (req.method === 'POST') {
         const b: any = await req.json();

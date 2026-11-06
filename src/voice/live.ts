@@ -6,6 +6,7 @@
 //   server attaches a sideband WebSocket to the same session:
 //     transcript deltas -> turns -> note-taker -> memory + panel + session.thinking.append(brief)
 
+import { connectedLabels, renderSources, publicConnections, publicSources } from '../brain/sources.ts';
 import { randomUUID } from 'node:crypto';
 import * as brain from '../brain/brain.ts';
 import { consolidate, renderTree } from '../brain/notes.ts';
@@ -57,12 +58,14 @@ function historyInput(p: Person, opening: Decision) {
     p.summary && `Summary so far: ${p.summary}`,
     p.expertise && `Who they are: ${p.expertise}`,
     p.background?.brief && `Background from a link they shared so you'd know a bit about them (may be out of date; use it to ask more specific questions, ask rather than assume): ${p.background.brief}`,
+    renderSources(p, 4000) && `Notes from tools they connected (read by an assistant, NOT said by them; shows the what, ask about the why; say where you saw it): \n${renderSources(p, 4000)}`,
+    connectedLabels(p).length ? `Tools they connected: ${connectedLabels(p).join(', ')}.` : '',
     Object.keys(p.notes).length ? `Their notes so far (what you already know; do not re-ask):\n${renderTree(p).slice(0, 6000)}` : '',
     p.open?.length ? `Still most worth learning: ${p.open.join('; ')}` : '',
   ]
     .filter(Boolean)
     .join('\n');
-  if (Object.keys(p.notes).length || p.summary || p.background?.brief) input.push(msg('developer', brief));
+  if (Object.keys(p.notes).length || p.summary || p.background?.brief || Object.keys(p.sources ?? {}).length) input.push(msg('developer', brief));
   // Seed the last few real turns so the voice model has the thread (Live accepts history only at start).
   const prior = p.turns.slice(0, -1).slice(-10); // last turn is the opener we're about to say
   for (const t of prior) input.push(t.role === 'agent' ? msg('assistant', t.text) : msg('user', t.text));
@@ -81,6 +84,7 @@ type Notify = (event: Record<string, unknown>) => void;
 export type CallHandle = {
   hangup(reason: string): Promise<void>;
   typed(text: string): void;
+  note(text: string): void;
 };
 
 // One live call. Owns the sideband, the turn segmentation and the brain queue.
@@ -299,6 +303,10 @@ export async function startCall(opts: {
         }
       }, 10_000);
     },
+    note(text) {
+      // Something new arrived mid-call (e.g. notes from a tool they just connected): silent context.
+      if (open) send({ type: 'session.thinking.append', delegation_id: null, content: text.slice(0, 4000) });
+    },
     typed(text) {
       // Typed during a call: it's their turn, as if said aloud.
       if (agentBuf.trim()) recordAgent();
@@ -331,6 +339,8 @@ export function publicPerson(p: Person) {
     language: p.language,
     summary: p.summary,
     background: p.background,
+    connections: publicConnections(p),
+    sources: publicSources(p),
     notes: p.notes,
     open: p.open,
     turns: p.turns.map(({ id, role, text, channel, sessionId, at, label, move, notes }) => ({ id, role, text, channel, sessionId, at, label, move, notes })),

@@ -306,6 +306,14 @@ Utkarsh's next note: TwinCafe "asks valuable stuff, like I'm an AI engineer, so 
 
 The goodbye now names one thing about them that surprised the interviewer, something a stranger wouldn't have guessed. That rewards their time, and it shows the delta was heard. In a replay of the first 8 answers, the questions now follow what they're doing (work, the move, the interview, then their office work) instead of their routine. The new moves didn't fire there, which is fine: they're for when they fit.
 
+**Tools they already use (optional connectors).** This was Utkarsh's idea. A person can connect a tool they work in, such as Notion, Granola, Linear, Jira and Confluence, ClickUp, Airtable, or Gmail and Calendar through Zapier. Any other remote MCP server works by URL.
+- It's a real MCP client: OAuth 2.1 with dynamic client registration and PKCE, over Streamable HTTP. Servers that need a pre-registered app (Slack, Google, GitHub, Asana's v2 server) are left out rather than faked. Sign-in redirects were checked against every preset.
+- An agent (Haiku, at most 24 steps) gets only the server's read-only tools, plus a pen for its own notebook. It reads the way a new colleague catches up: broad first, in time order, then writes the gist of what they work on, with "worth asking" lines. That notebook is kept apart from the interview notes. The interviewer sees it marked "read by an assistant, NOT said by them", and uses it to ask the why behind what the tools show: the data gives the what, the interview gives the why.
+- Privacy: it's optional, and the interviewer mentions it at most once. The notes are gist, not secrets. The person sees every note and can strike any of them. Nothing is written back to their tools. Tokens stay server-side and are never sent to the browser.
+- It keeps the profile current: on a visit more than a day after the last read, the agent reads again from its old notes and changes since then, and updates or deletes what's no longer true.
+- It fits where Viven is going, since a twin at work will sit on top of work tools anyway. It also doesn't exclude "any human": without tools, the interview works as before.
+- Not tested end to end with a real account. That needs someone to sign in; sign-in and the UI were checked, but the read loop wasn't.
+
 ## 11. What I'd do next
 
 - **Twin-gap questions.** Ask a cheap model "what would people who know this person's work ask their twin that these notes can't answer?", and feed the top gap to the note-taker as a direction. This is TwinCafe's "see what it missed" loop, but before the twin exists.

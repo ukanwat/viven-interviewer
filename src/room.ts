@@ -5,6 +5,7 @@ import { personId } from './brain/ids.ts';
 import { sessionReport } from './brain/report.ts';
 import { lookUp } from './brain/lookup.ts';
 import { consolidate, notesMarkdown } from './brain/notes.ts';
+import * as sources from './brain/sources.ts';
 import type { Person } from './brain/types.ts';
 import { startCall, publicPerson, type CallHandle, type Connect } from './voice/live.ts';
 
@@ -24,6 +25,7 @@ export class Room {
   private person?: Person;
   private loaded = false;
   private chain: Promise<unknown> = Promise.resolve();
+  private active?: CallHandle; // the live call, if any, so new context can reach it
 
   constructor(id: string, store: PersonStore, connect: Connect) {
     this.id = id;
@@ -57,7 +59,22 @@ export class Room {
     else if (topic && !p.topicHint) p.topicHint = topic;
     if (golden?.length) p.sealedGolden = golden;
     if (link) await lookUp(p, link).catch((e) => console.error('lookup failed', (e as Error).message));
+    // Keep what their tools show up to date: re-read in the background on a later visit.
+    for (const c of p.connections ?? []) if (c.status === 'ready' && Date.now() - (c.lastRead ?? 0) > sources.STALE_MS) this.readSource(p, c);
     return p;
+  }
+
+  // Runs beside the conversation (it can take a minute); saves as notes land.
+  private readSource(p: Person, c: NonNullable<Person['connections']>[number]) {
+    if (c.status === 'reading' && c.lastRead && Date.now() - c.lastRead < 60_000) return;
+    void sources
+      .read(p, c, { onChange: () => this.save() })
+      .then(() => {
+        this.save();
+        const src = sources.renderSources(p, 4000);
+        if (this.active && src) this.active.note(`New context (silent, not said by them): ${p.name} connected ${c.label}, and an assistant read it. What it shows (NOT said by them; ask about the why when it fits, say where you saw it; don't interrupt what they're saying):\n${src}`);
+      })
+      .catch((e) => console.error('source read failed', (e as Error).message));
   }
 
   private save() {
@@ -74,6 +91,19 @@ export class Room {
       const p = await this.get();
       return p ? ok(notesMarkdown(p)) : err(404, 'not found');
     }
+    if (route === 'connect/finish') {
+      const p = await this.get();
+      if (!p) return err(404, 'not found');
+      try {
+        const c = await sources.finishConnect(p, String(b.state ?? ''), String(b.code ?? ''));
+        this.save();
+        this.readSource(p, c);
+        return ok({ name: p.name, label: c.label });
+      } catch (e) {
+        this.save();
+        return err(400, (e as Error).message);
+      }
+    }
     if (route === 'lookup') {
       const p = await this.get();
       return ok(p ? { returning: brain.isReturning(p), person: publicPerson(p) } : { returning: false });
@@ -87,8 +117,31 @@ export class Room {
         this.save();
         return ok({ sessionId: s.id, decision: d, person: publicPerson(p) });
       }
+      if (route === 'connect/start') {
+        if (!b.name?.trim() || personId(b.name) !== this.id) return err(400, 'name required');
+        const p = await this.getOrCreate(b.name);
+        const url = await sources.startConnect(p, String(b.server ?? ''), String(b.redirectUri ?? '')).catch((e) => e as Error);
+        this.save();
+        return url instanceof Error ? err(400, url.message) : ok({ url });
+      }
       const p = await this.get();
       if (!p) return err(404, 'not found');
+      if (route === 'sources/strike') {
+        sources.strike(p, String(b.path ?? ''));
+        this.save();
+        return ok({ person: publicPerson(p) });
+      }
+      if (route === 'connect/remove') {
+        sources.disconnect(p, String(b.connection ?? ''));
+        this.save();
+        return ok({ person: publicPerson(p) });
+      }
+      if (route === 'connect/refresh') {
+        const c = p.connections?.find((x) => x.id === b.connection && x.tokens);
+        if (!c) return err(404, 'not connected');
+        this.readSource(p, c);
+        return ok({ person: publicPerson(p) });
+      }
       if (route === 'text/turn') {
         const text = String(b.text ?? '').slice(0, 4000);
         if (!text.trim()) return err(400, 'empty');
@@ -139,16 +192,21 @@ export class Room {
             const p = await room.getOrCreate(m.name, m.topic, m.golden, m.link);
             const c = await startCall({ store: saver, connect: room.connect, person: p, offerSdp: m.sdp, voice: m.voice, notify });
             handle = c.handle;
+            room.active = c.handle;
             notify({ type: 'answer', sdp: c.answerSdp, sessionId: c.sessionId, personId: p.id });
           } catch (e) {
             console.error('call start failed', (e as Error).message);
             notify({ type: 'error', message: (e as Error).message });
             closeBrowser();
           }
-        } else if (m.type === 'hangup') await handle?.hangup(m.reason ?? 'later');
+        } else if (m.type === 'hangup') {
+          if (room.active === handle) room.active = undefined;
+          await handle?.hangup(m.reason ?? 'later');
+        }
         else if (m.type === 'typed' && typeof m.text === 'string') handle?.typed(m.text.slice(0, 4000));
       },
       close() {
+        if (room.active === handle) room.active = undefined;
         void handle?.hangup('browser_closed');
       },
     };

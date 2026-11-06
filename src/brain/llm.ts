@@ -1,6 +1,6 @@
 // All text LLM calls go through OpenRouter, via the AI SDK (retries, streaming, usage, prompt caching).
 // Voice (gpt-live-1) is the only OpenAI-direct path.
-import { generateText, streamText, type LanguageModelUsage, type ModelMessage, type SystemModelMessage } from 'ai';
+import { generateText, streamText, stepCountIs, type ToolSet, type LanguageModelUsage, type ModelMessage, type SystemModelMessage } from 'ai';
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 
 export const MODELS = {
@@ -141,4 +141,21 @@ export function parseJson<T>(text: string): T {
     if (start >= 0 && end > start) return JSON.parse(cleaned.slice(start, end + 1)) as T;
     throw new Error(`Model did not return JSON: ${cleaned.slice(0, 200)}`);
   }
+}
+
+// An agent loop with tools (the sources reader). Returns its final text.
+export async function runAgent(opts: { model: string; system: string; prompt: string; tools: ToolSet; maxSteps: number; signal?: AbortSignal }): Promise<string> {
+  const r = await generateText({
+    model: model({ model: opts.model }),
+    instructions: opts.system,
+    prompt: opts.prompt,
+    tools: opts.tools,
+    stopWhen: stepCountIs(opts.maxSteps),
+    temperature: 0.3,
+    maxOutputTokens: 2000,
+    abortSignal: opts.signal,
+    maxRetries: 2,
+  } as any);
+  for (const st of r.steps) track(opts.model, st.usage, st.providerMetadata);
+  return r.text;
 }

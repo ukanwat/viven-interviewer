@@ -32,6 +32,7 @@ store: files | Postgres | S3/R2 | D1
 - **Text:** the same note-taker also writes the next question, streamed so the question appears before the notes finish.
 - **Memory** (`src/brain/notes.ts`): a folder tree of markdown notes, any depth, each with a title and one-line summary; folders carry descriptions. Per turn the model returns `write / move / delete / folder` ops. After each call a consolidation pass tidies the whole tree. Rules: notes are about the person, never the conversation; their words where wording matters; never lose a detail on rewrite.
 - **Report** (`src/brain/report.ts`): after a call, a judge from a different model family (Gemini) reviews the conversation: what it learned, what to ask next time, interviewer mistakes.
+- **Connectors** (`src/brain/mcp.ts`, `sources.ts`): optional. A person can connect Notion, Granola, Linear, Jira/Confluence, ClickUp, Airtable, Zapier (Gmail, Calendar…) or any remote MCP server (OAuth with dynamic registration + PKCE). A Haiku agent with read-only tools writes a separate "from your tools" notebook. The interviewer uses it to ask the why, never as their words. The person can strike notes, and it re-reads after a day.
 - **Eval** (`eval/run.ts`): simulated people (GPT) with hidden facts talk to the real text channel; Gemini judges what was drawn out and saved. See THINKING.md §6.
 
 | Role | Model |

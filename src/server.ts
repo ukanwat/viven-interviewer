@@ -1,3 +1,5 @@
+import { PRESETS } from './brain/mcp.ts';
+import { connectedHtml } from './brain/connected-page.ts';
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { join, normalize, extname } from 'node:path';
@@ -75,11 +77,28 @@ function authed(req: IncomingMessage) {
   return req.headers['x-passcode'] === PASSCODE || url.searchParams.get('code') === PASSCODE;
 }
 
+const html = (res: ServerResponse, status: number, body: string) => res.writeHead(status, { 'Content-Type': 'text/html; charset=utf-8' }).end(body);
+const origin = (req: IncomingMessage) => `${req.headers['x-forwarded-proto'] ?? 'http'}://${req.headers['x-forwarded-host'] ?? req.headers.host}`;
+
 async function api(req: IncomingMessage, res: ServerResponse, path: string) {
+  const url0 = new URL(req.url ?? '', 'http://x');
+  // The sign-in redirect from a tool they connect: no passcode (it comes from the tool), the state names the person.
+  if (path === '/api/oauth/callback') {
+    const state = url0.searchParams.get('state') ?? '';
+    const fail = url0.searchParams.get('error_description') ?? url0.searchParams.get('error');
+    if (!state.split('.')[0] || fail) return html(res, 400, connectedHtml(false, fail ?? 'Sign-in was cancelled.'));
+    const r = await room(state.split('.')[0]).api('connect/finish', { state, code: url0.searchParams.get('code') ?? '' });
+    return html(res, r.status, connectedHtml(r.status === 200, r.status === 200 ? (r.body as any).label : (r.body as any).error));
+  }
   if (!authed(req)) return json(res, 401, { error: 'passcode required' });
+  if (path === '/api/connect') {
+    const name = url0.searchParams.get('name') ?? '';
+    const r = await room(personId(name)).api('connect/start', { name, server: url0.searchParams.get('server') ?? '', redirectUri: `${origin(req)}/api/oauth/callback` });
+    return r.status === 200 ? res.writeHead(302, { Location: (r.body as any).url }).end() : html(res, 400, connectedHtml(false, (r.body as any).error));
+  }
   try {
     const url = new URL(req.url ?? '', 'http://x');
-    if (path === '/api/status') return json(res, 200, { models: MODELS, usage });
+    if (path === '/api/status') return json(res, 200, { models: MODELS, usage, tools: PRESETS });
     if (path === '/api/people') return json(res, 200, { people: (await store.list()).sort((a, b) => b.updatedAt - a.updatedAt) });
     if (path.startsWith('/api/person/')) {
       const r = await room(decodeURIComponent(path.slice('/api/person/'.length))).api('person', {});
