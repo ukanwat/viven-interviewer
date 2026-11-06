@@ -9,3 +9,10 @@ public/test-audio/
 worker-configuration.d.ts
 eval/results/runs/
 eval/results/cache/
+# Real people's conversations: never committed
+eval/results/real/
+eval/results/queue.jsonl
+eval/results/graded/hosted*
+eval/results/graded/local*
+eval/calibration/
+eval/results/taxonomy.md

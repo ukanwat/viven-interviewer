@@ -8,6 +8,8 @@
 //   node eval/run.ts compare <graded A> <graded B>            paired verdict: primary metric + guards
 //   node eval/run.ts view    <graded>                         HTML viewer + review (pass/fail, correct the judge)
 //   node eval/run.ts review-import <labels.json>              reviewed labels → eval/calibration (for meta)
+//   node eval/run.ts triage  [graded...]                      failure types from your review notes (#tags), next to the judge's counts
+//   node eval/run.ts pull                                     fetch new/changed hosted conversations into the review queue (free)
 //   node eval/run.ts meta    [--set graded] [--retest 2]      how far to trust the harness
 //   node eval/run.ts improve <graded>                         failure digest → one small prompt edit to A/B
 //
@@ -26,6 +28,7 @@ import { PERSONAS, simulate } from './lib/sim.ts';
 import { gradeAll, METRICS } from './lib/score.ts';
 import { compare, heldOut, SPLITS, summarise, type GradedItem, type GradedSet } from './lib/report.ts';
 import { viewHtml } from './lib/view.ts';
+import { triage, type Review } from './lib/triage.ts';
 import { coverageValidity, judgeRetest, judgeVsHuman, seedNoise, simRealism } from './lib/meta.ts';
 
 const R = join(import.meta.dirname, 'results');
@@ -42,10 +45,18 @@ const withName = (c: Conv) => (c.persona && c.name === c.persona ? { ...c, name:
 const write = (f: string, x: unknown) => (mkdirSync(join(f, '..'), { recursive: true }), writeFileSync(f, typeof x === 'string' ? x : JSON.stringify(x, null, 1)));
 const done = () => console.error(`\ncost this run $${spent().toFixed(3)} · cache ${cacheStats.hits} hits, ${cacheStats.misses} new calls`);
 
-async function hosted(ids: string[]): Promise<Conv[]> {
+function hostedGet() {
   const base = process.env.VIVEN_URL ?? 'https://viven-interviewer.utkarshkanwat.com';
   const pass = process.env.VIVEN_PASSCODE ?? execFileSync('security', ['find-generic-password', '-s', 'viven-passcode', '-w']).toString().trim();
-  const get = async (p: string) => (await fetch(base + p, { headers: { 'x-passcode': pass } })).json() as Promise<any>;
+  return async (p: string) => {
+    const r = await fetch(base + p, { headers: { 'x-passcode': pass } });
+    if (!r.ok) throw new Error(`${p}: ${r.status}`);
+    return r.json() as Promise<any>;
+  };
+}
+
+async function hosted(ids: string[]): Promise<Conv[]> {
+  const get = hostedGet();
   if (!ids.length) ids = ((await get('/api/people')).people as any[]).map((p) => p.id);
   const out: Conv[] = [];
   for (const id of ids) {
@@ -164,6 +175,32 @@ if (mode === 'sim') {
   write(join(R, 'meta.md'), md);
   console.log(md);
   done();
+} else if (mode === 'triage') {
+  const revFile = join(import.meta.dirname, 'calibration/reviews.jsonl');
+  const reviews: Review[] = existsSync(revFile) ? readFileSync(revFile, 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l)) : [];
+  const sets = files.map((f) => JSON.parse(readFileSync(f, 'utf8')) as GradedSet);
+  const md = triage(reviews, sets);
+  write(join(R, 'taxonomy.md'), md);
+  console.log(md);
+} else if (mode === 'pull') {
+  // The online half (Braintrust/LangSmith style, minus the service): conversations people had on the
+  // site land in a local queue to review and grade. Fetching is free; grading costs, so it stays a
+  // separate step (`grade --hosted <ids>`). Real people's words: eval/results/real/ is gitignored.
+  const get = hostedGet();
+  const qFile = join(R, 'queue.jsonl');
+  const queue = existsSync(qFile) ? readFileSync(qFile, 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l)) : [];
+  const seen = new Map<string, number>(queue.map((q: any) => [q.id, q.updatedAt]));
+  const fresh: any[] = [];
+  for (const p of (await get('/api/people')).people as any[]) {
+    if ((seen.get(p.id) ?? -1) >= p.updatedAt) continue;
+    const full = await get(`/api/person/${encodeURIComponent(p.id)}`);
+    const answers = (full?.turns ?? []).filter((t: any) => t.role === 'person' && t.text?.trim()).length;
+    if (!answers) continue;
+    write(join(R, 'real', `${p.id}.json`), full);
+    fresh.push({ id: p.id, name: p.name, updatedAt: p.updatedAt, answers, sessions: p.sessions, pulledAt: new Date().toISOString(), status: 'new' });
+  }
+  if (fresh.length) write(qFile, queue.map((q) => JSON.stringify(q)).concat(fresh.map((q) => JSON.stringify(q))).join('\n') + '\n');
+  console.log(fresh.length ? `${fresh.length} new or changed: ${fresh.map((q) => `${q.name} (${q.answers} answers)`).join(', ')}\nGrade them: node eval/run.ts grade eval/results/real/<id>.json --out hosted-<date>` : 'Nothing new.');
 } else if (mode === 'improve') {
   // The failures, gathered from a graded set, for one small generic edit. Nothing is applied: the
   // edit goes into a branch and through `compare`, and only a win is kept. Prompt optimisers overfit (TextGrad: 91–96% on

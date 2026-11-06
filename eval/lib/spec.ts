@@ -18,14 +18,17 @@ const git = (...a: string[]) => {
 
 export type Spec = { commit: string; dirty: boolean; interviewer: string; judge: string; sim: string; personas: string; models: Record<string, string> };
 
-export function spec(models: Record<string, string>): Spec {
+// `personas`: the hash covers only the people given (a run's one person), so adding new personas to
+// the file doesn't make every older run look different. A graded set passes none: compare checks
+// each pair's run spec instead.
+export function spec(models: Record<string, string>, personas: unknown[] = []): Spec {
   return {
     commit: git('rev-parse', '--short', 'HEAD'),
     dirty: !!git('status', '--porcelain', 'src', 'eval/lib', 'eval/scenarios'),
     interviewer: hash('src/brain/prompts.ts', 'src/brain/brain.ts', 'src/brain/notes.ts'),
     judge: hash('eval/lib/grade.ts', 'eval/lib/score.ts'),
     sim: hash('eval/lib/sim.ts'),
-    personas: hash('eval/scenarios/personas.json'),
+    personas: personas.length ? createHash('sha256').update(JSON.stringify(personas)).digest('hex').slice(0, 10) : '',
     models,
   };
 }

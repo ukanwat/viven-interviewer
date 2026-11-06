@@ -48,7 +48,7 @@ function nav(){document.getElementById('nav').innerHTML=set.items.map((it,i)=>'<
 function show(i){cur=i;nav();const it=set.items[i],d=it.detail||{},c=it.conv||{lines:[],notes:[]};const r=R[it.id]??={lines:{}};
  const L=d.conversation?.lines||[],A=d.conversation?.answers||[];let q=0,a=0,h='';
  h+='<h2>'+esc(it.name)+' <small style="color:#888">'+esc(it.id)+'</small></h2>';
- h+='<div class=review><button id=pass class="'+(r.pass===true?'on':'')+'">Pass</button> <button id=fail class="'+(r.pass===false?'on':'')+'">Fail</button> <span style="color:#777">Fail = its first real failure (Hamel: note only the first, upstream errors cascade)</span><textarea id=note placeholder="First failure, in your words">'+esc(r.note||'')+'</textarea></div>';
+ h+='<div class=review><button id=pass class="'+(r.pass===true?'on':'')+'">Pass</button> <button id=fail class="'+(r.pass===false?'on':'')+'">Fail</button> <span style="color:#777">Fail = its first real failure (Hamel: note only the first, upstream errors cascade)</span><textarea id=note placeholder="First failure, in your words, with #tags for its type (e.g. #restates #missed-story): run.ts triage counts them">'+esc(r.note||'')+'</textarea></div>';
  h+='<table><tr>'+Object.keys(metrics).filter(k=>it.metrics[k]!=null).map(k=>'<th title="'+esc(metrics[k].what)+'">'+k+'</th>').join('')+'</tr><tr>'+Object.keys(metrics).filter(k=>it.metrics[k]!=null).map(k=>'<td>'+pct(it.metrics[k],k)+'</td>').join('')+'</tr></table>';
  c.lines.forEach((l,j)=>{if(j===0||c.lines[j-1].session!==l.session)h+='<div class=sess>session '+l.session+'</div>';
   if(l.role==='agent'){q++;const lab=L.find(x=>x.q===q)||{};const hum=r.lines[q]||{};

@@ -9,6 +9,7 @@
     "start": "node src/server.ts",
     "dev": "node --watch src/server.ts",
     "eval": "node eval/run.ts",
+    "test:eval": "node --test eval/test/*.test.ts",
     "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.worker.json",
     "deploy": "wrangler deploy",
     "dev:cf": "wrangler dev --port 8002"

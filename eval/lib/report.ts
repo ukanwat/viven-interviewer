@@ -71,7 +71,8 @@ export function compare(a: GradedSet, b: GradedSet) {
     if (ps.length) rows.push({ k, d: pairedDiff(ps, m.up) });
   }
   // Only a fair comparison: same judge, sim, personas and models, so the interviewer is the one thing that differs.
-  const why = [...unfair(a.spec, b.spec), ...unfair(a.items[0]?.runSpec, b.items[0]?.runSpec).filter((x) => !x.startsWith('judge') && !x.includes('no spec'))];
+  // Run specs are checked pair by pair (same person on both sides), judge excepted: the set spec covers it.
+  const why = [...new Set([...unfair(a.spec, b.spec), ...pairs.flatMap((p) => unfair(p.x.runSpec, p.y.runSpec).filter((x) => !x.startsWith('judge')).map((x) => (x.includes('no spec') ? 'some runs have no spec (made before specs were recorded)' : x)))])];
   const prim = rows.find((r) => r.k === primary)?.d.verdict ?? "can't tell";
   // The primary on held-out people alone: an edit proposed from dev people should win here too.
   const ho = pairs.filter((p) => heldOut(p.x) && p.x.metrics[primary] != null && p.y.metrics[primary] != null);

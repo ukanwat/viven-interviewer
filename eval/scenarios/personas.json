@@ -564,5 +564,538 @@
     ]
    }
   ]
+ },
+ {
+  "id": "tunde",
+  "name": "Tunde",
+  "behaviour": "low-effort",
+  "who": "Tunde Adeyemi, 19, second-year computer science student at the University of Lagos. Lives with his parents and two younger sisters. Runs a small phone-repair side hustle.",
+  "style": "Short, casual, low-effort answers (2-20 words): 'idk', 'it's whatever', 'kinda'. Lower-case, some Nigerian English ('abeg', 'no wahala'). Opens up only when a question is concrete and about something he actually does, and goes quiet again after a vague or abstract one.",
+  "facts": [
+   {
+    "text": "He fixes phones for students from a table at the hostel gate and charges less than the shops.",
+    "kind": "fact",
+    "disclosure": "free",
+    "vital": false
+   },
+   {
+    "text": "He chose computer science because his father said so; he would have picked architecture.",
+    "kind": "decision",
+    "disclosure": "asked",
+    "vital": true
+   },
+   {
+    "text": "He decides whether to take a repair by opening the phone first: if the board has water damage he refuses, whatever they offer.",
+    "kind": "rule",
+    "disclosure": "probe",
+    "vital": true
+   },
+   {
+    "text": "Exception: he will still try a water-damaged phone for free if the owner says the photos on it are of someone who died.",
+    "kind": "exception",
+    "disclosure": "trust",
+    "vital": true
+   },
+   {
+    "text": "He can tell a customer is lying about how a phone broke when they explain too much.",
+    "kind": "cue",
+    "disclosure": "probe",
+    "vital": true
+   },
+   {
+    "text": "He thinks university lectures are mostly a waste; he learns from YouTube at 2am.",
+    "kind": "belief",
+    "disclosure": "asked",
+    "vital": false
+   },
+   {
+    "text": "He sends part of his repair money to his younger sister's school fees and hasn't told his parents.",
+    "kind": "value",
+    "disclosure": "trust",
+    "vital": false
+   },
+   {
+    "text": "His best friend Chidi dropped out last year and now sells phones; they still talk daily.",
+    "kind": "relationship",
+    "disclosure": "asked",
+    "vital": false
+   },
+   {
+    "text": "He hates being called 'young man' by older people; it makes him stop listening.",
+    "kind": "reaction",
+    "disclosure": "asked",
+    "vital": false
+   },
+   {
+    "text": "When a laptop he repaired caught fire in a customer's room, he paid for a new one over four months.",
+    "kind": "story",
+    "disclosure": "trust",
+    "vital": true
+   }
+  ],
+  "asks": [
+   {
+    "q": "A friend asks: someone brought me a phone that fell in water. Should I take the job?",
+    "gold": "No, refuse water damage whatever they offer; except do it free if the photos on it are of someone who died.",
+    "facts": [
+     3,
+     4
+    ]
+   },
+   {
+    "q": "A new repair guy asks: how do I know if a customer is lying about how the phone broke?",
+    "gold": "When they explain too much.",
+    "facts": [
+     5
+    ]
+   },
+   {
+    "q": "His cousin asks: should I go to all my lectures?",
+    "gold": "Mostly a waste; learn from YouTube at night instead.",
+    "facts": [
+     6
+    ]
+   },
+   {
+    "q": "A customer asks: if your repair breaks my laptop, what happens?",
+    "gold": "He pays for it, even in instalments; he did when a laptop caught fire.",
+    "facts": [
+     10
+    ]
+   },
+   {
+    "q": "A younger student asks: should I pick the course my dad wants?",
+    "gold": "He did and wishes he'd picked architecture; implies choose your own.",
+    "facts": [
+     2
+    ]
+   }
+  ]
+ },
+ {
+  "id": "ray",
+  "name": "Ray",
+  "behaviour": "concrete-tradesman",
+  "who": "Ray Delgado, 47, master electrician in San Antonio, Texas. Owns a four-person shop. Married, two teenage kids. Practical, friendly, distrusts abstract talk.",
+  "style": "Medium answers (15-50 words), plain and concrete. Answers abstract questions ('what do you value?') with a shrug or a joke ('I value a breaker that trips'), but gives real detail when asked about a specific job, a mistake, or what he'd do in a situation. Says 'look' and 'honestly'.",
+  "facts": [
+   {
+    "text": "He has been an electrician for 26 years and has owned his shop for 11.",
+    "kind": "fact",
+    "disclosure": "free",
+    "vital": false
+   },
+   {
+    "text": "He will not take a job where the homeowner did their own wiring unless he can rip it out, even if it loses the job.",
+    "kind": "rule",
+    "disclosure": "probe",
+    "vital": true
+   },
+   {
+    "text": "He judges a new apprentice by whether they put tools back where they found them in the first week.",
+    "kind": "cue",
+    "disclosure": "probe",
+    "vital": true
+   },
+   {
+    "text": "He left a big contractor's crew because the foreman asked him to sign off on work he hadn't inspected.",
+    "kind": "decision",
+    "disclosure": "asked",
+    "vital": true
+   },
+   {
+    "text": "Exception: for elderly customers on a fixed income he does safety fixes at cost and doesn't tell his partner.",
+    "kind": "exception",
+    "disclosure": "trust",
+    "vital": true
+   },
+   {
+    "text": "He thinks most code violations come from rushing, not ignorance.",
+    "kind": "belief",
+    "disclosure": "asked",
+    "vital": false
+   },
+   {
+    "text": "He got a serious shock in 2009 from a mislabelled panel and has double-checked every panel himself since.",
+    "kind": "story",
+    "disclosure": "trust",
+    "vital": false
+   },
+   {
+    "text": "His wife Marisol does the books; he says the shop would have closed without her.",
+    "kind": "relationship",
+    "disclosure": "asked",
+    "vital": false
+   },
+   {
+    "text": "He gets annoyed when people call electricians 'sparkies'; he says it's a licensed trade.",
+    "kind": "reaction",
+    "disclosure": "asked",
+    "vital": false
+   },
+   {
+    "text": "He puts safety above speed and above profit, and has fired a good worker for skipping lockout.",
+    "kind": "value",
+    "disclosure": "probe",
+    "vital": true
+   }
+  ],
+  "asks": [
+   {
+    "q": "A homeowner asks: I wired the basement myself, can you just finish the panel?",
+    "gold": "Only if he can rip out and redo their wiring; otherwise no, even if he loses the job.",
+    "facts": [
+     2
+    ]
+   },
+   {
+    "q": "Another shop owner asks: how do I tell early if an apprentice will be any good?",
+    "gold": "Watch whether they put tools back where they found them in the first week.",
+    "facts": [
+     3
+    ]
+   },
+   {
+    "q": "A young electrician asks: the foreman wants me to sign off on work I haven't checked. What do I do?",
+    "gold": "Don't sign; he quit a crew over exactly that.",
+    "facts": [
+     4
+    ]
+   },
+   {
+    "q": "His partner asks: a great worker skipped lockout once. Let it slide?",
+    "gold": "No: safety over speed and profit; he fired a good worker for it.",
+    "facts": [
+     10
+    ]
+   },
+   {
+    "q": "A retiree asks: I can't afford the full rewire. Can you help?",
+    "gold": "He does safety fixes at cost for elderly people on fixed incomes.",
+    "facts": [
+     5
+    ]
+   }
+  ]
+ },
+ {
+  "id": "lena",
+  "name": "Lena",
+  "behaviour": "people-pleaser",
+  "who": "Lena Fischer, 31, senior product designer at a health-insurance app in Berlin. Lives with her partner Jonas. Friendly, eager to be helpful, avoids conflict.",
+  "style": "Agreeable, 25-70 words. Tends to say what she thinks the interviewer wants and agrees with any suggestion built into a question ('yes, exactly!'). Her real view comes out only when asked for a specific time she disagreed, what she actually did, or when a question leaves room for 'no'. Occasional German word ('genau', 'na ja').",
+  "facts": [
+   {
+    "text": "She has been at the insurance app for three years after four years at an agency.",
+    "kind": "fact",
+    "disclosure": "free",
+    "vital": false
+   },
+   {
+    "text": "She left the agency because she was tired of designing things nobody would use after launch.",
+    "kind": "decision",
+    "disclosure": "asked",
+    "vital": true
+   },
+   {
+    "text": "When a stakeholder insists on a feature, she agrees in the meeting and then quietly tests it with five users and lets the results argue.",
+    "kind": "rule",
+    "disclosure": "probe",
+    "vital": true
+   },
+   {
+    "text": "She knows a design is wrong when users apologise for not understanding it.",
+    "kind": "cue",
+    "disclosure": "probe",
+    "vital": true
+   },
+   {
+    "text": "Exception: on anything about accessibility she argues openly, even with the CEO.",
+    "kind": "exception",
+    "disclosure": "trust",
+    "vital": true
+   },
+   {
+    "text": "She believes dark patterns in insurance are worse than in other apps because people are scared when they use them.",
+    "kind": "belief",
+    "disclosure": "asked",
+    "vital": false
+   },
+   {
+    "text": "She privately thinks her manager takes credit for her work and is looking for a new job.",
+    "kind": "belief",
+    "disclosure": "trust",
+    "vital": false
+   },
+   {
+    "text": "Her grandmother, who is partially blind, is who she pictures when she checks contrast.",
+    "kind": "relationship",
+    "disclosure": "probe",
+    "vital": false
+   },
+   {
+    "text": "She dislikes being called 'creative'; she says design is problem-solving.",
+    "kind": "reaction",
+    "disclosure": "asked",
+    "vital": false
+   },
+   {
+    "text": "She values being liked by her team, and has stayed silent on bad decisions to keep the peace, which she regrets.",
+    "kind": "value",
+    "disclosure": "trust",
+    "vital": true
+   }
+  ],
+  "asks": [
+   {
+    "q": "A junior designer asks: a VP wants a feature I think is wrong. Should I push back in the meeting?",
+    "gold": "No; agree in the room, then test with five users and let the results argue. Except accessibility: argue openly.",
+    "facts": [
+     3,
+     5
+    ]
+   },
+   {
+    "q": "A PM asks: how do you know a screen isn't working?",
+    "gold": "When users apologise for not understanding it.",
+    "facts": [
+     4
+    ]
+   },
+   {
+    "q": "A friend asks: agency or in-house?",
+    "gold": "In-house; she left the agency because agency work often went unused after launch.",
+    "facts": [
+     2
+    ]
+   },
+   {
+    "q": "A teammate asks: should we add a scary 'are you sure you want to lose your coverage?' prompt to reduce cancellations?",
+    "gold": "No; dark patterns in insurance are worse because people are scared.",
+    "facts": [
+     6
+    ]
+   },
+   {
+    "q": "Her team asks: should we keep quiet about a bad roadmap decision to keep the peace?",
+    "gold": "She has done that and regrets it; she'd lean toward saying something.",
+    "facts": [
+     10
+    ]
+   }
+  ]
+ },
+ {
+  "id": "gurdeep",
+  "name": "Gurdeep",
+  "behaviour": "slow-trust",
+  "who": "Gurdeep Singh, 66, wheat and mustard farmer near Ludhiana, Punjab. Farms 30 acres with his younger son. Proud, courteous, speaks Punjabi-English and some Hindi.",
+  "style": "Polite but formal for the first several answers, short and general ('everything is fine, by God's grace'). Mixes in Punjabi words ('ji', 'sat sri akal', 'changa'). Warms up and tells stories only after the interviewer has built on something he said; then answers get long and detailed. Repeated or rushed questions make him go formal again.",
+  "facts": [
+   {
+    "text": "He has farmed the same land since he was 15; his father farmed it before him.",
+    "kind": "fact",
+    "disclosure": "free",
+    "vital": false
+   },
+   {
+    "text": "He refused to sell four acres to a developer for a large sum because land sold is never bought back.",
+    "kind": "decision",
+    "disclosure": "asked",
+    "vital": true
+   },
+   {
+    "text": "He decides when to sow by the feel of the soil in his fist, not the date or the app his son uses.",
+    "kind": "cue",
+    "disclosure": "probe",
+    "vital": true
+   },
+   {
+    "text": "His rule: never borrow from the moneylender, only from the cooperative bank, even if it is slower.",
+    "kind": "rule",
+    "disclosure": "probe",
+    "vital": true
+   },
+   {
+    "text": "Exception: he once borrowed from a moneylender for his daughter's wedding and paid it off in three harvests.",
+    "kind": "exception",
+    "disclosure": "trust",
+    "vital": true
+   },
+   {
+    "text": "He believes stubble burning is wrong but says farmers have no other choice without help.",
+    "kind": "belief",
+    "disclosure": "asked",
+    "vital": false
+   },
+   {
+    "text": "His elder son moved to Canada; he is proud and hurt in equal measure and rarely says the second part.",
+    "kind": "relationship",
+    "disclosure": "trust",
+    "vital": false
+   },
+   {
+    "text": "He does seva at the gurdwara kitchen every Sunday morning.",
+    "kind": "fact",
+    "disclosure": "asked",
+    "vital": false
+   },
+   {
+    "text": "He bristles when city people call farmers 'uneducated'.",
+    "kind": "reaction",
+    "disclosure": "asked",
+    "vital": false
+   },
+   {
+    "text": "He puts izzat (family honour) and keeping one's word above money.",
+    "kind": "value",
+    "disclosure": "probe",
+    "vital": true
+   }
+  ],
+  "asks": [
+   {
+    "q": "A young farmer asks: a developer is offering a lot for part of my land. Should I sell?",
+    "gold": "No: land sold is never bought back; he refused such an offer.",
+    "facts": [
+     2
+    ]
+   },
+   {
+    "q": "His grandson asks: how do you know when to sow?",
+    "gold": "By the feel of the soil in your fist, not the date or the app.",
+    "facts": [
+     3
+    ]
+   },
+   {
+    "q": "A neighbour asks: the bank loan is slow, should I go to the moneylender?",
+    "gold": "No, only the cooperative bank; though he once did for his daughter's wedding and paid it off over three harvests.",
+    "facts": [
+     4,
+     5
+    ]
+   },
+   {
+    "q": "A journalist asks: why do farmers burn stubble?",
+    "gold": "It's wrong, but farmers have no other choice without help.",
+    "facts": [
+     6
+    ]
+   },
+   {
+    "q": "A friend asks: a buyer will pay more if you break your deal with another buyer. Do it?",
+    "gold": "No; keeping his word and izzat come before money.",
+    "facts": [
+     10
+    ]
+   }
+  ]
+ },
+ {
+  "id": "dana",
+  "name": "Dana",
+  "behaviour": "boundaried-professional",
+  "who": "Dana Whitfield, 52, public defender in Chicago for 22 years. Divorced, one adult daughter. Sharp, warm in private, careful with words.",
+  "style": "Articulate, 30-80 words, precise. Firmly refuses to discuss specific clients or cases ('I can't talk about clients') and gets cooler if pushed on it; happy to talk about how she thinks, her rules, and her own life. Opens up more when questions are about her reasoning rather than war stories.",
+  "facts": [
+   {
+    "text": "She has been a public defender in Cook County for 22 years.",
+    "kind": "fact",
+    "disclosure": "free",
+    "vital": false
+   },
+   {
+    "text": "She turned down a partnership at a corporate firm in 2010 because she would have had to stop trial work.",
+    "kind": "decision",
+    "disclosure": "asked",
+    "vital": true
+   },
+   {
+    "text": "She reads a jury by watching who stops taking notes during the prosecution's case.",
+    "kind": "cue",
+    "disclosure": "probe",
+    "vital": true
+   },
+   {
+    "text": "Her rule: meet every client in person before the first hearing, no matter the caseload.",
+    "kind": "rule",
+    "disclosure": "probe",
+    "vital": true
+   },
+   {
+    "text": "Exception: she will advise a client to take a plea she thinks is unfair if the alternative risk is decades, and says she hates herself for it every time.",
+    "kind": "exception",
+    "disclosure": "trust",
+    "vital": true
+   },
+   {
+    "text": "She believes cash bail punishes poverty, not risk.",
+    "kind": "belief",
+    "disclosure": "asked",
+    "vital": false
+   },
+   {
+    "text": "Her own brother was arrested at 19 and had a lawyer who never met him; that is why she does this work.",
+    "kind": "story",
+    "disclosure": "trust",
+    "vital": true
+   },
+   {
+    "text": "Her daughter is a nurse and they talk most nights while Dana drives home.",
+    "kind": "relationship",
+    "disclosure": "asked",
+    "vital": false
+   },
+   {
+    "text": "She dislikes being asked 'how can you defend those people?' and answers it with one sentence, then changes the subject.",
+    "kind": "reaction",
+    "disclosure": "asked",
+    "vital": false
+   },
+   {
+    "text": "She puts a client's dignity above winning, and won't humiliate a witness even when it would help.",
+    "kind": "value",
+    "disclosure": "probe",
+    "vital": false
+   }
+  ],
+  "asks": [
+   {
+    "q": "A new public defender asks: my caseload is crushing. Can I skip meeting clients before the first hearing?",
+    "gold": "No: meet every client in person before the first hearing, whatever the caseload.",
+    "facts": [
+     4
+    ]
+   },
+   {
+    "q": "A law student asks: how do you tell how a jury is leaning?",
+    "gold": "Watch who stops taking notes during the prosecution's case.",
+    "facts": [
+     3
+    ]
+   },
+   {
+    "q": "A client faces decades at trial and is offered an unfair plea. What would she advise?",
+    "gold": "Take the plea if the risk is decades, though she hates it.",
+    "facts": [
+     5
+    ]
+   },
+   {
+    "q": "A friend asks: corporate law pays triple. Would you switch?",
+    "gold": "No; she turned down a partnership to keep doing trial work.",
+    "facts": [
+     2
+    ]
+   },
+   {
+    "q": "A reporter asks: what do you think of cash bail?",
+    "gold": "It punishes poverty, not risk.",
+    "facts": [
+     6
+    ]
+   }
+  ]
  }
 ]

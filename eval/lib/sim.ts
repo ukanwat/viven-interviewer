@@ -153,5 +153,5 @@ export async function simulate(p: Persona, arm: string, o: RunOpts): Promise<Run
   if (!left) await iv.end().catch(() => {});
   const kept = iv.person();
   const notes = Object.values(kept?.notes ?? {}).map((n) => `[${n.path}] ${n.title}: ${n.body.replace(/\s+/g, ' ')}`);
-  return { id: `${p.id}-${arm}-${o.seed}${o.label ? `-${o.label}` : ''}`, name: p.name, source: 'sim', lines, notes, persona: p.id, arm, seed: o.seed, left, wrappedItself, label: o.label, gaps: kept?.open, liveGaps, at: new Date().toISOString(), spec: spec({ brain: arm === 'baseline' ? `baseline:${MODELS.brain}` : MODELS.brain, sim: SIM, twin: TWIN, judge: JUDGE }) };
+  return { id: `${p.id}-${arm}-${o.seed}${o.label ? `-${o.label}` : ''}`, name: p.name, source: 'sim', lines, notes, persona: p.id, arm, seed: o.seed, left, wrappedItself, label: o.label, gaps: kept?.open, liveGaps, at: new Date().toISOString(), spec: spec({ brain: arm === 'baseline' ? `baseline:${MODELS.brain}` : MODELS.brain, sim: SIM, twin: TWIN, judge: JUDGE }, [p]) };
 }
