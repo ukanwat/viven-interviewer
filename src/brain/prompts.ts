@@ -61,13 +61,15 @@ export const TURN_SCHEMA = `Return ONLY a JSON object, keys IN THIS ORDER (the "
 }
 "notes": the edits to their notes from their LAST answer, following the rules for the notes. An empty list is normal when the answer added nothing a twin would need. "write" replaces the whole note, so include what should stay; only write notes whose body you can see, or new ones.`;
 
+// The turn prompt in two parts: the reply format never changes (cached), the context does.
+export const TURN_FORMAT = `After each of their answers you get the context below it, and decide the next move. ${TURN_SCHEMA}`;
 export function turnPrompt(ctx: string, constraints: string) {
   return `${ctx}
 
 == Facts about this turn ==
 ${constraints}
 
-Decide the next move. ${TURN_SCHEMA}`;
+Decide the next move, as JSON in the format above.`;
 }
 
 export const OPEN_INSTRUCTIONS = `This is the FIRST contact with this person. Sound like a curious person, not a product or a script.

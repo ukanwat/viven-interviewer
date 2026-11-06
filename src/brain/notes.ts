@@ -2,7 +2,7 @@
 // One person's notes fit in context (tree + summaries, bodies up to a budget), so the model sees
 // everything and opens what it needs; no retrieval index. Code only applies the edits it asks for.
 import { chatJson, MODELS } from './llm.ts';
-import { MEMORY_RULES, NOTE_OPS_SCHEMA, PURPOSE } from './prompts.ts';
+import { NOTE_OPS_SCHEMA, PRINCIPLES } from './prompts.ts';
 import type { Note, NoteChange, NoteOp, Person, Turn } from './types.ts';
 
 const BODY_BUDGET = 14_000; // chars of note bodies shown in context; beyond this, summaries only
@@ -133,10 +133,11 @@ export async function consolidate(p: Person, opts: { sessionId: string; turns?: 
     : `This conversation just ended. Tidy ${p.name}'s notes against it: add anything they said that's missing, fix any note their words don't support, remove anything that isn't about them (conversation logistics, the interviewer's guesses), merge duplicates and overlaps, and reorganise folders if a clearer structure is now visible. If the notes are already right, return no ops.`;
   const out = await chatJson<{ notes?: NoteOp[]; open?: string[]; who?: string }>(
     [
-      { role: 'system', content: `You keep the notes of an interviewer. ${PURPOSE}\n\n${MEMORY_RULES}` },
+      // Same system prompt as the interview turns, so the after-call pass reads it from the cache.
+      { role: 'system', content: PRINCIPLES, cache: true },
       {
         role: 'user',
-        content: `Today: ${new Date().toISOString().slice(0, 10)}.\n\n== Current notes ==\n${opts.fromScratch ? '(none)' : renderNotes(p)}\n\n== Transcript ==\n${transcript}\n\n${task}
+        content: `You are now keeping the notes, not interviewing. Today: ${new Date().toISOString().slice(0, 10)}.\n\n== Current notes ==\n${opts.fromScratch ? '(none)' : renderNotes(p)}\n\n== Transcript ==\n${transcript}\n\n${task}
 Return ONLY JSON:
 {
   "notes": ${NOTE_OPS_SCHEMA},

@@ -14,6 +14,8 @@
     "dev:cf": "wrangler dev --port 8002"
   },
   "dependencies": {
+    "@openrouter/ai-sdk-provider": "^3.1.0",
+    "ai": "^7.0.163",
     "aws4fetch": "^1.0.20",
     "postgres": "^4.1.0",
     "ws": "^8.18.0"

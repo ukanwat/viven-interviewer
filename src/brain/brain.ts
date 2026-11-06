@@ -3,6 +3,7 @@ import { chat, chatJson, chatStream, completedObject, MODELS, type Msg } from '.
 import {
   PRINCIPLES,
   turnPrompt,
+  TURN_FORMAT,
   OPEN_INSTRUCTIONS,
   RESUME_INSTRUCTIONS,
   WRAP_INSTRUCTIONS,
@@ -136,8 +137,12 @@ export async function personTurn(
   p.turns.push(personTurnRec);
 
   const ctx = renderContext(p, sessionId);
-  const sys: Msg = { role: 'system', content: PRINCIPLES };
-  const messages: Msg[] = [sys, { role: 'user', content: turnPrompt(ctx, turnFacts(p, sessionId)) }];
+  // Stable first, marked for the prompt cache: principles (shared with opener/resume/wrap and the
+  // after-call notes), then the reply format. Only the context after them is new each turn.
+  const messages: Msg[] = [
+    { role: 'system', content: PRINCIPLES, cache: true },
+    { role: 'user', content: [{ text: TURN_FORMAT, cache: true }, { text: turnPrompt(ctx, turnFacts(p, sessionId)) }] },
+  ];
 
   let out: TurnOut | undefined;
   let sentEarly = false;
@@ -217,7 +222,7 @@ async function speak(p: Person, sessionId: string, channel: Channel, instr: stri
   const ctx = renderContext(p, sessionId);
   const out = await chatJson<SpeakOut>(
     [
-      { role: 'system', content: PRINCIPLES },
+      { role: 'system', content: PRINCIPLES, cache: true },
       {
         role: 'user',
         content: `${ctx}\n\n${instr}\nReturn ONLY JSON: {"next": {"move": "${move}", "ack": "<greeting / recap / reflection>", "question": "<the one question, or empty for wrap>", "reason": "<one line: why>"}}`,

@@ -42,7 +42,7 @@ store: files | Postgres | S3/R2 | D1
 | Simulated people (eval) | `openai/gpt-6-luna` |
 | Judge (report, eval) | `google/gemini-4-argon` |
 
-All text models go through OpenRouter; the OpenAI key is used only for voice.
+All text models go through OpenRouter via the Vercel AI SDK (`src/brain/llm.ts`), with prompt caching. The stable prefix (principles, reply format) is marked once and reused by every turn and by the after-call pass; about 80% of a turn's input is read from cache. Set `LLM_LOG=1` to log tokens, cache hits and cost per call. The OpenAI key is used only for voice.
 
 ## Running it
 

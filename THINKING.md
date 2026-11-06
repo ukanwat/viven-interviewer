@@ -273,3 +273,4 @@ The browser connects audio straight to OpenAI `gpt-live-1` over WebRTC. The serv
 - Storage is pluggable: Postgres, any S3-compatible bucket, files, or D1 on Cloudflare.
 - The same code runs as a plain Node server (Dockerfile) or on Cloudflare Workers (`src/worker.ts`: one Durable Object per person).
 - The judge model is a different family (Gemini) from the interviewer (Claude) and the simulated people (GPT), to avoid self-preference.
+- Text model calls go through the Vercel AI SDK with its OpenRouter provider, which handles retries, streaming, usage accounting and prompt caching. Each prompt puts what never changes first and marks it for caching: the principles (shared by every turn, the opener and the after-call pass), then the reply format. Only the person's context after them is new. In a measured run, the second answer read 2,270 of its 2,817 input tokens from the cache (81%), at a tenth of the price. The hosted turn went from 5.4 s to 3.8 s.
