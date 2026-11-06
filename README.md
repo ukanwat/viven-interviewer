@@ -1,0 +1,81 @@
+# Viven interviewer
+
+A voice-first interviewer that gets to know a whole person (how they decide, what they put first, what they notice, how they talk) and keeps it as a notebook a digital twin could use.
+
+- **Live:** https://viven-interviewer.utkarshkanwat.com (needs a passcode; ask me for it)
+- **The thinking:** [THINKING.md](THINKING.md) is the experiment log: hypotheses, what broke, what changed and the evidence. Start there.
+- **Eval:** `/eval` on the site shows the simulated-people results with full transcripts.
+
+## Using it
+
+1. Type your name. Optionally add a link about yourself (it's only used to ask better questions, never stored as fact).
+2. Press **Start talking** (voice) or **or type instead** (text). Same interviewer, same memory.
+3. Talk. The notebook beside the conversation fills in as you go; new and changed notes are tagged.
+4. Press **End call**, or just say "call me later". You get your notebook (downloadable as markdown) and a short review of the conversation. Come back with the same name and it picks up where you left off.
+
+Other pages: `/people.html` lists everyone with their notebook and past conversations. `/eval.html` shows the eval. Add `?lab` to the start page for lab fields (sealed facts used in evals).
+
+## How it works
+
+```
+browser ──WebRTC audio──▶ OpenAI gpt-live-1 (speaks, owns turn-taking)
+   │                              ▲
+   │ text / events                │ sideband WS: transcripts in, silent briefs out
+   ▼                              │
+Room (one per person, serial) ── brain: note-taker (Claude Sonnet via OpenRouter)
+   │                                 reads the answer + notebook → note ops + what's still worth learning
+   ▼
+store: files | Postgres | S3/R2 | D1
+```
+
+- **Voice:** the realtime model leads the conversation, guided by the craft prompt (`src/brain/prompts.ts`). After each answer, the note-taker updates the notebook and slips the voice model a silent brief: what was just noted and what's still most worth learning.
+- **Text:** the same note-taker also writes the next question, streamed so the question appears before the notes finish.
+- **Memory** (`src/brain/notes.ts`): a folder tree of markdown notes, any depth, each with a title and one-line summary; folders carry descriptions. Per turn the model returns `write / move / delete / folder` ops. After each call a consolidation pass tidies the whole tree. Rules: notes are about the person, never the conversation; their words where wording matters; never lose a detail on rewrite.
+- **Report** (`src/brain/report.ts`): after a call, a judge from a different model family (Gemini) reviews the conversation: what it learned, what to ask next time, interviewer mistakes.
+- **Eval** (`eval/run.ts`): simulated people (GPT) with hidden facts talk to the real text channel; Gemini judges what was drawn out and saved. See THINKING.md §6.
+
+| Role | Model |
+|---|---|
+| Voice | `gpt-live-1` (OpenAI Realtime) |
+| Note-taker / interviewer brain | `anthropic/claude-sonnet-5.5` |
+| Fast tasks (link summary, running summary) | `anthropic/claude-haiku-5.5` |
+| Simulated people (eval) | `openai/gpt-6-luna` |
+| Judge (report, eval) | `google/gemini-4-argon` |
+
+All text models go through OpenRouter; the OpenAI key is used only for voice.
+
+## Running it
+
+Node ≥ 22.18 (runs TypeScript directly, no build step).
+
+```sh
+pnpm install
+export OPENROUTER_API_KEY=...   # text models
+export OPENAI_API_KEY=...       # voice
+export PASSCODE=...             # optional: gate the API
+pnpm dev                        # http://localhost:8000
+```
+
+Storage is picked from the environment: `DATABASE_URL` → Postgres, `S3_BUCKET` (+ `S3_ENDPOINT`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_REGION`) → any S3-compatible bucket, otherwise JSON files in `DATA_DIR` (default `data/people`). Models can be overridden with `BRAIN_MODEL`, `FAST_MODEL`, `JUDGE_MODEL`, `PERSONA_MODEL`, `VOICE_MODEL`.
+
+**Docker:** `docker build -t viven . && docker run -p 8000:8000 -e OPENROUTER_API_KEY -e OPENAI_API_KEY viven`
+
+**Cloudflare (how the live site runs):** `src/worker.ts` runs the same Room inside one Durable Object per person, with D1 for storage. Set secrets with `wrangler secret put OPENROUTER_API_KEY` (and `OPENAI_API_KEY`, `PASSCODE`), create the D1 database named in `wrangler.jsonc`, then `pnpm run deploy`.
+
+**Eval:** `pnpm eval --arms ours,baseline --turns 12 --break 6 --seeds 1` (about $1.25 for four people, both arms). Results go to `eval/results/` and `public/eval-results.json`.
+
+**Typecheck:** `pnpm typecheck` (Node and Worker configs).
+
+## Layout
+
+```
+src/
+  server.ts        Node server: static files, API, voice sideband
+  worker.ts        Cloudflare Worker + Durable Object
+  room.ts          one person's room: text turns, end of call, report, notes rebuild
+  brain/           prompts, note-taker, notebook ops, report, model client, stores
+  voice/live.ts    realtime session: transcripts in, briefs out, end-of-call
+public/            start / call / after views, people, eval
+eval/              harness, personas with hidden facts, results
+THINKING.md        the experiment log
+```

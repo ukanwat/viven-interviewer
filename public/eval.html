@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex" />
+  <title>Eval</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <main class="page">
+    <h1 class="display">Eval</h1>
+    <p class="sub" id="meta">Loading…</p>
+    <p class="sub small">Simulated people, each with hidden facts and rules for when they'd share them (freely, if asked, only to a specific why/example, or only once they feel heard). Each talks with the interviewer over text, says "call me later" midway, and comes back. A judge from a different model family checks which facts they actually said (with quotes, verified against the transcript) and what the interviewer got wrong. <b>ours</b> is the product; <b>baseline</b> is the same model with one sensible prompt and the chat history.</p>
+    <div id="summary"></div>
+    <div id="runs"></div>
+  </main>
+  <script type="module">
+    const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+    const pct = (x) => (x == null ? '–' : `${Math.round(x * 100)}%`);
+    const d = await (await fetch('/eval-results.json', { cache: 'no-cache' })).json();
+    document.getElementById('meta').textContent = `Run ${new Date(d.at).toLocaleString()} · ${d.config.turns} answers per person, break after ${d.config.break} · ${d.config.seeds} seed(s) · interviewer ${d.config.models.brain}, simulated people ${d.config.models.persona}, judge ${d.config.models.judge}`;
+
+    const rows = [
+      ['Facts drawn out (weighted, vital ×2)', 'recall', pct],
+      ['Vital facts', 'vitalRecall', pct],
+      ['Tacit facts (need a specific why / example / trust)', 'tacitRecall', pct],
+      ['Facts saved to memory', 'memoryRecall', pct],
+      ['Mean annoyance (1–5, self-reported by the sim)', 'meanAnnoyance', (x) => x.toFixed(2)],
+      ['People who left early', 'leftEarly', String],
+      ['Words per interviewer turn', 'agentWords', (x) => Math.round(x)],
+      ['Repeated questions', 'repeated', String],
+      ['Praise', 'praise', String],
+      ['Over-drilling', 'overdrill', String],
+      ['Ignored what they said', 'ignored', String],
+      ['Pushed after pushback', 'pushedAfterPushback', String],
+      ['Resume remembered session 1', 'resumeRemembered', (x, s) => `${x}/${s.runs}`],
+      ['Re-asked after resume', 'resumeReAsks', String],
+      ['Cost (USD)', 'costUsd', (x) => `$${x.toFixed(2)}`],
+    ];
+    const arms = d.summary;
+    document.getElementById('summary').innerHTML = `<table class="eval-table"><thead><tr><th></th>${arms.map((a) => `<th>${esc(a.arm)}</th>`).join('')}</tr></thead><tbody>${rows
+      .map(([label, k, f]) => `<tr><td>${label}</td>${arms.map((a) => `<td>${a[k] == null ? '–' : f(a[k], a)}</td>`).join('')}</tr>`)
+      .join('')}</tbody></table>`;
+    if (d.note) document.getElementById('summary').insertAdjacentHTML('beforeend', `<p class="small muted">${esc(d.note)}</p>`);
+
+    const mark = { yes: '●', partial: '◐', no: '○' };
+    document.getElementById('runs').innerHTML = d.results
+      .map((r) => {
+        const m = r.metrics;
+        const issues = Object.entries(r.issues ?? {}).flatMap(([k, v]) => (v ?? []).map((x) => `<li><b>${k}</b>: ${esc(x)}</li>`)).join('');
+        return `<section class="run">
+          <h3>${esc(r.persona)} (${esc(r.behaviour)}) · ${esc(r.arm)}</h3>
+          <p class="small">drawn out ${pct(m.recall)} · tacit ${pct(m.tacitRecall)}${m.memoryRecall != null ? ` · saved ${pct(m.memoryRecall)}` : ''} · annoyance ${m.meanAnnoyance.toFixed(1)}${m.left ? ' · <b>left early</b>' : ''} · resume ${r.resume?.remembered ? 'remembered' : 'did not remember'}${r.resume?.note ? `: ${esc(r.resume.note)}` : ''}</p>
+          <details><summary>Facts (${r.facts.filter((f) => f.said !== 'no').length}/${r.facts.length} said)</summary>
+            <ul class="facts">${r.facts.map((f) => `<li title="${esc(f.evidence)}"><span class="mk">${mark[f.said]}</span>${f.saved ? `<span class="mk" title="saved">${mark[f.saved]}</span>` : ''} <span class="tag ${f.vital ? 'new' : 'textbook'}">${f.disclosure}</span>${esc(f.text)}</li>`).join('')}</ul>
+            <p class="muted small">First mark: said in the conversation. Second (ours only): saved to memory. Hover for the quote.</p>
+          </details>
+          ${issues ? `<details><summary>Interviewer issues</summary><ul class="small">${issues}</ul></details>` : ''}
+          <details><summary>Transcript</summary><div class="transcript">${r.lines
+            .map((l, i) => `${i === 0 || r.lines[i - 1].session !== l.session ? `<div class="session-head">Session ${l.session}</div>` : ''}<div class="line ${l.role}"><span class="speaker">${l.role === 'agent' ? 'Interviewer' : esc(r.persona)}${l.annoyance ? ` · annoyance ${l.annoyance}` : ''}</span><span class="text">${esc(l.text)}</span></div>`)
+            .join('')}</div></details>
+        </section>`;
+      })
+      .join('');
+  </script>
+</body>
+</html>

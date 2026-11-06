@@ -10,7 +10,7 @@ export type Turn = {
   // Agent turns: the move the brain chose. Person turns: how the answer was read.
   label?: AnswerLabel;
   move?: Move;
-  threadId?: string;
+  notes?: string[]; // person turns: note paths it changed
 };
 
 // What a person's answer was, as read by the brain.
@@ -39,47 +39,25 @@ export type Move =
   | 'answer' // they asked something: answer briefly, then continue
   | 'wrap'; // ending: recap + thank + when to continue
 
-export type Angle = 'case' | 'contrast' | 'options' | 'novice' | 'example_answer' | 'timeline';
-
-export type ItemKind =
-  | 'story' // a specific episode they lived
-  | 'decision' // a choice they made, with why
-  | 'value' // what they put first when things conflict
-  | 'belief' // a view or opinion, esp. where they differ from most people
-  | 'rule' // how they do or judge something
-  | 'exception' // when their rule doesn't hold
-  | 'cue' // what they notice that others miss
-  | 'reaction' // how they respond to people / situations
-  | 'style' // how they talk or come across
-  | 'relationship' // a person who matters and how
-  | 'fact'; // background
-
-export type Item = {
-  id: string;
-  kind: ItemKind;
-  text: string;
-  why?: string;
-  // Would a generic model already say this? 'textbook' = yes; 'new' = this person's delta.
-  novelty: 'new' | 'textbook';
-  evidence: string; // a short quote from the person
-  threadId?: string;
-  turnId: string;
-  sessionId: string;
-  at: number;
-};
-
-export type Thread = {
-  id: string;
+// Memory: a tree of short markdown notes, keyed by path ("work/agents/how-they-review").
+export type Note = {
+  path: string;
   title: string;
-  status: 'active' | 'open' | 'parked' | 'done' | 'thin';
-  // Weak answers in a row on this thread since the last good one. Capped in code.
-  weakStreak: number;
-  anglesTried: Angle[];
-  turns: number;
-  emptyTurns: number; // consecutive person turns that added no new item
-  gaps: string[]; // what's still missing on this thread (e.g. "why they chose X")
+  summary: string; // one line, used to find the note
+  body: string; // markdown, in their terms, with their words quoted where it matters
   createdAt: number;
+  updatedAt: number;
+  sessions: string[];
+  turns: string[]; // person turns it came from
 };
+
+export type NoteOp =
+  | { op: 'write'; path: string; title?: string; summary?: string; body: string }
+  | { op: 'move'; from: string; to: string }
+  | { op: 'delete'; path: string }
+  | { op: 'folder'; path: string; description: string };
+
+export type NoteChange = { op: 'add' | 'edit' | 'move' | 'delete'; path: string; from?: string; title: string; summary: string };
 
 export type Session = {
   id: string;
@@ -96,14 +74,14 @@ export type Person = {
   topicHint: string;
   createdAt: number;
   updatedAt: number;
-  expertise: string; // where this person's deep knowledge is, discovered in the conversation
+  expertise: string; // one line: who they are, as the note-taker sees it
   language: 'english' | 'hindi' | 'hinglish' | string;
   summary: string; // rolling, for context + resume
   background?: { url: string; brief: string; at: number }; // from a link they gave; not said by them
   turns: Turn[];
-  items: Item[];
-  threads: Thread[];
-  activeThreadId?: string;
+  notes: Record<string, Note>;
+  folders?: Record<string, string>; // folder path -> one-line description
+  open: string[]; // what's still most worth learning about them
   sessions: Session[];
   hostility: number; // count of hostile/bored readings, decays on good answers
   status: 'active' | 'paused' | 'done';
@@ -122,11 +100,8 @@ export type SessionReport = {
 export type Decision = {
   label: AnswerLabel;
   move: Move;
-  angle?: Angle;
-  threadId?: string;
   say: string; // full utterance (text channel / guidance for voice)
   question: string; // just the question part
   reason: string; // why this move, for the thinking panel
-  newItems: Item[];
-  enforced?: string; // what code overrode, if anything
+  changes: NoteChange[];
 };

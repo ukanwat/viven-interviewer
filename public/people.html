@@ -8,55 +8,56 @@
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
-  <main class="people-wrap">
-    <h1>People</h1>
-    <div id="list" class="people-list"><p class="muted">Loading…</p></div>
-    <section id="detail" class="hidden">
-      <h2 id="dName"></h2>
-      <p id="dSummary" class="sub"></p>
-      <div class="cols people-cols">
-        <div class="col"><h3>Conversations</h3><div id="dTurns" class="transcript"></div></div>
-        <div class="col"><h3>What was learned</h3><div id="dItems"></div></div>
-      </div>
-    </section>
+  <main class="page">
+    <h1 class="display">People</h1>
+    <div class="page-grid">
+      <nav id="list" class="people-list"><p class="muted">Loading…</p></nav>
+      <section id="detail" class="hidden">
+        <h1 id="dName" class="display person-name"></h1>
+        <p id="dWho" class="lede"></p>
+        <div class="tabs"><button data-tab="notes" class="on">Notebook</button><button data-tab="talk">Conversations</button></div>
+        <div id="dNotes" class="nb"></div>
+        <div id="dTurns" class="transcript hidden"></div>
+      </section>
+    </div>
   </main>
   <script type="module">
-    let code = new URLSearchParams(location.search).get('code') || localStorage.getItem('code') || '';
-    const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
-    async function get(path) {
-      const r = await fetch(path, { headers: { 'x-passcode': code } });
-      if (r.status === 401) {
-        code = prompt('Passcode') || '';
-        localStorage.setItem('code', code);
-        return get(path);
-      }
-      return r.json();
-    }
-    const when = (t) => new Date(t).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
-    const { people } = await get('/api/people');
-    document.getElementById('list').innerHTML = people.length
-      ? people.map((p) => `<button class="person-row" data-id="${esc(p.id)}"><b>${esc(p.name)}</b><span class="muted small">${when(p.updatedAt)} · ${p.sessions} session(s) · ${p.turns} answers · ${p.items} things learned</span></button>`).join('')
+    import { api, esc, renderNotebook, notesCount, when } from '/ui.js';
+    const $ = (id) => document.getElementById(id);
+    const { people } = await api('/api/people');
+    $('list').innerHTML = people.length
+      ? people.map((p) => `<button class="person-row" data-id="${esc(p.id)}"><b>${esc(p.name)}</b><span>${when(p.updatedAt)} · ${p.sessions} conversation${p.sessions === 1 ? '' : 's'} · ${p.items} notes</span></button>`).join('')
       : '<p class="muted">No one yet.</p>';
-    document.getElementById('list').addEventListener('click', async (e) => {
+    $('list').addEventListener('click', (e) => {
       const b = e.target.closest('.person-row');
-      if (!b) return;
-      const p = await get(`/api/person/${encodeURIComponent(b.dataset.id)}`);
-      document.getElementById('detail').classList.remove('hidden');
-      document.getElementById('dName').textContent = p.name;
-      document.getElementById('dSummary').textContent = p.summary || p.expertise || '';
+      if (b) open(b.dataset.id);
+    });
+    document.querySelector('.tabs').addEventListener('click', (e) => {
+      const t = e.target.closest('button');
+      if (!t) return;
+      document.querySelectorAll('.tabs button').forEach((x) => x.classList.toggle('on', x === t));
+      $('dNotes').classList.toggle('hidden', t.dataset.tab !== 'notes');
+      $('dTurns').classList.toggle('hidden', t.dataset.tab !== 'talk');
+    });
+    async function open(id) {
+      document.querySelectorAll('.person-row').forEach((x) => x.classList.toggle('on', x.dataset.id === id));
+      const p = await api(`/api/person/${encodeURIComponent(id)}`);
+      $('detail').classList.remove('hidden');
+      $('dName').textContent = p.name;
+      $('dWho').textContent = p.expertise || p.summary || '';
+      renderNotebook($('dNotes'), p);
       let last = '';
-      document.getElementById('dTurns').innerHTML = p.turns
+      $('dTurns').innerHTML = p.turns
         .map((t) => {
-          const head = t.sessionId !== last ? `<div class="muted small">${when(t.at)} · ${t.channel}</div>` : '';
+          const head = t.sessionId !== last ? `<div class="session-head">${when(t.at)} · ${t.channel === 'voice' ? 'voice' : 'typed'}</div>` : '';
           last = t.sessionId;
-          return `${head}<div class="msg ${t.role}">${esc(t.text)}</div>`;
+          return `${head}<div class="line ${t.role}"><span class="speaker">${t.role === 'agent' ? 'Interviewer' : esc(p.name)}</span><span class="text">${esc(t.text)}</span></div>`;
         })
         .join('');
-      document.getElementById('dItems').innerHTML = p.items
-        .map((i) => `<div class="item"><span class="tag ${i.novelty}">${i.kind}</span>${esc(i.text)}${i.why ? `<span class="why">why: ${esc(i.why)}</span>` : ''}</div>`)
-        .join('') || '<p class="empty">Nothing yet.</p>';
-      document.getElementById('detail').scrollIntoView({ behavior: 'smooth' });
-    });
+      history.replaceState(null, '', `#${encodeURIComponent(id)}`);
+    }
+    if (location.hash) open(decodeURIComponent(location.hash.slice(1)));
+    else if (people[0]) open(people[0].id);
   </script>
 </body>
 </html>

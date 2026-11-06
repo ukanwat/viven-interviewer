@@ -4,6 +4,7 @@ import * as brain from './brain/brain.ts';
 import { personId } from './brain/ids.ts';
 import { sessionReport } from './brain/report.ts';
 import { lookUp } from './brain/lookup.ts';
+import { consolidate, notesMarkdown } from './brain/notes.ts';
 import type { Person } from './brain/types.ts';
 import { startCall, publicPerson, type CallHandle, type Connect } from './voice/live.ts';
 
@@ -40,6 +41,12 @@ export class Room {
     if (!this.loaded) {
       this.person = await this.store.load(this.id);
       this.loaded = true;
+      // Records from before notes existed: write their notes from what they said.
+      if (this.person && brain.needsNotes(this.person)) {
+        const p = this.person;
+        await consolidate(p, { sessionId: p.sessions.at(-1)?.id ?? 'rebuild', turns: p.turns, fromScratch: true }).catch((e) => console.error('rebuild failed', (e as Error).message));
+        this.save();
+      }
     }
     return this.person;
   }
@@ -62,6 +69,10 @@ export class Room {
     if (route === 'person') {
       const p = await this.get();
       return p ? ok(publicPerson(p)) : err(404, 'not found');
+    }
+    if (route === 'notes.md') {
+      const p = await this.get();
+      return p ? ok(notesMarkdown(p)) : err(404, 'not found');
     }
     if (route === 'lookup') {
       const p = await this.get();
@@ -94,6 +105,7 @@ export class Room {
       }
       if (route === 'text/end') {
         brain.endSession(p, b.sessionId, b.reason ?? 'later');
+        await consolidate(p, { sessionId: b.sessionId }).catch((e) => console.error('after-call notes failed', (e as Error).message));
         await brain.refreshSummary(p).catch(() => {});
         this.save();
         return ok({ person: publicPerson(p) });
@@ -146,5 +158,5 @@ export class Room {
 // The row the people list shows.
 export function personRow(p: Person) {
   const people = p.turns.filter((t) => t.role === 'person').length;
-  return { id: p.id, name: p.name, updatedAt: p.updatedAt ?? Date.now(), turns: people, items: p.items.length, sessions: p.sessions.length, summary: p.summary ?? '' };
+  return { id: p.id, name: p.name, updatedAt: p.updatedAt ?? Date.now(), turns: people, items: Object.keys(p.notes ?? {}).length, sessions: p.sessions.length, summary: p.summary ?? '' };
 }

@@ -8,5 +8,6 @@
   "durable_objects": { "bindings": [{ "name": "ROOMS", "class_name": "PersonRoom" }] },
   "migrations": [{ "tag": "v1", "new_sqlite_classes": ["PersonRoom"] }],
   "d1_databases": [{ "binding": "DB", "database_name": "viven-people", "database_id": "b809a542-60d5-43b3-aa78-a32525dbf4b9" }],
+  "routes": [{ "pattern": "viven-interviewer.utkarshkanwat.com", "custom_domain": true }],
   "observability": { "enabled": true }
 }

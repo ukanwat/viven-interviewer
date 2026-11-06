@@ -8,6 +8,7 @@
 
 import { randomUUID } from 'node:crypto';
 import * as brain from '../brain/brain.ts';
+import { consolidate, renderTree } from '../brain/notes.ts';
 import type { Decision, Person } from '../brain/types.ts';
 // The caller supplies the sideband socket, so this file has no transport dependency.
 export type Socket = {
@@ -53,11 +54,12 @@ function historyInput(p: Person, opening: Decision) {
     p.summary && `Summary so far: ${p.summary}`,
     p.expertise && `Who they are: ${p.expertise}`,
     p.background?.brief && `Background from a link they shared so you'd know a bit about them (may be out of date; use it to ask more specific questions, ask rather than assume): ${p.background.brief}`,
-    p.items.length ? `Things they already taught (do not re-ask): ${p.items.slice(-15).map((i) => i.text).join(' | ')}` : '',
+    Object.keys(p.notes).length ? `Their notes so far (what you already know; do not re-ask):\n${renderTree(p).slice(0, 6000)}` : '',
+    p.open?.length ? `Still most worth learning: ${p.open.join('; ')}` : '',
   ]
     .filter(Boolean)
     .join('\n');
-  if (p.items.length || p.summary || p.background?.brief) input.push(msg('developer', brief));
+  if (Object.keys(p.notes).length || p.summary || p.background?.brief) input.push(msg('developer', brief));
   // Seed the last few real turns so the voice model has the thread (Live accepts history only at start).
   const prior = p.turns.slice(0, -1).slice(-10); // last turn is the opener we're about to say
   for (const t of prior) input.push(t.role === 'agent' ? msg('assistant', t.text) : msg('user', t.text));
@@ -150,7 +152,7 @@ export async function startCall(opts: {
     if (!text) return;
     const last = p.turns[p.turns.length - 1];
     if (openerPlanned && last?.role === 'agent') last.text = text; // what it actually said, not the planned opener
-    else p.turns.push({ id: randomUUID().slice(0, 8), role: 'agent', text, channel: 'voice', sessionId: session.id, at: Date.now(), threadId: p.activeThreadId });
+    else p.turns.push({ id: randomUUID().slice(0, 8), role: 'agent', text, channel: 'voice', sessionId: session.id, at: Date.now() });
     openerPlanned = false;
     store.save(p);
   };
@@ -268,9 +270,14 @@ export async function startCall(opts: {
       brain.endSession(p, session.id, reason === 'done' ? 'done' : reason);
       store.save(p);
       try {
+        await consolidate(p, { sessionId: session.id });
+        store.save(p);
+        notify({ type: 'brain', person: publicPerson(p) });
         await brain.refreshSummary(p);
         store.save(p);
-      } catch {}
+      } catch (e) {
+        console.error('after-call notes failed', (e as Error).message);
+      }
       notify({ type: 'ended', person: publicPerson(p) });
     });
   };
@@ -302,9 +309,9 @@ export async function startCall(opts: {
 // The silent note for the voice after each turn: what's new, what's left, a suggested direction.
 function brief(d: Decision, p: Person) {
   const lines = ['Note from the note-taker (silent, not said by them):'];
-  if (d.newItems.length) lines.push(`Just captured: ${d.newItems.map((i) => i.text).join(' | ')}`);
-  const gaps = p.threads.find((t) => t.id === d.threadId)?.gaps ?? [];
-  if (gaps.length) lines.push(`Still open here: ${gaps.join('; ')}`);
+  const noted = d.changes.filter((c) => c.op === 'add' || c.op === 'edit');
+  if (noted.length) lines.push(`Just noted: ${noted.map((c) => c.summary || c.title).join(' | ')}`);
+  if (p.open?.length) lines.push(`Still most worth learning: ${p.open.join('; ')}`);
   lines.push(`Suggested direction: ${d.reason}${d.question ? ` For example: "${d.question}"` : ''}`);
   if (p.language && p.language !== 'english') lines.push(`They speak ${p.language}.`);
   return lines.join('\n').slice(0, 1800);
@@ -319,10 +326,9 @@ export function publicPerson(p: Person) {
     language: p.language,
     summary: p.summary,
     background: p.background,
-    items: p.items,
-    threads: p.threads,
-    activeThreadId: p.activeThreadId,
-    turns: p.turns.map(({ id, role, text, channel, sessionId, at, label, move }) => ({ id, role, text, channel, sessionId, at, label, move })),
+    notes: p.notes,
+    open: p.open,
+    turns: p.turns.map(({ id, role, text, channel, sessionId, at, label, move, notes }) => ({ id, role, text, channel, sessionId, at, label, move, notes })),
     sessions: p.sessions,
     status: p.status,
     reports: p.reports,

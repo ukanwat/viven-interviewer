@@ -2,19 +2,18 @@
 // Numbers come from code; the judgement (gaps, next questions, golden match) from a judge model
 // of a different family than the brain.
 import { chatJson, MODELS } from './llm.ts';
+import { notesOf, renderNotes } from './notes.ts';
 import type { Person } from './types.ts';
 
 export type Report = {
   stats: {
     personTurns: number;
     agentTurns: number;
-    items: number;
-    newItems: number;
-    textbookItems: number;
-    byKind: Record<string, number>;
+    notes: number; // all notes about them
+    notesTouched: number; // notes added or changed this session
     labels: Record<string, number>;
     moves: Record<string, number>;
-    newPerTurn: number[]; // saturation curve
+    newPerTurn: number[]; // notes changed per answer: the saturation curve
     avgAnswerWords: number;
     repeatedQuestions: number;
   };
@@ -24,6 +23,7 @@ export type Report = {
     gaps: { thread: string; missing: string }[];
     nextQuestions: string[];
     interviewerIssues: string[];
+    notesIssues?: string[];
   };
   golden?: { fact: string; captured: 'yes' | 'partial' | 'no'; evidence: string }[];
   goldenRecall?: number;
@@ -31,12 +31,13 @@ export type Report = {
 
 export async function sessionReport(p: Person, sessionId?: string): Promise<Report> {
   const turns = sessionId ? p.turns.filter((t) => t.sessionId === sessionId) : p.turns;
-  const items = sessionId ? p.items.filter((i) => i.sessionId === sessionId) : p.items;
+  const notes = Object.values(notesOf(p));
+  const touched = sessionId ? notes.filter((n) => n.sessions.includes(sessionId)) : notes;
   const personTurns = turns.filter((t) => t.role === 'person');
   const agentTurns = turns.filter((t) => t.role === 'agent');
 
   const count = (xs: (string | undefined)[]) => xs.reduce<Record<string, number>>((m, x) => (x ? ((m[x] = (m[x] ?? 0) + 1), m) : m), {});
-  const newPerTurn = personTurns.map((t) => items.filter((i) => i.turnId === t.id && i.novelty === 'new').length);
+  const newPerTurn = personTurns.map((t) => t.notes?.length ?? 0);
   let repeated = 0;
   const { similarity } = await import('./brain.ts');
   agentTurns.forEach((t, i) => {
@@ -46,10 +47,8 @@ export async function sessionReport(p: Person, sessionId?: string): Promise<Repo
   const stats: Report['stats'] = {
     personTurns: personTurns.length,
     agentTurns: agentTurns.length,
-    items: items.length,
-    newItems: items.filter((i) => i.novelty === 'new').length,
-    textbookItems: items.filter((i) => i.novelty === 'textbook').length,
-    byKind: count(items.map((i) => i.kind)),
+    notes: notes.length,
+    notesTouched: touched.length,
     labels: count(personTurns.map((t) => t.label)),
     moves: count(agentTurns.map((t) => t.move)),
     newPerTurn,
@@ -58,7 +57,7 @@ export async function sessionReport(p: Person, sessionId?: string): Promise<Repo
   };
 
   const transcript = turns.map((t) => `${t.role === 'agent' ? 'Interviewer' : p.name}: ${t.text}`).join('\n');
-  const captured = items.map((i) => `- [${i.kind}${i.novelty === 'textbook' ? ', textbook' : ''}] ${i.text}${i.why ? ` (why: ${i.why})` : ''}`).join('\n');
+  const captured = renderNotes(p);
 
   const judge = await chatJson<Report['judge']>(
     [
@@ -69,8 +68,9 @@ export async function sessionReport(p: Person, sessionId?: string): Promise<Repo
       },
       {
         role: 'user',
-        content: `Transcript:\n${transcript}\n\nWhat the interviewer captured:\n${captured || '(nothing)'}\n\nReturn ONLY JSON:
+        content: `Transcript:\n${transcript}\n\nThe interviewer's notes about them:\n${captured}\n\nReturn ONLY JSON:
 {"headline": "<one sentence: how much of what makes this person themselves was captured>",
+ "notesIssues": ["<notes that say something their words don't support, are about the conversation rather than them, or carry the interviewer's framing; empty if none>"],
  "strongest": ["<up to 3 most valuable captured pieces, short>"],
  "gaps": [{"thread": "<topic>", "missing": "<what is still missing: e.g. a decision without its why, an outcome, the exception>"}],
  "nextQuestions": ["<up to 4 questions for next time, spoken style, each targeting a gap>"],

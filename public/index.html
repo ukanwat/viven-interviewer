@@ -2,73 +2,92 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="robots" content="noindex" />
-  <title>Interviewer</title>
+  <meta name="theme-color" content="#f5f1ea" />
+  <title>Let's talk</title>
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
   <!-- Start -->
-  <main id="start" class="view">
-    <div class="start-card">
-      <h1>Hi. What's your name?</h1>
-      <input id="name" autocomplete="given-name" placeholder="Your name" aria-label="Your name" />
-      <input id="link" class="link-input" type="url" placeholder="A link about you, if you like (website, profile)" aria-label="A link about you (optional)" autocomplete="url" />
+  <main id="start" class="view start">
+    <div class="start-inner">
+      <h1 class="display">Hi. What's your name?</h1>
+      <p class="lede">A conversation to learn how you think. Talk as long as you like, stop any time, pick it up later.</p>
+      <input id="name" class="name-input" autocomplete="given-name" placeholder="Your name" aria-label="Your name" />
       <div id="returning" class="returning hidden"></div>
+      <details id="linkBox" class="link-box">
+        <summary>Add a link about you</summary>
+        <input id="link" type="url" placeholder="Website or profile (optional)" aria-label="A link about you (optional)" autocomplete="url" />
+        <p class="hint">It helps me ask better questions. I'll only treat what you say as true.</p>
+      </details>
       <div id="lab" class="lab hidden">
-        <label>Topic hint <span class="muted">(lab only)</span><input id="topic" /></label>
-        <label>Sealed facts <span class="muted">(lab only, one per line; never shown to the interviewer)</span><textarea id="golden" rows="3"></textarea></label>
+        <label>Topic hint <span class="muted">(lab)</span><input id="topic" /></label>
+        <label>Sealed facts <span class="muted">(lab, one per line, never shown to the interviewer)</span><textarea id="golden" rows="3"></textarea></label>
       </div>
-      <button id="call" class="call-btn" type="button"><span class="dot"></span><span id="callLabel">Call</span></button>
-      <label class="toggle"><input type="checkbox" id="typeMode" /> Type instead</label>
+      <div class="start-actions">
+        <button id="call" class="call-btn" type="button"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 1 0-6 0v6a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-2.08A7 7 0 0 0 19 12h-2Z"/></svg><span id="callLabel">Start talking</span></button>
+        <button id="typeBtn" class="text-btn" type="button">or type instead</button>
+      </div>
       <p id="startErr" class="err hidden"></p>
     </div>
   </main>
 
   <!-- In call -->
-  <main id="callView" class="view hidden">
-    <header class="bar">
-      <div class="who"><span id="liveDot" class="live-dot"></span><b id="callName"></b> <span id="callMode" class="muted"></span> <span id="timer" class="muted"></span></div>
-      <div class="bar-actions">
-        <button id="mute" class="ghost hidden" type="button" title="Turn your microphone off">Mute mic</button>
-        <button id="quiet" class="ghost hidden" type="button" title="Stop hearing it; read the conversation instead">Read only</button>
-        <button id="hangup" class="danger" type="button">End call</button>
+  <main id="callView" class="view call hidden">
+    <header class="topbar">
+      <div class="who"><b id="callName"></b><span id="timer" class="timer">0:00</span></div>
+      <div class="actions">
+        <button id="mute" class="pill" type="button" aria-pressed="false">Mute</button>
+        <button id="quiet" class="pill" type="button" aria-pressed="false" title="Stop hearing it and read instead">Read only</button>
+        <button id="nbToggle" class="pill nb-toggle" type="button">Notebook <span id="nbCount">0</span></button>
+        <button id="hangup" class="end-btn" type="button">End call</button>
       </div>
     </header>
-    <div class="cols">
-      <section class="col transcript-col">
-        <h2>Conversation</h2>
-        <div id="transcript" class="transcript"></div>
-        <div id="thinking" class="thinking hidden">thinking…</div>
-        <form id="typeForm" class="type-form">
-          <input id="typeInput" placeholder="Type your answer… (or say 'call me later')" autocomplete="off" />
-          <button type="submit">Send</button>
+    <div class="stage">
+      <section class="convo">
+        <div id="presence" class="presence">
+          <div class="orb"><span></span></div>
+          <div id="presenceText" class="presence-text">Connecting…</div>
+        </div>
+        <div id="transcript" class="transcript" aria-live="polite"></div>
+        <form id="typeForm" class="composer">
+          <input id="typeInput" placeholder="Type here…" autocomplete="off" />
+          <button type="submit" aria-label="Send"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20.5 21 12 3 3.5l.01 6.6L15 12 3.01 13.9Z"/></svg></button>
         </form>
       </section>
-      <section class="col learned-col">
-        <h2>What I've learned about you</h2>
-        <div id="expertise" class="expertise muted"></div>
-        <details id="bgBox" class="bg-box hidden"><summary>From your link (not something you said)</summary><p id="bg" class="small muted"></p></details>
-        <div id="learned"></div>
-        <h3>Threads</h3>
-        <div id="threads" class="threads"></div>
-        <details class="why-panel" open>
-          <summary>What it wants to learn next</summary>
-          <div id="why" class="why muted small"></div>
-        </details>
-      </section>
+      <aside id="notebook" class="notebook">
+        <div class="nb-head">
+          <h2>What I've learned</h2>
+          <span id="notesState" class="nb-state"></span>
+        </div>
+        <p id="whoLine" class="who-line"></p>
+        <details id="bgBox" class="bg-box hidden"><summary>From your link · not something you said</summary><p id="bg"></p></details>
+        <div id="learned" class="nb"></div>
+        <div id="openBox" class="open-box hidden">
+          <h3>Still want to learn</h3>
+          <ul id="openList"></ul>
+        </div>
+      </aside>
     </div>
   </main>
 
   <!-- After -->
-  <main id="after" class="view hidden">
-    <div class="after-wrap">
-      <h1 id="afterTitle">Thanks</h1>
-      <p id="afterSummary" class="sub"></p>
-      <div id="report" class="report"><p class="muted">Writing the report…</p></div>
+  <main id="after" class="view after hidden">
+    <div class="after-inner">
+      <h1 id="afterTitle" class="display">Thanks</h1>
+      <p id="afterSummary" class="lede"></p>
       <div class="after-actions">
-        <button id="again" type="button">Continue the conversation</button>
-        <a href="/" class="ghost-link">New person</a>
+        <button id="again" class="call-btn small" type="button">Continue talking</button>
+        <a id="download" class="text-btn" href="#" download>Download notes</a>
+        <a href="/" class="text-btn">New person</a>
+      </div>
+      <div class="after-grid">
+        <section>
+          <h2>Notebook</h2>
+          <div id="afterNotes" class="nb"></div>
+        </section>
+        <section id="report" class="report"><p class="muted">Reviewing the conversation…</p></section>
       </div>
     </div>
   </main>

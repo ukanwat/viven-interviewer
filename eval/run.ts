@@ -96,7 +96,7 @@ function ours(p: Persona): Interviewer {
     async end() {
       body(await room.api('text/end', { id: room.id, sessionId, reason: 'later' }));
     },
-    memory: () => (mem.get(room.id)?.items ?? []).map((i) => `[${i.kind}] ${i.text}${i.why ? ` (why: ${i.why})` : ''}`),
+    memory: () => Object.values(mem.get(room.id)?.notes ?? {}).map((n) => `[${n.path}] ${n.title}: ${n.body.replace(/\s+/g, ' ')}`),
   };
 }
 
@@ -107,7 +107,7 @@ function baseline(p: Persona): Interviewer {
   let msgs: Msg[] = [];
   let earlier = '';
   const ask = async () => {
-    const text = (await chat(msgs, { model: MODELS.brain, temperature: 0.5, maxTokens: 300 })).trim();
+    const text = (await chat(msgs, { model: MODELS.brain, temperature: 0.5, maxTokens: 700 })).trim();
     msgs.push({ role: 'assistant', content: text });
     return text;
   };
