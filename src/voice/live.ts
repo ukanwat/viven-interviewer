@@ -9,7 +9,7 @@
 import { randomUUID } from 'node:crypto';
 import * as brain from '../brain/brain.ts';
 import type { Decision, Person } from '../brain/types.ts';
-// Runs on Node (ws) and on Cloudflare Workers (fetch upgrade): the caller supplies the socket.
+// The caller supplies the sideband socket, so this file has no transport dependency.
 export type Socket = {
   send(data: string): void;
   close(): void;

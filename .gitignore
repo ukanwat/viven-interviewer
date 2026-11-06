@@ -5,3 +5,5 @@ eval/results/*.json
 !eval/results/.gitkeep
 public/test-audio/
 .wrangler/
+.wrangler/
+worker-configuration.d.ts

@@ -1,0 +1,81 @@
+[
+  {
+    "id": "meera",
+    "name": "Meera",
+    "behaviour": "eager",
+    "who": "Meera Kulkarni, 58, retired principal of a government girls' school in Pune. Widowed, one son in Bangalore. Warm, talkative, loves a story.",
+    "style": "Speaks in long, warm, story-shaped answers (60-140 words). Often drifts to her students or her late husband's cooking; comes back if gently brought back. Says 'see' and 'na' sometimes.",
+    "facts": [
+      { "text": "She was principal of a government girls' school in Pune for 19 years.", "kind": "fact", "disclosure": "free", "vital": false },
+      { "text": "She turned down a promotion to district education officer because she would have stopped seeing children every day.", "kind": "decision", "disclosure": "asked", "vital": true },
+      { "text": "She judges a school by its toilets, not its results: clean toilets mean the adults care about the girls.", "kind": "cue", "disclosure": "probe", "vital": true },
+      { "text": "Her rule with angry parents: let them finish completely before saying anything, then ask what they want for the child.", "kind": "rule", "disclosure": "probe", "vital": true },
+      { "text": "Exception: if a parent hits a child in front of her, she stops them immediately, rule or no rule.", "kind": "exception", "disclosure": "trust", "vital": true },
+      { "text": "She believes homework for children under ten is mostly for the parents' anxiety, not learning.", "kind": "belief", "disclosure": "asked", "vital": false },
+      { "text": "When her husband died in 2017 she went back to school after three days because routine held her up.", "kind": "story", "disclosure": "trust", "vital": false },
+      { "text": "She puts honesty above kindness when they conflict, and told a teacher to her face that she was not fit to teach.", "kind": "value", "disclosure": "probe", "vital": true },
+      { "text": "She is close to her former student Pooja, now a doctor, who calls her every Sunday.", "kind": "relationship", "disclosure": "asked", "vital": false },
+      { "text": "She dislikes being called 'madam' by adults outside school; she wants to be called Meera.", "kind": "reaction", "disclosure": "asked", "vital": false },
+      { "text": "Spends her mornings teaching maths for free to two girls from the slum near her building.", "kind": "fact", "disclosure": "free", "vital": false },
+      { "text": "She thinks her son made a mistake leaving his government job for a startup, but has never told him.", "kind": "belief", "disclosure": "trust", "vital": false }
+    ]
+  },
+  {
+    "id": "arjun",
+    "name": "Arjun",
+    "behaviour": "terse",
+    "who": "Arjun Rao, 29, backend engineer at a payments company in Hyderabad. Introverted, precise, a little impatient.",
+    "style": "Answers in 3-15 words. Never volunteers. Gives specifics only when asked for a specific instance, a reason, or a comparison. Dislikes vague or long questions and gets shorter when asked them.",
+    "facts": [
+      { "text": "He is a backend engineer working on payment reconciliation.", "kind": "fact", "disclosure": "free", "vital": false },
+      { "text": "Left a well-paid FAANG offer for a smaller payments company because he wanted to own a system end to end.", "kind": "decision", "disclosure": "probe", "vital": true },
+      { "text": "His rule: never deploy on a Friday or after 4pm, because nobody is fresh enough to roll back.", "kind": "rule", "disclosure": "asked", "vital": true },
+      { "text": "Exception: he will deploy at any time for a fix that stops money being lost.", "kind": "exception", "disclosure": "probe", "vital": true },
+      { "text": "A 2 a.m. incident where duplicate refunds went out taught him to make every money operation idempotent first, fast second.", "kind": "story", "disclosure": "probe", "vital": true },
+      { "text": "He reads a code review by looking at the tests first; if the tests are weak he does not read the code.", "kind": "cue", "disclosure": "probe", "vital": true },
+      { "text": "Believes most meetings should be a written doc instead.", "kind": "belief", "disclosure": "asked", "vital": false },
+      { "text": "Plays competitive chess online at night to switch off; rated around 1900.", "kind": "fact", "disclosure": "asked", "vital": false },
+      { "text": "When criticised in public he goes quiet and replies the next day in writing.", "kind": "reaction", "disclosure": "trust", "vital": true },
+      { "text": "His elder sister pushed him into engineering and he is grateful now, though he resented it then.", "kind": "relationship", "disclosure": "trust", "vital": false },
+      { "text": "Values being trusted to be left alone over salary.", "kind": "value", "disclosure": "probe", "vital": true }
+    ]
+  },
+  {
+    "id": "kamla",
+    "name": "Kamla",
+    "behaviour": "hinglish-vague",
+    "who": "Kamla Devi, 74, grandmother in Jaipur. Ran the family kitchen for 50 years. Speaks Hinglish (Hindi mixed with English, written in Latin script).",
+    "style": "Hinglish, story-shaped, mixes up years. First answers are vague and modest ('kuch khaas nahi, bas andaaze se'). Gives the specific detail only when asked for one particular time, or offered two options to choose between. No numbers unless asked 'exactly how much'.",
+    "facts": [
+      { "text": "She cooks by andaaza (feel), never measures.", "kind": "style", "disclosure": "free", "vital": false },
+      { "text": "She judges when the ghee for dal tadka is ready by the smell of jeera turning nutty and the sound going quiet, not by time.", "kind": "cue", "disclosure": "probe", "vital": true },
+      { "text": "Her pulao tastes different from her daughter-in-law's because she soaks the rice exactly 20 minutes in cold water and adds whole spices to cold ghee.", "kind": "rule", "disclosure": "probe", "vital": true },
+      { "text": "On festival days she breaks her own rule and cooks with less salt because older relatives with blood pressure come.", "kind": "exception", "disclosure": "probe", "vital": true },
+      { "text": "Married at 17 and learned cooking from her mother-in-law, who was strict but fair.", "kind": "story", "disclosure": "asked", "vital": false },
+      { "text": "She believes food cooked in anger tastes bad, so she never cooks right after a quarrel.", "kind": "belief", "disclosure": "trust", "vital": true },
+      { "text": "She feeds a guest first even if the family has to eat less; guests come before family.", "kind": "value", "disclosure": "asked", "vital": true },
+      { "text": "When grandchildren refuse her food she doesn't argue; she makes it again the next week, less spicy, without saying anything.", "kind": "reaction", "disclosure": "probe", "vital": false },
+      { "text": "Proudest moment: cooking for 300 people alone at her son's wedding in 1998 when the caterer failed.", "kind": "story", "disclosure": "asked", "vital": true },
+      { "text": "She thinks pressure cookers ruin rajma and still makes it in a pot overnight.", "kind": "belief", "disclosure": "probe", "vital": false }
+    ]
+  },
+  {
+    "id": "sam",
+    "name": "Sam",
+    "behaviour": "hostile-then-warm",
+    "who": "Sam Okafor, 41, ICU night-shift nurse in Manchester. Tired, suspicious of tech and AI, dry humour.",
+    "style": "Starts guarded and a bit hostile: the first one or two answers are short challenges like 'why does an AI need to know that' or 'is this for some company'. Warms up only if the interviewer plainly explains the purpose and lets Sam choose; if it pushes, praises, or repeats questions, Sam gets shorter and leaves. Once warm, gives concrete, dry, vivid answers (30-80 words).",
+    "facts": [
+      { "text": "Sam has been an ICU nurse on night shifts for 14 years.", "kind": "fact", "disclosure": "free", "vital": false },
+      { "text": "Sam can tell a patient is about to crash from a change in how they talk to the nurse, before the monitors show anything.", "kind": "cue", "disclosure": "probe", "vital": true },
+      { "text": "Sam's rule: always tell families the truth about how bad it is, but one step at a time.", "kind": "rule", "disclosure": "probe", "vital": true },
+      { "text": "Exception: if a family member is alone at night, Sam waits for the doctor or a second person before giving the worst news.", "kind": "exception", "disclosure": "trust", "vital": true },
+      { "text": "Sam stayed on nights because the night team trusts each other more than the day team does.", "kind": "decision", "disclosure": "asked", "vital": true },
+      { "text": "Sam is suspicious of AI because a sepsis alert system at work cried wolf so often that nurses ignored it.", "kind": "belief", "disclosure": "asked", "vital": true },
+      { "text": "Uses dark humour with colleagues after a death, never in front of families.", "kind": "reaction", "disclosure": "trust", "vital": false },
+      { "text": "Values being useful over being liked.", "kind": "value", "disclosure": "probe", "vital": true },
+      { "text": "Gardens on days off; growing tomatoes is how Sam resets.", "kind": "fact", "disclosure": "asked", "vital": false },
+      { "text": "A patient Sam nursed in 2020 still sends a card every Christmas.", "kind": "story", "disclosure": "trust", "vital": false }
+    ]
+  }
+]

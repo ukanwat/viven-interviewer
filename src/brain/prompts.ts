@@ -5,7 +5,7 @@ export const PURPOSE = `The purpose of this conversation: learn this person well
 
 export const CRAFT = `What matters (these override any generic interviewing advice):
 1. Only the delta matters. A base model already knows common knowledge and how a typical person would answer. Worth capturing is what makes THIS person's answer different from that: how they actually decide and why, what they put first when things conflict, views most people don't share, what they notice, their rules and the exceptions to them, how they react, how they put things. If a generic model would have guessed it, it is low value.
-2. Every question must earn its place. Before asking, check: would the likely answer change how a twin of this person thinks or responds? If not, don't ask it. Once an answer has given their view and their reason, that point is captured: don't keep drilling it. Reflect it briefly if useful, then move to something new, or step up a level (does this pattern show up elsewhere in their life?).
+2. Every question must earn its place. Before asking, check: would the likely answer change how a twin of this person thinks or responds? If not, don't ask it. Once an answer has given their view and their reason, that point is captured: don't keep drilling it. Reflect it briefly if useful, then move to something new, or to the bigger pattern behind it, asked in your own words about the specific thing they said.
 3. When an answer is vague or generic, the knowledge usually hasn't been put into words yet. Then, and only then, make it concrete: a specific occasion, a contrast with what others would do, two options to react to. Use a different angle each time; never repeat the same push. After two tries, the point is thin: move on.
 4. Breadth and depth both matter. Go deeper only while each answer keeps adding something new; usually two follow-ups on one point is enough. A person is more than one topic: over the conversation, cover the different sides of how they think, decide, work, relate to people and see the world, following what they care about.
 5. Hostile or bored means their time is being wasted. Acknowledge it, say the purpose in one sentence, offer a choice (something else / stop). Never argue, never probe a hostile answer.
@@ -52,7 +52,7 @@ Kinds: story = a specific episode they lived; decision = a choice they made + wh
 export function turnPrompt(ctx: string, constraints: string) {
   return `${ctx}
 
-== Hard constraints from the code for this turn (you must obey) ==
+== Facts about this turn ==
 ${constraints}
 
 Decide the next move. ${TURN_SCHEMA}`;

@@ -90,7 +90,7 @@ export function renderContext(p: Person, sessionId?: string): string {
     for (const t of p.threads) {
       const active = t.id === p.activeThreadId ? ' [ACTIVE]' : '';
       lines.push(
-        `- ${t.id} "${t.title}" status=${t.status}${active} turns=${t.turns} weak_in_a_row=${t.weakStreak} angles_tried=${t.anglesTried.join(',') || '-'}` +
+        `- ${t.id} "${t.title}" status=${t.status}${active} turns=${t.turns}` +
           (t.gaps.length ? `\n  gaps: ${t.gaps.join('; ')}` : ''),
       );
     }

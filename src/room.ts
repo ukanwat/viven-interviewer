@@ -1,6 +1,5 @@
 // Everything about one person: memory, text turns, reports, live calls. Runs serially, so one
-// person is never driven by two brains at once. Node keeps one Room per person in a map;
-// on Cloudflare each Room lives in its own Durable Object.
+// person is never driven by two brains at once. The server keeps one Room per person in a map.
 import * as brain from './brain/brain.ts';
 import { personId } from './brain/ids.ts';
 import { sessionReport } from './brain/report.ts';

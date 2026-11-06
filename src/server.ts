@@ -4,15 +4,22 @@ import { join, normalize, extname } from 'node:path';
 import { WebSocketServer, WebSocket } from 'ws';
 import { Store, personId } from './brain/store.ts';
 import { PgStore } from './brain/pg-store.ts';
+import { S3Store } from './brain/s3-store.ts';
 import { usage, MODELS } from './brain/llm.ts';
 import { Room, personRow } from './room.ts';
 import type { Connect } from './voice/live.ts';
 
-// One Room per person. People and chats go to Postgres when DATABASE_URL is set, else to files on disk.
+// One Room per person. People and chats go to Postgres (DATABASE_URL) or an S3-compatible bucket
+// (S3_BUCKET, e.g. Cloudflare R2), else to files on disk.
+const env = process.env;
 const files = new Store();
-const store = process.env.DATABASE_URL
-  ? new PgStore(process.env.DATABASE_URL)
-  : { load: async (id: string) => files.get(id), save: (p: Parameters<Store['save']>[0]) => files.save(p), list: async () => files.list().map(personRow) };
+const STORAGE = env.DATABASE_URL ? 'postgres' : env.S3_BUCKET ? 's3' : 'files';
+const store =
+  STORAGE === 'postgres'
+    ? new PgStore(env.DATABASE_URL!)
+    : STORAGE === 's3'
+      ? new S3Store({ endpoint: env.S3_ENDPOINT ?? '', bucket: env.S3_BUCKET!, accessKeyId: env.S3_ACCESS_KEY_ID ?? '', secretAccessKey: env.S3_SECRET_ACCESS_KEY ?? '', region: env.S3_REGION })
+      : { load: async (id: string) => files.get(id), save: (p: Parameters<Store['save']>[0]) => files.save(p), list: async () => files.list().map(personRow) };
 const connect: Connect = (url, headers) =>
   new Promise((resolve, reject) => {
     const ws = new WebSocket(url, { headers, handshakeTimeout: 15_000 });
@@ -129,5 +136,5 @@ server.on('upgrade', (req, socket, head) => {
 });
 
 server.listen(PORT, HOST, () => {
-  console.log(`Interviewer on http://${HOST === '0.0.0.0' ? 'localhost' : HOST}:${PORT}  (brain ${MODELS.brain}, storage ${process.env.DATABASE_URL ? 'postgres' : 'files'})`);
+  console.log(`Interviewer on http://${HOST === '0.0.0.0' ? 'localhost' : HOST}:${PORT}  (brain ${MODELS.brain}, storage ${STORAGE})`);
 });
