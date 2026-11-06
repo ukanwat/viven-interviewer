@@ -107,7 +107,7 @@ export function renderContext(p: Person, sessionId?: string): string {
 // ---------- the turn ----------
 
 type TurnOut = {
-  read: { label: AnswerLabel; why: string };
+  read: { label: AnswerLabel; why: string; covered?: string };
   language?: string;
   who?: string | null;
   notes?: NoteOp[];
@@ -206,7 +206,7 @@ function applyTurn(p: Person, out: TurnOut, sessionId: string, channel: Channel,
   // In voice the interviewer words its own reply; the transcript records what it actually said.
   if (recordAgent) p.turns.push({ id: id(), role: 'agent', text: say, channel, sessionId, at: Date.now(), move: next.move });
 
-  return { label, move: next.move, say, question: next.question ?? '', reason: next.reason ?? out.read.why ?? '', changes };
+  return { label, move: next.move, say, question: next.question ?? '', reason: next.reason ?? out.read.why ?? '', covered: out.read.covered, changes };
 }
 
 // ---------- opener / resume / wrap (agent speaks without a person turn) ----------

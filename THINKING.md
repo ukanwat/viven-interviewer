@@ -336,6 +336,19 @@ Five people (a new one, Neha, is a busy founder who gives short answers), 10 tur
 - Even the best run answers only a quarter of the asks, and abstains on most of the rest. Ten turns don't reach most of what people would ask. The gap is coverage, not accuracy (wrong answers are 0–4%). That points at the twin-gap idea below rather than at more prompt wording.
 - Not confirmed on Sonnet (the production brain), to stay within budget. An earlier Sonnet smoke test showed the same habit of quoting and complimenting, so the fix should carry over.
 
+**Follow-up: four ideas taken from other products (7 Nov).** Utkarsh picked four ideas from the competitor research (logs/competitor-ideas.md in my notes). Each one is a line or two, kept light:
+- **Try it out in their voice.** Second Me does this. Now and then, once a topic is covered, the interviewer says how it would answer someone as them ("so if a junior asked me about X, I'd say… close?") and lets them fix it.
+- **Ask what made a guess wrong**, not only what's right. Second Me does this too. The reason is the boundary a twin needs.
+- **A private "covered enough?" check.** Park et al. do this before each follow-up. The note-taker now writes, before its next move, whether the topic in play has what a twin needs or what's missing. The voice gets that line in its silent brief.
+- **Room to think.** The voice is told that a few seconds of silence after a hard question is thinking, not the end of the turn. GPT-Live has no silence setting to raise: the model judges turn-taking itself, so this goes in its instructions.
+
+| Prompt | Twin | Recall | Hands words back | Several Qs in one | Praise | Pushed after pushback |
+|---|---|---|---|---|---|---|
+| Current + "never quote or compliment" | 0.25 | 0.25 | 0.35 | 0.37 | 8 | 2 |
+| + the four ideas | 0.20 | 0.22 | 0.23 | 0.37 | 12 | 0 |
+
+One seed each, Haiku, so the twin difference is noise. Handing words back fell again, and it never pushed after a pushback. The try-out barely fired in 10 turns: it's meant to be occasional, so it will show more in a real 20-minute call than in the sim. Not judged by eval, only by feel.
+
 ## 12. What I'd do next
 
 - **Twin-gap questions.** Ask a cheap model "what would people who know this person's work ask their twin that these notes can't answer?", and feed the top gap to the note-taker as a direction. This is TwinCafe's "see what it missed" loop, but before the twin exists.

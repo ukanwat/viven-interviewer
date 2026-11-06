@@ -107,6 +107,7 @@ export type Decision = {
   say: string; // full utterance (text channel / guidance for voice)
   question: string; // just the question part
   reason: string; // why this move, for the thinking panel
+  covered?: string; // whether the topic in play has what a twin needs, or what's missing
   changes: NoteChange[];
 };
 
