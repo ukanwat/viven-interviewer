@@ -1,0 +1,5 @@
+{
+  "why": "dev people are where failures are read and prompt edits proposed (`improve` only sees these); held-out people are only for confirming an edit in `compare`. An edit that wins on dev but not held-out was fitted to those people. Kept apart from personas.json so the personas hash, and older comparisons, stay valid.",
+  "dev": ["meera", "arjun", "kamla"],
+  "heldout": ["sam", "neha"]
+}

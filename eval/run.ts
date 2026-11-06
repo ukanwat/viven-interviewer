@@ -24,7 +24,7 @@ import { spec } from './lib/spec.ts';
 import { fromPerson, load, transcript, type Conv } from './lib/conversation.ts';
 import { PERSONAS, simulate } from './lib/sim.ts';
 import { gradeAll, METRICS } from './lib/score.ts';
-import { compare, summarise, type GradedItem, type GradedSet } from './lib/report.ts';
+import { compare, heldOut, SPLITS, summarise, type GradedItem, type GradedSet } from './lib/report.ts';
 import { viewHtml } from './lib/view.ts';
 import { coverageValidity, judgeRetest, judgeVsHuman, seedNoise, simRealism } from './lib/meta.ts';
 
@@ -168,7 +168,11 @@ if (mode === 'sim') {
   // The failures, gathered from a graded set, for one small generic edit. Nothing is applied: the
   // edit goes into a branch and through `compare`, and only a win is kept. Prompt optimisers overfit (TextGrad: 91–96% on
   // validation, 62–69% on test; logs/eval-research.md), so propose from one set of people and confirm on others.
-  const set = JSON.parse(readFileSync(files[0], 'utf8')) as GradedSet;
+  const all = JSON.parse(readFileSync(files[0], 'utf8')) as GradedSet;
+  // Only dev people: held-out ones are kept for confirming the edit, so it can't be fitted to them.
+  const set = { ...all, items: all.items.filter((i) => !heldOut(i)) };
+  if (!set.items.length) throw new Error(`no dev-split conversations in ${all.label} (dev: ${SPLITS.dev.join(', ')})`);
+  console.error(`improve: reading ${set.items.length} dev conversations, skipping ${all.items.length - set.items.length} held-out`);
   const bad: string[] = [];
   for (const i of set.items) {
     const d = i.detail;

@@ -84,3 +84,9 @@ export function corr(x: number[], y: number[]) {
   }
   return sxy / Math.sqrt(sxx * syy);
 }
+
+// pass^k (τ-bench): the chance that k fresh tries with the same person ALL succeed, estimated per
+// person from c successes in n tries as C(c,k)/C(n,k), then averaged. pass^1 is the plain success
+// rate; the drop from pass^1 to pass^k is how unreliable the interviewer is for the same person.
+const choose = (n: number, k: number) => (k > n ? 0 : Array.from({ length: k }, (_, i) => (n - i) / (k - i)).reduce((a, b) => a * b, 1));
+export const passK = (tries: { n: number; c: number }[], k: number) => mean(tries.filter((t) => t.n >= k).map((t) => choose(t.c, k) / choose(t.n, k)));

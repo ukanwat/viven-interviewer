@@ -2,6 +2,9 @@
 5 paired conversations, 5 people. Primary: **twin**. Guards may not get worse.
 
 **Verdict: can't tell**
+Held-out people only (sam, neha): twin B−A -30% (-60% – 0%), can't tell.
+
+⚠ Not a clean comparison: one side has no spec (made before specs were recorded).
 
 | metric | A | B | B−A | 95% CI | verdict |
 |---|---|---|---|---|---|
