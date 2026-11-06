@@ -299,6 +299,13 @@ Utkarsh's next note: TwinCafe "asks valuable stuff, like I'm an AI engineer, so 
 
 **A second lesson, on how it feels.** Utkarsh about TwinCafe's flow (pick a topic, then answer a set of questions): "it's tiring, people will leave". A run of bare questions reads as a questionnaire whatever the questions are. Ours already has no topic to pick. But after the repeat-back complaints (§9), our ack rule had swung to "empty is often best", which pushes toward exactly that run of bare questions. The rule now asks for a short genuine reaction before the question when one comes naturally: a thought the answer sparks, a link to something they said earlier, a light remark. It still never restates what they said.
 
+**Other ways in (light, the model's call).** From ideas Utkarsh liked, CRAFT now names three alternatives to a plain question, offered as options rather than rules:
+- make a confident guess about how they'd see or do something and let them correct it (a wrong guess finds the delta);
+- play someone who'd come to them (a junior asking advice, a client) so they answer in character;
+- put a sharp take from their world to them.
+
+The goodbye now names one thing about them that surprised the interviewer, something a stranger wouldn't have guessed. That rewards their time, and it shows the delta was heard. In a replay of the first 8 answers, the questions now follow what they're doing (work, the move, the interview, then their office work) instead of their routine. The new moves didn't fire there, which is fine: they're for when they fit.
+
 ## 11. What I'd do next
 
 - **Twin-gap questions.** Ask a cheap model "what would people who know this person's work ask their twin that these notes can't answer?", and feed the top gap to the note-taker as a direction. This is TwinCafe's "see what it missed" loop, but before the twin exists.
