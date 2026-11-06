@@ -137,7 +137,7 @@ export class Room {
           if (!m.name?.trim() || !m.sdp || personId(m.name) !== room.id) return notify({ type: 'error', message: 'name and offer required' });
           try {
             const p = await room.getOrCreate(m.name, m.topic, m.golden, m.link);
-            const c = await startCall({ store: saver, connect: room.connect, person: p, offerSdp: m.sdp, notify });
+            const c = await startCall({ store: saver, connect: room.connect, person: p, offerSdp: m.sdp, voice: m.voice, notify });
             handle = c.handle;
             notify({ type: 'answer', sdp: c.answerSdp, sessionId: c.sessionId, personId: p.id });
           } catch (e) {

@@ -23,10 +23,12 @@ import { CRAFT, PURPOSE } from '../brain/prompts.ts';
 
 const API = 'https://api.openai.com/v1';
 export const VOICE_MODEL = process.env.VOICE_MODEL ?? 'gpt-live-1';
-export const VOICE = process.env.VOICE ?? 'marin';
+export const VOICE = process.env.VOICE ?? 'cedar';
+// Voices offered on the start page, with the gender they sound (Hindi grammar follows it).
+export const VOICES: Record<string, 'female' | 'male'> = { marin: 'female', cedar: 'male' };
 
 
-export function voiceInstructions(p: Person) {
+export function voiceInstructions(p: Person, voice = VOICE) {
   return `You are a curious interviewer on a voice call with ${p.name}. ${PURPOSE} They are the expert on their own life; you're the curious one.
 
 ${CRAFT}
@@ -35,10 +37,10 @@ Personality: warm, unhurried, genuinely curious, a little informal. Short senten
 
 How you talk:
 - One short question at a time. No add-on second question.
-- Acknowledge only when it adds something; never repeat back what they just said, never summarise them to themselves.
+- Acknowledge only when it adds something; never repeat back what they just said, never summarise them to themselves. This holds in every language you speak.
 - Never re-ask something already answered. Never re-explain the purpose unprompted.
 - Speak the language ${p.name} speaks; if they mix Hindi and English, mix the same way. Start in English unless they start otherwise.
-- Sound like a native speaker of whatever language you speak. In Hindi or Hinglish, speak like someone who grew up in Delhi: a natural Indian accent and everyday spoken Hindi (the words people actually use, English words where people would use them), never formal or textbook Hindi, never a foreign accent.
+- Sound like a native speaker of whatever language you speak. In Hindi or Hinglish, speak like someone who grew up in Delhi: a natural Indian accent and everyday spoken Hindi (the words people actually use, English words where people would use them), never formal or textbook Hindi, never a foreign accent.${VOICES[voice] ? ` Your voice is a ${VOICES[voice] === 'female' ? 'woman' : 'man'}'s: in Hindi use ${VOICES[voice] === 'female' ? 'feminine' : 'masculine'} forms when talking about yourself (${VOICES[voice] === 'female' ? '"kar sakti hoon", "samajh gayi"' : '"kar sakta hoon", "samajh gaya"'}).` : ''}
 - If they just check the line or say a filler, reply in a couple of words and wait.
 - If they ask you something, answer briefly and honestly, then carry on.
 - If they want to stop or talk later: a short warm goodbye (one line on something you took from the talk), no new question.
@@ -87,10 +89,12 @@ export async function startCall(opts: {
   connect: Connect;
   person: Person;
   offerSdp: string;
+  voice?: string;
   notify: Notify;
 }): Promise<{ answerSdp: string; handle: CallHandle; sessionId: string }> {
   const { store, notify } = opts;
   const p = opts.person;
+  const voice = opts.voice && VOICES[opts.voice] ? opts.voice : VOICE;
   const key = process.env.OPENAI_API_KEY;
   if (!key) throw new Error('OPENAI_API_KEY is not set');
 
@@ -106,9 +110,9 @@ export async function startCall(opts: {
     body: JSON.stringify({
       session: {
         model: VOICE_MODEL,
-        instructions: voiceInstructions(p),
+        instructions: voiceInstructions(p, voice),
         input: historyInput(p, opening),
-        audio: { output: { voice: VOICE } },
+        audio: { output: { voice } },
       },
       transport: { type: 'webrtc', sdp: opts.offerSdp },
     }),

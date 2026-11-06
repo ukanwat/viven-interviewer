@@ -74,7 +74,7 @@ export async function sessionReport(p: Person, sessionId?: string): Promise<Repo
  "strongest": ["<up to 3 most valuable captured pieces, short>"],
  "gaps": [{"thread": "<topic>", "missing": "<what is still missing: e.g. a decision without its why, an outcome, the exception>"}],
  "nextQuestions": ["<up to 4 questions for next time, spoken style, each targeting a gap>"],
- "interviewerIssues": ["<concrete mistakes by the interviewer: repeated question, missed a probe on a vague answer, pushed after hostility, off-topic; empty if none>"]}
+ "interviewerIssues": ["<concrete mistakes by the interviewer: repeated question, repeating or summarising their answer back to them, missed a probe on a vague answer, pushed after hostility, off-topic; empty if none>"]}
 Gaps list SLOTS that are missing, never invented content.`,
       },
     ],

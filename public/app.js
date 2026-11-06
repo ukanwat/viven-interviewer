@@ -186,7 +186,7 @@ async function startVoice(name, topic, golden, link) {
 
   await new Promise((resolve, reject) => {
     const timeout = setTimeout(() => reject(new Error('Could not connect the call. Try again.')), 30000);
-    ws.onopen = () => ws.send(JSON.stringify({ type: 'start', name, topic, golden, link, sdp: pc.localDescription.sdp }));
+    ws.onopen = () => ws.send(JSON.stringify({ type: 'start', name, topic, golden, link, voice: localStorage.getItem('voice') || 'cedar', sdp: pc.localDescription.sdp }));
     ws.onerror = () => reject(new Error('Could not reach the server.'));
     ws.onclose = () => {
       clearTimeout(timeout);
@@ -413,3 +413,9 @@ $('again').addEventListener('click', () => {
   show('start');
   lookup();
 });
+
+// Interviewer voice: remembered on this device.
+for (const r of document.querySelectorAll('input[name=voice]')) {
+  r.checked = r.value === (localStorage.getItem('voice') || 'cedar');
+  r.addEventListener('change', () => localStorage.setItem('voice', r.value));
+}
