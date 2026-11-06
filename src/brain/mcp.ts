@@ -8,7 +8,6 @@ export const PRESETS: { id: string; label: string; url: string; what: string }[]
   { id: 'atlassian', label: 'Jira & Confluence', url: 'https://mcp.atlassian.com/v1/mcp', what: 'tickets and docs' },
   { id: 'clickup', label: 'ClickUp', url: 'https://mcp.clickup.com/mcp', what: 'tasks and docs' },
   { id: 'airtable', label: 'Airtable', url: 'https://mcp.airtable.com/mcp', what: 'bases' },
-  { id: 'zapier', label: 'Gmail, Calendar & more (via Zapier)', url: 'https://mcp.zapier.com/api/mcp/mcp', what: 'whatever apps they enable in Zapier' },
 ];
 
 export type Tokens = { access: string; refresh?: string; expiresAt?: number };

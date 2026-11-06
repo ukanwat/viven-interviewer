@@ -427,15 +427,10 @@ api('/api/status')
 
 function renderToolButtons(el) {
   const on = new Set((state.person?.connections ?? []).filter((c) => c.status !== 'failed' && c.status !== 'pending').map((c) => c.id));
-  el.innerHTML =
-    toolPresets.map((t) => `<button type="button" class="pill${on.has(t.id) ? ' on' : ''}" data-server="${esc(t.id)}" title="${esc(t.what)}">${on.has(t.id) ? '✓ ' : ''}${esc(t.label)}</button>`).join('') +
-    `<form><input name="url" type="url" placeholder="Other MCP server (https://…)" aria-label="Other MCP server URL" /><button class="pill" type="submit">Connect</button></form>`;
+  el.innerHTML = toolPresets
+    .map((t) => `<button type="button" class="pill tool${on.has(t.id) ? ' on' : ''}" data-server="${esc(t.id)}" title="${esc(t.what)}"><img src="/logos/${esc(t.id)}.${t.id === 'granola' ? 'png' : 'svg'}" alt="" />${esc(t.label)}${on.has(t.id) ? ' ✓' : ''}</button>`)
+    .join('');
   el.querySelectorAll('[data-server]').forEach((b) => b.addEventListener('click', () => connectTool(b.dataset.server)));
-  el.querySelector('form').addEventListener('submit', (e) => {
-    e.preventDefault();
-    const url = e.target.url.value.trim();
-    if (url) connectTool(url);
-  });
 }
 
 function connectTool(server) {

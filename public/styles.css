@@ -233,8 +233,8 @@ body[data-mode='voice'] .composer:focus-within { opacity: 1; }
 .tool-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
 .tool-list .pill { color: var(--ink-2); }
 .tool-list .pill.on { border-color: var(--ink); color: var(--ink); }
-.tool-list form { display: flex; gap: 6px; width: 100%; margin-top: 2px; }
-.tool-list form input { flex: 1; margin: 0; padding: 7px 10px; border: 1px solid var(--line); border-radius: 999px; background: var(--card); font-size: 13px; }
+.tool-list .tool { display: inline-flex; align-items: center; gap: 7px; }
+.tool-list .tool img { width: 15px; height: 15px; object-fit: contain; }
 .src-box { margin-top: 22px; padding-top: 6px; border-top: 1px dashed var(--line-2); }
 .src-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .src-head h3 { margin: 8px 0; font-size: 13px; font-weight: 600; color: var(--ink-2); }
