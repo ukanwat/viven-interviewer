@@ -7,10 +7,17 @@
 //     transcript deltas -> turns -> note-taker -> memory + panel + session.thinking.append(brief)
 
 import { randomUUID } from 'node:crypto';
-import { WebSocket } from 'ws';
 import * as brain from '../brain/brain.ts';
 import type { Decision, Person } from '../brain/types.ts';
-import type { Store } from '../brain/store.ts';
+// Runs on Node (ws) and on Cloudflare Workers (fetch upgrade): the caller supplies the socket.
+export type Socket = {
+  send(data: string): void;
+  close(): void;
+  onMessage(cb: (data: string) => void): void;
+  onClose(cb: () => void): void;
+};
+export type Connect = (url: string, headers: Record<string, string>) => Promise<Socket>;
+export type Saver = { save(p: Person): void };
 import { CRAFT, PURPOSE } from '../brain/prompts.ts';
 
 const API = 'https://api.openai.com/v1';
@@ -72,7 +79,8 @@ export type CallHandle = {
 
 // One live call. Owns the sideband, the turn segmentation and the brain queue.
 export async function startCall(opts: {
-  store: Store;
+  store: Saver;
+  connect: Connect;
   person: Person;
   offerSdp: string;
   notify: Notify;
@@ -115,13 +123,11 @@ export async function startCall(opts: {
   session.liveSessionId = liveId;
   store.save(p);
 
-  const ws = new WebSocket(`${API.replace('https', 'wss')}/live/sessions/${encodeURIComponent(liveId)}/attach`, {
-    headers: { Authorization: `Bearer ${key}` },
-    handshakeTimeout: 15_000,
-  });
+  const ws = await opts.connect(`${API.replace('https', 'wss')}/live/sessions/${encodeURIComponent(liveId)}/attach`, { Authorization: `Bearer ${key}` });
+  let open = true;
 
   const send = (event: Record<string, unknown>) => {
-    if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ event_id: randomUUID(), ...event }));
+    if (open) ws.send(JSON.stringify({ event_id: randomUUID(), ...event }));
   };
 
   // ---- turns ----
@@ -192,10 +198,10 @@ export async function startCall(opts: {
     brain.refreshSummary(p).then(() => store.save(p), () => {});
   };
 
-  ws.on('message', (raw) => {
+  ws.onMessage((raw) => {
     let e: any;
     try {
-      e = JSON.parse(raw.toString());
+      e = JSON.parse(raw);
     } catch {
       return;
     }
@@ -243,8 +249,10 @@ export async function startCall(opts: {
         break;
     }
   });
-  ws.on('close', () => finalize('sideband_closed'));
-  ws.on('error', (err) => console.error('sideband error', err.message));
+  ws.onClose(() => {
+    open = false;
+    finalize('sideband_closed');
+  });
 
   let finalized = false;
   const finalize = (reason: string) => {
@@ -274,7 +282,7 @@ export async function startCall(opts: {
       setTimeout(() => {
         if (!finalized) {
           finalize(reason);
-          ws.terminate();
+          ws.close();
         }
       }, 10_000);
     },
@@ -286,11 +294,6 @@ export async function startCall(opts: {
       send({ type: 'session.commentary.append', delegation_id: null, content: `${p.name} typed this instead of saying it: "${text.slice(0, 1500)}". Respond to it as if they had said it.` });
     },
   };
-
-  await new Promise<void>((resolve, reject) => {
-    ws.once('open', () => resolve());
-    ws.once('error', reject);
-  });
 
   return { answerSdp: created.transport.sdp, handle, sessionId: session.id };
 }

@@ -159,7 +159,7 @@ async function startVoice(name, topic, golden) {
   await pc.setLocalDescription(await pc.createOffer());
   await iceDone(pc);
 
-  const wsUrl = `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws${code ? `?code=${encodeURIComponent(code)}` : ''}`;
+  const wsUrl = `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws?name=${encodeURIComponent(name)}${code ? `&code=${encodeURIComponent(code)}` : ''}`;
   const ws = new WebSocket(wsUrl);
   state.call = { pc, ws, mic, agentEl: null, personEl: null, ended: false };
 

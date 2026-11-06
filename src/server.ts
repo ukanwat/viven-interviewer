@@ -2,13 +2,37 @@ import { createServer, type IncomingMessage, type ServerResponse } from 'node:ht
 import { readFile } from 'node:fs/promises';
 import { join, normalize, extname } from 'node:path';
 import { WebSocketServer, WebSocket } from 'ws';
-import * as brain from './brain/brain.ts';
 import { Store, personId } from './brain/store.ts';
-import { startCall, publicPerson, type CallHandle } from './voice/live.ts';
-import { sessionReport } from './brain/report.ts';
+import { PgStore } from './brain/pg-store.ts';
 import { usage, MODELS } from './brain/llm.ts';
+import { Room, personRow } from './room.ts';
+import type { Connect } from './voice/live.ts';
 
-const store = new Store();
+// One Room per person. People and chats go to Postgres when DATABASE_URL is set, else to files on disk.
+const files = new Store();
+const store = process.env.DATABASE_URL
+  ? new PgStore(process.env.DATABASE_URL)
+  : { load: async (id: string) => files.get(id), save: (p: Parameters<Store['save']>[0]) => files.save(p), list: async () => files.list().map(personRow) };
+const connect: Connect = (url, headers) =>
+  new Promise((resolve, reject) => {
+    const ws = new WebSocket(url, { headers, handshakeTimeout: 15_000 });
+    ws.once('error', reject);
+    ws.once('open', () =>
+      resolve({
+        send: (d) => ws.readyState === WebSocket.OPEN && ws.send(d),
+        close: () => ws.close(),
+        onMessage: (cb) => ws.on('message', (raw) => cb(raw.toString())),
+        onClose: (cb) => ws.on('close', cb),
+      }),
+    );
+    ws.on('error', (e) => console.error('sideband error', e.message));
+  });
+const rooms = new Map<string, Room>();
+const room = (id: string) => {
+  let r = rooms.get(id);
+  if (!r) rooms.set(id, (r = new Room(id, store, connect)));
+  return r;
+};
 const PUBLIC = join(import.meta.dirname, '../public');
 const PORT = Number(process.env.PORT ?? 8000);
 const HOST = process.env.HOST ?? '127.0.0.1';
@@ -44,93 +68,25 @@ function authed(req: IncomingMessage) {
   return req.headers['x-passcode'] === PASSCODE || url.searchParams.get('code') === PASSCODE;
 }
 
-// One person can't be driven by two brains at once.
-const locks = new Map<string, Promise<unknown>>();
-function withLock<T>(id: string, fn: () => Promise<T>): Promise<T> {
-  const prev = locks.get(id) ?? Promise.resolve();
-  const next = prev.then(fn, fn);
-  locks.set(id, next.catch(() => {}));
-  return next;
-}
-
-function getOrCreate(name: string, topic: string, golden?: string[]) {
-  const id = personId(name);
-  let p = store.get(id);
-  if (!p) p = brain.newPerson(name, topic);
-  else if (topic && !p.topicHint) p.topicHint = topic;
-  if (golden?.length) p.sealedGolden = golden;
-  return p;
-}
-
 async function api(req: IncomingMessage, res: ServerResponse, path: string) {
   if (!authed(req)) return json(res, 401, { error: 'passcode required' });
   try {
-    if (req.method === 'GET' && path.startsWith('/api/person/')) {
-      const p = store.get(decodeURIComponent(path.slice('/api/person/'.length)));
-      return p ? json(res, 200, publicPerson(p)) : json(res, 404, { error: 'not found' });
+    const url = new URL(req.url ?? '', 'http://x');
+    if (path === '/api/status') return json(res, 200, { models: MODELS, usage });
+    if (path === '/api/people') return json(res, 200, { people: (await store.list()).sort((a, b) => b.updatedAt - a.updatedAt) });
+    if (path.startsWith('/api/person/')) {
+      const r = await room(decodeURIComponent(path.slice('/api/person/'.length))).api('person', {});
+      return json(res, r.status, r.body);
     }
-    if (req.method === 'GET' && path === '/api/lookup') {
-      const name = new URL(req.url ?? '', 'http://x').searchParams.get('name') ?? '';
-      const p = store.get(personId(name));
-      return json(res, 200, p ? { returning: brain.isReturning(p), person: publicPerson(p) } : { returning: false });
+    if (path === '/api/lookup') {
+      const r = await room(personId(url.searchParams.get('name') ?? '')).api('lookup', {});
+      return json(res, r.status, r.body);
     }
-    if (req.method === 'GET' && path === '/api/status') {
-      return json(res, 200, { models: MODELS, usage });
-    }
-    if (req.method === 'POST' && path === '/api/text/start') {
+    if (req.method === 'POST') {
       const b = await body(req);
-      if (!b.name?.trim()) return json(res, 400, { error: 'name required' });
-      const id = personId(b.name);
-      return await withLock(id, async () => {
-        const p = getOrCreate(b.name, b.topic ?? '', b.golden);
-        const s = brain.startSession(p, 'text');
-        const d = await brain.opener(p, s.id, 'text');
-        store.save(p);
-        json(res, 200, { sessionId: s.id, decision: d, person: publicPerson(p) });
-      });
-    }
-    if (req.method === 'POST' && path === '/api/text/turn') {
-      const b = await body(req);
-      const text = String(b.text ?? '').slice(0, 4000);
-      if (!text.trim()) return json(res, 400, { error: 'empty' });
-      return await withLock(b.id, async () => {
-        const p = store.get(b.id);
-        if (!p) return json(res, 404, { error: 'not found' });
-        const t0 = Date.now();
-        const d = await brain.personTurn(p, text, 'text', b.sessionId);
-        if (d.move === 'wrap') brain.endSession(p, b.sessionId, 'later');
-        store.save(p);
-        json(res, 200, { decision: d, ms: Date.now() - t0, person: publicPerson(p) });
-        if (p.turns.filter((t) => t.role === 'person').length % 4 === 0) {
-          void withLock(p.id, async () => {
-            const q = store.get(p.id)!;
-            await brain.refreshSummary(q);
-            store.save(q);
-          }).catch(() => {});
-        }
-      });
-    }
-    if (req.method === 'POST' && path === '/api/text/end') {
-      const b = await body(req);
-      return await withLock(b.id, async () => {
-        const p = store.get(b.id);
-        if (!p) return json(res, 404, { error: 'not found' });
-        brain.endSession(p, b.sessionId, b.reason ?? 'later');
-        await brain.refreshSummary(p).catch(() => {});
-        store.save(p);
-        json(res, 200, { person: publicPerson(p) });
-      });
-    }
-    if (req.method === 'POST' && path === '/api/report') {
-      const b = await body(req);
-      return await withLock(b.id, async () => {
-        const p = store.get(b.id);
-        if (!p) return json(res, 404, { error: 'not found' });
-        const r = await sessionReport(p, b.sessionId);
-        p.reports = [...(p.reports ?? []).filter((x) => x.sessionId !== (b.sessionId ?? 'all')), { sessionId: b.sessionId ?? 'all', at: Date.now(), report: r }];
-        store.save(p);
-        json(res, 200, { report: r });
-      });
+      const id = path === '/api/text/start' ? personId(b.name ?? '') : String(b.id ?? '');
+      const r = await room(id).api(path.slice('/api/'.length), b);
+      return json(res, r.status, r.body);
     }
     json(res, 404, { error: 'unknown route' });
   } catch (e) {
@@ -143,7 +99,7 @@ const server = createServer(async (req, res) => {
   const url = new URL(req.url ?? '/', 'http://x');
   const path = url.pathname;
   if (path.startsWith('/api/')) return api(req, res, path);
-  const file = path === '/' ? 'index.html' : path === '/eval' ? 'eval.html' : normalize(path).replace(/^\/+/, '');
+  const file = path === '/' ? 'index.html' : path === '/eval' ? 'eval.html' : path === '/people' ? 'people.html' : normalize(path).replace(/^\/+/, '');
   if (file.includes('..')) return res.writeHead(400).end();
   try {
     const content = await readFile(join(PUBLIC, file));
@@ -161,42 +117,17 @@ server.on('upgrade', (req, socket, head) => {
     socket.end('HTTP/1.1 403 Forbidden\r\nConnection: close\r\n\r\n');
     return;
   }
-  wss.handleUpgrade(req, socket, head, (ws) => handleCall(ws));
+  const name = url.searchParams.get('name') ?? '';
+  wss.handleUpgrade(req, socket, head, (ws) => {
+    const call = room(personId(name)).call(
+      (e) => ws.readyState === WebSocket.OPEN && ws.send(JSON.stringify(e)),
+      () => ws.close(),
+    );
+    ws.on('message', (raw) => void call.message(raw.toString()));
+    ws.on('close', () => call.close());
+  });
 });
 
-function handleCall(ws: WebSocket) {
-  let handle: CallHandle | undefined;
-  const notify = (e: Record<string, unknown>) => {
-    if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(e));
-  };
-  ws.on('message', async (raw) => {
-    let m: any;
-    try {
-      m = JSON.parse(raw.toString());
-    } catch {
-      return;
-    }
-    if (m.type === 'start' && !handle) {
-      if (!m.name?.trim() || !m.sdp) return notify({ type: 'error', message: 'name and offer required' });
-      try {
-        const p = getOrCreate(m.name, m.topic ?? '', m.golden);
-        const call = await startCall({ store, person: p, offerSdp: m.sdp, notify });
-        handle = call.handle;
-        notify({ type: 'answer', sdp: call.answerSdp, sessionId: call.sessionId, personId: p.id });
-      } catch (e) {
-        console.error('call start failed', (e as Error).message);
-        notify({ type: 'error', message: (e as Error).message });
-        ws.close();
-      }
-    } else if (m.type === 'hangup') {
-      await handle?.hangup(m.reason ?? 'later');
-    } else if (m.type === 'typed' && typeof m.text === 'string') {
-      handle?.typed(m.text.slice(0, 4000));
-    }
-  });
-  ws.on('close', () => void handle?.hangup('browser_closed'));
-}
-
 server.listen(PORT, HOST, () => {
-  console.log(`Interviewer on http://${HOST === '0.0.0.0' ? 'localhost' : HOST}:${PORT}  (brain ${MODELS.brain})`);
+  console.log(`Interviewer on http://${HOST === '0.0.0.0' ? 'localhost' : HOST}:${PORT}  (brain ${MODELS.brain}, storage ${process.env.DATABASE_URL ? 'postgres' : 'files'})`);
 });

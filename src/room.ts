@@ -1,0 +1,149 @@
+// Everything about one person: memory, text turns, reports, live calls. Runs serially, so one
+// person is never driven by two brains at once. Node keeps one Room per person in a map;
+// on Cloudflare each Room lives in its own Durable Object.
+import * as brain from './brain/brain.ts';
+import { personId } from './brain/ids.ts';
+import { sessionReport } from './brain/report.ts';
+import type { Person } from './brain/types.ts';
+import { startCall, publicPerson, type CallHandle, type Connect } from './voice/live.ts';
+
+export type PersonStore = {
+  load(id: string): Promise<Person | undefined>;
+  save(p: Person): void; // fire-and-forget; the platform makes it durable
+};
+
+type Reply = { status: number; body: unknown };
+const ok = (body: unknown): Reply => ({ status: 200, body });
+const err = (status: number, error: string): Reply => ({ status, body: { error } });
+
+export class Room {
+  id: string;
+  private store: PersonStore;
+  private connect: Connect;
+  private person?: Person;
+  private loaded = false;
+  private chain: Promise<unknown> = Promise.resolve();
+
+  constructor(id: string, store: PersonStore, connect: Connect) {
+    this.id = id;
+    this.store = store;
+    this.connect = connect;
+  }
+
+  private serial<T>(fn: () => Promise<T>): Promise<T> {
+    const next = this.chain.then(fn, fn);
+    this.chain = next.catch(() => {});
+    return next;
+  }
+
+  private async get(): Promise<Person | undefined> {
+    if (!this.loaded) {
+      this.person = await this.store.load(this.id);
+      this.loaded = true;
+    }
+    return this.person;
+  }
+
+  private async getOrCreate(name: string, topic = '', golden?: string[]): Promise<Person> {
+    let p = await this.get();
+    if (!p) p = this.person = brain.newPerson(name, topic);
+    else if (topic && !p.topicHint) p.topicHint = topic;
+    if (golden?.length) p.sealedGolden = golden;
+    return p;
+  }
+
+  private save() {
+    if (this.person) this.store.save(this.person);
+  }
+
+  // JSON API for one person. `route` is the part after /api/.
+  async api(route: string, b: any): Promise<Reply> {
+    if (route === 'person') {
+      const p = await this.get();
+      return p ? ok(publicPerson(p)) : err(404, 'not found');
+    }
+    if (route === 'lookup') {
+      const p = await this.get();
+      return ok(p ? { returning: brain.isReturning(p), person: publicPerson(p) } : { returning: false });
+    }
+    return this.serial(async () => {
+      if (route === 'text/start') {
+        if (!b.name?.trim() || personId(b.name) !== this.id) return err(400, 'name required');
+        const p = await this.getOrCreate(b.name, b.topic, b.golden);
+        const s = brain.startSession(p, 'text');
+        const d = await brain.opener(p, s.id, 'text');
+        this.save();
+        return ok({ sessionId: s.id, decision: d, person: publicPerson(p) });
+      }
+      const p = await this.get();
+      if (!p) return err(404, 'not found');
+      if (route === 'text/turn') {
+        const text = String(b.text ?? '').slice(0, 4000);
+        if (!text.trim()) return err(400, 'empty');
+        const t0 = Date.now();
+        const d = await brain.personTurn(p, text, 'text', b.sessionId);
+        if (d.move === 'wrap') brain.endSession(p, b.sessionId, 'later');
+        this.save();
+        if (p.turns.filter((t) => t.role === 'person').length % 4 === 0)
+          void this.serial(async () => {
+            await brain.refreshSummary(p);
+            this.save();
+          }).catch(() => {});
+        return ok({ decision: d, ms: Date.now() - t0, person: publicPerson(p) });
+      }
+      if (route === 'text/end') {
+        brain.endSession(p, b.sessionId, b.reason ?? 'later');
+        await brain.refreshSummary(p).catch(() => {});
+        this.save();
+        return ok({ person: publicPerson(p) });
+      }
+      if (route === 'report') {
+        const r = await sessionReport(p, b.sessionId);
+        p.reports = [...(p.reports ?? []).filter((x) => x.sessionId !== (b.sessionId ?? 'all')), { sessionId: b.sessionId ?? 'all', at: Date.now(), report: r }];
+        this.save();
+        return ok({ report: r });
+      }
+      return err(404, 'unknown route');
+    });
+  }
+
+  // One voice call over a browser socket. Returns handlers for the socket's messages and close.
+  call(notify: (e: Record<string, unknown>) => void, closeBrowser: () => void) {
+    let handle: CallHandle | undefined;
+    const room = this;
+    const saver = { save: () => room.save() };
+    return {
+      async message(raw: string) {
+        let m: any;
+        try {
+          m = JSON.parse(raw);
+        } catch {
+          return;
+        }
+        if (m.type === 'start' && !handle) {
+          if (!m.name?.trim() || !m.sdp || personId(m.name) !== room.id) return notify({ type: 'error', message: 'name and offer required' });
+          try {
+            const p = await room.getOrCreate(m.name, m.topic, m.golden);
+            const c = await startCall({ store: saver, connect: room.connect, person: p, offerSdp: m.sdp, notify });
+            handle = c.handle;
+            notify({ type: 'answer', sdp: c.answerSdp, sessionId: c.sessionId, personId: p.id });
+          } catch (e) {
+            console.error('call start failed', (e as Error).message);
+            notify({ type: 'error', message: (e as Error).message });
+            closeBrowser();
+          }
+        } else if (m.type === 'hangup') await handle?.hangup(m.reason ?? 'later');
+        else if (m.type === 'typed' && typeof m.text === 'string') handle?.typed(m.text.slice(0, 4000));
+      },
+      close() {
+        void handle?.hangup('browser_closed');
+      },
+    };
+  }
+}
+
+// The row the people list shows.
+export function personRow(p: Person) {
+  const people = p.turns.filter((t) => t.role === 'person').length;
+  return { id: p.id, name: p.name, updatedAt: p.updatedAt ?? Date.now(), turns: people, items: p.items.length, sessions: p.sessions.length, summary: p.summary ?? '' };
+}

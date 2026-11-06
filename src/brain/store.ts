@@ -6,17 +6,7 @@ import type { Person } from './types.ts';
 const DIR = process.env.DATA_DIR ?? join(import.meta.dirname, '../../data/people');
 mkdirSync(DIR, { recursive: true });
 
-export function personId(name: string) {
-  return (
-    name
-      .trim()
-      .toLowerCase()
-      .normalize('NFKD')
-      .replace(/[^\p{L}\p{N}]+/gu, '-')
-      .replace(/^-|-$/g, '')
-      .slice(0, 60) || 'anonymous'
-  );
-}
+export { personId } from './ids.ts';
 
 export class Store {
   dir: string;

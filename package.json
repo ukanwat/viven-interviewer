@@ -2,7 +2,9 @@
   "name": "viven-interviewer",
   "private": true,
   "type": "module",
-  "engines": { "node": ">=22.18" },
+  "engines": {
+    "node": ">=22.18"
+  },
   "scripts": {
     "start": "node src/server.ts",
     "dev": "node --watch src/server.ts",
@@ -10,6 +12,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "postgres": "^4.1.0",
     "ws": "^8.18.0"
   },
   "devDependencies": {

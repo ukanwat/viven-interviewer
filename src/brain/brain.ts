@@ -8,7 +8,7 @@ import {
   WRAP_INSTRUCTIONS,
   SUMMARY_PROMPT,
 } from './prompts.ts';
-import { personId } from './store.ts';
+import { personId } from './ids.ts';
 import type {
   Angle,
   AnswerLabel,

@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex" />
+  <title>People</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <main class="people-wrap">
+    <h1>People</h1>
+    <div id="list" class="people-list"><p class="muted">Loading…</p></div>
+    <section id="detail" class="hidden">
+      <h2 id="dName"></h2>
+      <p id="dSummary" class="sub"></p>
+      <div class="cols people-cols">
+        <div class="col"><h3>Conversations</h3><div id="dTurns" class="transcript"></div></div>
+        <div class="col"><h3>What was learned</h3><div id="dItems"></div></div>
+      </div>
+    </section>
+  </main>
+  <script type="module">
+    let code = new URLSearchParams(location.search).get('code') || localStorage.getItem('code') || '';
+    const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+    async function get(path) {
+      const r = await fetch(path, { headers: { 'x-passcode': code } });
+      if (r.status === 401) {
+        code = prompt('Passcode') || '';
+        localStorage.setItem('code', code);
+        return get(path);
+      }
+      return r.json();
+    }
+    const when = (t) => new Date(t).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
+    const { people } = await get('/api/people');
+    document.getElementById('list').innerHTML = people.length
+      ? people.map((p) => `<button class="person-row" data-id="${esc(p.id)}"><b>${esc(p.name)}</b><span class="muted small">${when(p.updatedAt)} · ${p.sessions} session(s) · ${p.turns} answers · ${p.items} things learned</span></button>`).join('')
+      : '<p class="muted">No one yet.</p>';
+    document.getElementById('list').addEventListener('click', async (e) => {
+      const b = e.target.closest('.person-row');
+      if (!b) return;
+      const p = await get(`/api/person/${encodeURIComponent(b.dataset.id)}`);
+      document.getElementById('detail').classList.remove('hidden');
+      document.getElementById('dName').textContent = p.name;
+      document.getElementById('dSummary').textContent = p.summary || p.expertise || '';
+      let last = '';
+      document.getElementById('dTurns').innerHTML = p.turns
+        .map((t) => {
+          const head = t.sessionId !== last ? `<div class="muted small">${when(t.at)} · ${t.channel}</div>` : '';
+          last = t.sessionId;
+          return `${head}<div class="msg ${t.role}">${esc(t.text)}</div>`;
+        })
+        .join('');
+      document.getElementById('dItems').innerHTML = p.items
+        .map((i) => `<div class="item"><span class="tag ${i.novelty}">${i.kind}</span>${esc(i.text)}${i.why ? `<span class="why">why: ${esc(i.why)}</span>` : ''}</div>`)
+        .join('') || '<p class="empty">Nothing yet.</p>';
+      document.getElementById('detail').scrollIntoView({ behavior: 'smooth' });
+    });
+  </script>
+</body>
+</html>

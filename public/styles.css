@@ -115,3 +115,10 @@ label { display: block; font-size: 14px; font-weight: 500; margin-bottom: 14px; 
   .transcript { max-height: 55vh; }
   .bar { flex-wrap: wrap; gap: 8px; }
 }
+
+/* People */
+.people-wrap { max-width: 980px; margin: 0 auto; padding: 40px 20px; }
+.people-list { display: flex; flex-direction: column; gap: 8px; margin: 16px 0 32px; }
+.person-row { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; text-align: left; padding: 12px 14px; }
+.people-cols { height: auto; border-top: 1px solid var(--line); }
+.people-cols .transcript { max-height: 70vh; }
