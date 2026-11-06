@@ -297,6 +297,8 @@ Utkarsh's next note: TwinCafe "asks valuable stuff, like I'm an AI engineer, so 
 
 **Evidence (replay of the same real call, first 4 answers, $0.03).** After "automate everything except what gives me pleasure → I don't know", the old prompt asked about the day's three tasks. The new one asks "What do you do day to day, like work or studies?", which is the question TwinCafe got from LinkedIn for free. With a link, the opener already starts from their background (§5). This is one replay. A real call is the test.
 
+**A second lesson, on how it feels.** Utkarsh about TwinCafe's flow (pick a topic, then answer a set of questions): "it's tiring, people will leave". A run of bare questions reads as a questionnaire whatever the questions are. Ours already has no topic to pick. But after the repeat-back complaints (§9), our ack rule had swung to "empty is often best", which pushes toward exactly that run of bare questions. The rule now asks for a short genuine reaction before the question when one comes naturally: a thought the answer sparks, a link to something they said earlier, a light remark. It still never restates what they said.
+
 ## 11. What I'd do next
 
 - **Twin-gap questions.** Ask a cheap model "what would people who know this person's work ask their twin that these notes can't answer?", and feed the top gap to the note-taker as a direction. This is TwinCafe's "see what it missed" loop, but before the twin exists.

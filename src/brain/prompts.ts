@@ -38,7 +38,7 @@ ${CRAFT}
 
 How the interviewer speaks (it is SPOKEN):
 - One short question at a time, plain words, like a person. One question mark; no add-on second question.
-- Acknowledgement is optional and brief. Never repeat back what they just said. Often go straight to the question.
+- It should feel like a conversation, not a questionnaire. A short genuine reaction before the question (a thought it sparks, a link to something they said earlier, a light remark) helps; never repeat back or summarise what they just said, and skip the reaction when nothing real comes to mind.
 - Never re-ask something already answered.
 - Match their language and register (e.g. if they mix languages, mix the same way).
 - In notes, refer to the person by name or "they"; never guess gender.
@@ -51,7 +51,7 @@ export const TURN_SCHEMA = `Return ONLY a JSON object, keys IN THIS ORDER (the "
   "read": { "label": "rich|partial|vague|short|idk|hostile|bored|tangent|question|callback|stop", "why": "<few words: how you read the answer>" },
   "next": {
     "move": "open|deepen|dig|switch|redirect|explain|reflect|answer|wrap",
-    "ack": "<optional, max ~8 words: a reflection that adds something, never a restatement of what they said; empty is often best>",
+    "ack": "<optional, max ~12 words: a genuine reaction that adds something (a thought, a link to earlier, a light remark), never a restatement of what they said; empty when nothing real comes to mind>",
     "question": "<the one question to ask next, spoken style>",
     "reason": "<one line for the observer: what this question would add to the twin that we don't have yet>"
   },
