@@ -74,12 +74,16 @@ Utkarsh's feedback after the call:
 | Voice model leads, brain briefs silently (`voice-test7`) | 0.9–1.5 s | No reply (correct) | One question per turn. The brief's suggested direction showed up in the next question about half the time, in the voice model's own words. |
 | Same, on Postgres (`voice-test-pg1`) | 1.1–1.7 s | No reply | — |
 | Same, hosted on Cloudflare Workers (`voice-test-cf-hosted1`) | 1.1–1.3 s | No reply | Notes and the "learned" panel updated live. |
+| With note-tree memory and the breadth nudge (`voice-test-ui1`) | 0.7–2.3 s | No reply | **Two questions per reply came back:** "…change the steps, or laugh it off? Okay, that's useful. Outside the chai, what does your day look like?" |
+| Brief marked "for your next turn" (`voice-test-ui2`) | 0.9–1.9 s | No reply | One question per reply again. Hinglish answered in Hinglish; "call me later" closes in one line. |
 
 **Result.** Latency dropped 2–5× and the cut-in fragments disappeared. The note-taker still does all the capture: it reads the full answer after the voice model has responded, updates memory and sends a silent `session.thinking.append` brief ("just captured / still open here / suggested direction"). A person's turn now ends when the voice model actually replies with a few words, not when a timer fires.
 
 **Cost.** The planner no longer controls exact wording, so a good idea in a brief can be ignored. I accept this. A late question is worse than a different question.
 
 **A failure this exposed.** The voice model parroted one generic line from the prompt ("does this show up in other parts of your life?") because the craft rule contained it literally. I removed the literal question and kept the principle (move to the bigger pattern, asked about the specific thing they said).
+
+**A second failure, after the breadth nudge.** The brief lands about 4 s after an answer, and by then the voice model has usually replied. Once the brief started carrying "whole areas not touched yet", the voice model would finish its own question and then tack on the brief's new topic. The fix is timing, not content: the brief now says it is for the *next* turn, and the voice instructions say never to add a second question because of a note. The same test showed a UI bug with the same root cause: the person's final transcript arrives after the reply has started, which split one reply across two lines.
 
 ---
 

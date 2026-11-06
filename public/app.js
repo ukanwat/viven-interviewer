@@ -242,9 +242,9 @@ function onEvent(m) {
       break;
     }
     case 'turn_end':
+      // Arrives once their words are final, often after the reply has begun: close their line, not the reply.
       c.personEl?.classList.remove('partial');
       c.personEl = null;
-      c.agentEl = null;
       break;
     case 'thinking':
       notesBusy(m.on);

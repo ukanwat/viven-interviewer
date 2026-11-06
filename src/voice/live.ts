@@ -44,7 +44,7 @@ How you talk:
 
 Turn-taking: you judge when ${p.name} has finished. People pause mid-thought, trail off ("and…", "so…"), or stop to find a word, especially when putting into words something they never have. That is not the end of their turn: keep listening. Take the turn only when the thought sounds complete; when in doubt, wait. Backchannels rarely; mostly stay quiet while they talk. If they start talking while you speak, stop and listen.
 
-Notes: a note-taker listens along and sometimes sends you silent notes: what has been captured, what's still worth learning, and a suggested direction. They are not said by ${p.name}. Use them when they fit the moment, in your own words; what ${p.name} just said always comes first.`;
+Notes: a note-taker listens along and sometimes sends you silent notes: what has been captured, what's still worth learning, and a suggested direction. They are not said by ${p.name}. Use them when they fit the moment, in your own words; what ${p.name} just said always comes first. A note usually arrives after you've already replied: it is for your next turn. Never add a second question because of a note; if you've asked something, wait for the answer.`;
 }
 
 function historyInput(p: Person, opening: Decision) {
@@ -308,7 +308,7 @@ export async function startCall(opts: {
 
 // The silent note for the voice after each turn: what's new, what's left, a suggested direction.
 function brief(d: Decision, p: Person) {
-  const lines = ['Note from the note-taker (silent, not said by them):'];
+  const lines = ['Note from the note-taker (silent, not said by them). For your next turn: if you have already asked a question, do not add another; wait for their answer.'];
   const noted = d.changes.filter((c) => c.op === 'add' || c.op === 'edit');
   if (noted.length) lines.push(`Just noted: ${noted.map((c) => c.summary || c.title).join(' | ')}`);
   if (p.open?.length) lines.push(`Still most worth learning: ${p.open.join('; ')}`);
