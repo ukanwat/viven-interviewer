@@ -33,7 +33,7 @@ store: files | Postgres | S3/R2 | D1
 - **Memory** (`src/brain/notes.ts`): a folder tree of markdown notes, any depth, each with a title and one-line summary; folders carry descriptions. Per turn the model returns `write / move / delete / folder` ops. After each call a consolidation pass tidies the whole tree. Rules: notes are about the person, never the conversation; their words where wording matters; never lose a detail on rewrite.
 - **Report** (`src/brain/report.ts`): after a call, a judge from a different model family (Gemini) reviews the conversation: what it learned, what to ask next time, interviewer mistakes.
 - **Connectors** (`src/brain/mcp.ts`, `sources.ts`): optional. A person can connect Notion, Granola, Linear, Jira/Confluence, ClickUp or Airtable (remote MCP; OAuth with dynamic registration + PKCE). A Haiku agent with read-only tools writes a separate "from your tools" notebook. The interviewer uses it to ask the why, never as their words. The person can strike notes, and it re-reads after a day.
-- **Eval** (`eval/run.ts`): simulated people (GPT) with hidden facts talk to the real text channel; Gemini judges what was drawn out and saved. See THINKING.md §6.
+- **Eval** (`eval/run.ts`): simulated people (GPT) with hidden facts talk to the real text channel; a judge from another family grades any conversation, simulated or real. See THINKING.md §6, §11 and eval/FINDINGS-2026-11-07.md.
 
 | Role | Model |
 |---|---|
@@ -63,7 +63,7 @@ Storage is picked from the environment: `DATABASE_URL` → Postgres, `S3_BUCKET`
 
 **Cloudflare (how the live site runs):** `src/worker.ts` runs the same Room inside one Durable Object per person, with D1 for storage. Set secrets with `wrangler secret put OPENROUTER_API_KEY` (and `OPENAI_API_KEY`, `PASSCODE`), create the D1 database named in `wrangler.jsonc`, then `pnpm run deploy`.
 
-**Eval:** `pnpm eval --arms ours,baseline --turns 12 --break 6 --seeds 1` (about $1.25 for four people, both arms). Results go to `eval/results/` (add `PUBLISH=1` to update the site's `/eval` page). The twin test (a stand-in twin answers outsiders' questions from the notes only) and per-line feel labels are scored too; `--from <runs>` re-judges saved conversations; `BRAIN_MODEL=anthropic/claude-haiku-5.5` for cheap iterations (about $0.10 for five people). See THINKING.md §11.
+**Eval** (`eval/run.ts`, modules in `eval/lib/`): `sim` (simulated people talk to the real text channel, with a "call me later" break), `show` (read one with the interviewer's live read of each answer and its gaps file), `grade` (any conversation: saved sims, `--local` people, or `--hosted` ones from the site; real ones need no gold answers: coverage = outsider questions answered from the notes, checked against everything they said), `compare A B` (paired by person, cluster-bootstrap CIs; verdict = primary metric better and no guard worse), `meta` (how far to trust it: judge vs hand labels, retest flips, seed noise and smallest detectable change, sims vs real people, coverage vs gold twin), `improve` (failure digest → one proposed prompt edit to A/B). Judge calls are cached on disk, so re-grading is free. `BRAIN_MODEL=anthropic/claude-haiku-5.5` for cheap runs (about $0.015 per person). Latest read-through: eval/FINDINGS-2026-11-07.md.
 
 **Typecheck:** `pnpm typecheck` (Node and Worker configs).
 

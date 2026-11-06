@@ -8,3 +8,4 @@ public/test-audio/
 .wrangler/
 worker-configuration.d.ts
 eval/results/runs/
+eval/results/cache/

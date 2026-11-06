@@ -11,6 +11,7 @@ export type Turn = {
   label?: AnswerLabel;
   move?: Move;
   notes?: string[]; // person turns: note paths it changed
+  gap?: string; // person turns: what a fuller answer would have added, as the brain read it live
 };
 
 // What a person's answer was, as read by the brain.
@@ -85,7 +86,7 @@ export type Person = {
   turns: Turn[];
   notes: Record<string, Note>;
   folders?: Record<string, string>; // folder path -> one-line description
-  open: string[]; // what's still most worth learning about them
+  open: string[]; // the agent's private gaps file: what's still missing for their twin
   sessions: Session[];
   hostility: number; // count of hostile/bored readings, decays on good answers
   status: 'active' | 'paused' | 'done';
@@ -107,7 +108,7 @@ export type Decision = {
   say: string; // full utterance (text channel / guidance for voice)
   question: string; // just the question part
   reason: string; // why this move, for the thinking panel
-  covered?: string; // whether the topic in play has what a twin needs, or what's missing
+  gap?: string; // was the last answer complete, what a fuller one would add, and whether the topic has enough
   changes: NoteChange[];
 };
 

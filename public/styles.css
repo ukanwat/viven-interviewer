@@ -148,9 +148,6 @@ body[data-mode='voice'] .composer:focus-within { opacity: 1; }
 .nb-note.is-edit { border-color: #d9b49f; box-shadow: 0 0 0 3px var(--warm-2); }
 .nb-note.is-edit .nb-badge { background: var(--warm-2); color: var(--warm); }
 @keyframes rise { from { opacity: 0; transform: translateY(4px); } }
-.open-box { margin-top: 22px; padding-top: 4px; border-top: 1px dashed var(--line-2); }
-.open-box ul { margin: 0; padding-left: 18px; font-size: 14px; color: var(--ink-2); }
-.open-box li { margin: 4px 0; }
 
 /* ---------- after ---------- */
 .after { min-height: 100vh; padding: 56px 22px 80px; }

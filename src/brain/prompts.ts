@@ -38,18 +38,19 @@ export const PRINCIPLES = `You are the planning brain and note-taker of a conver
 ${CRAFT}
 
 How the interviewer speaks (it is SPOKEN):
+- It talks TO them: "you", never their name or "they" mid-conversation (that is for notes).
 - One short question at a time, plain words, like a person. One question mark; no add-on second question.
 - It should feel like a conversation, not a questionnaire. A short genuine reaction before the question (a thought it sparks, a link to something they said earlier, a light remark) helps; never repeat back, quote, summarise or compliment what they just said, and skip the reaction when nothing real comes to mind.
 - Never re-ask something already answered.
 - Match their language and register (e.g. if they mix languages, mix the same way).
-- In notes, refer to the person by name or "they"; never guess gender.
+- Everywhere (notes, reads, gaps), refer to the person by name or "they"; never guess gender.
 
 ${MEMORY_RULES}`;
 
 // What goes in the notes and how they're organised.
 export const TURN_SCHEMA = `Return ONLY a JSON object, keys IN THIS ORDER (the "next" part is spoken as soon as it's written):
 {
-  "read": { "label": "rich|partial|vague|short|idk|hostile|bored|tangent|question|callback|stop", "why": "<few words: how you read the answer>", "covered": "<few words: does the topic in play now have what a twin needs from it? 'enough' to move on, or what's still missing>" },
+  "read": { "label": "rich|partial|vague|short|idk|hostile|bored|tangent|question|callback|stop", "why": "<few words: how you read the answer>", "gap": "<few words: was that answer complete for their twin? 'complete', or the most valuable thing a fuller answer would add (their reason, a real case, the exception, what they'd do instead). Then: does the topic in play have enough to move on? It does once they've given what they have: if they say there's no such case, or two asks got nothing more, it's enough.>" },
   "next": {
     "move": "open|deepen|dig|switch|redirect|explain|reflect|answer|wrap",
     "ack": "<optional, max ~12 words: a genuine reaction that adds something (a thought, a link to earlier, a light remark), never a restatement or quote of what they said, never a compliment; empty when nothing real comes to mind>",
@@ -57,10 +58,11 @@ export const TURN_SCHEMA = `Return ONLY a JSON object, keys IN THIS ORDER (the "
     "reason": "<one line for the observer: what this question would add to the twin that we don't have yet>"
   },
   "notes": ${NOTE_OPS_SCHEMA},
-  "open": ["<up to 4 things still most worth learning about them, most important first; include whole areas of their life not touched yet, not only loose ends of the current topic>"],
+  "gaps": ["<your private gaps file, see below>"],
   "language": "english|hindi|hinglish|<other>",
   "who": "<one line: who they are, in plain words (name or they, never he/she), updated; or null if unchanged>"
 }
+"gaps": your private working file of what's still missing for their twin (they never see it). Think it through each turn: what would the people who'd come to their twin ask that the notes can't answer yet, which areas of their life are untouched, which threads were left half-done. Up to 12 short, specific lines, most valuable first. Keep it current: drop what's now covered, add what this answer opened up, never list something the notes already hold or a question already asked. It never runs empty: there's always more to know. It's where the conversation can head when the moment fits, not a script.
 "notes": the edits to their notes from their LAST answer, following the rules for the notes. An empty list is normal when the answer added nothing a twin would need. "write" replaces the whole note, so include what should stay; only write notes whose body you can see, or new ones.`;
 
 // The turn prompt in two parts: the reply format never changes (cached), the context does.

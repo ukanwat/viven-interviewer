@@ -65,7 +65,6 @@ function resetCallView(name) {
   $('transcript').innerHTML = '';
   $('learned').innerHTML = '';
   $('whoLine').textContent = '';
-  $('openBox').classList.add('hidden');
   $('callName').textContent = name;
   $('timer').textContent = '0:00';
   document.body.dataset.mode = state.mode;
@@ -342,8 +341,6 @@ function renderPerson(p, first = false) {
   $('bg').textContent = p.background?.brief ?? '';
   $('nbCount').textContent = notesCount(p);
   renderNotebook($('learned'), p, { marks: state.marks, open: state.openNotes });
-  $('openBox').classList.toggle('hidden', !p.open?.length);
-  $('openList').innerHTML = (p.open ?? []).map((x) => `<li>${esc(x)}</li>`).join('');
   renderSources(p);
   clearTimeout(state.markTimer);
   state.markTimer = setTimeout(() => {

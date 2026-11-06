@@ -1,405 +1,162 @@
-// Eval harness: simulated people with hidden facts talk to an interviewer over the text channel;
-// a judge from a different model family checks what was drawn out and what went wrong.
+// The eval harness. Grade any conversation, simulated or real, and compare two versions of the
+// interviewer with paired, per-person confidence intervals. Judge calls are cached on disk
+// (eval/results/cache), so re-grading saved conversations is free.
 //
-//   node eval/run.ts [--arms ours,baseline] [--people meera,arjun] [--turns 12] [--break 6] [--seeds 1] [--label name]
-//   node eval/run.ts --compare results/a.json results/b.json
+//   node eval/run.ts sim     [--people meera,arjun] [--arms ours,baseline] [--turns 12] [--break 6] [--seeds 1] [--label name]
+//   node eval/run.ts show    <run.json>                       read one conversation with the interviewer's live gap reads
+//   node eval/run.ts grade   <runs...> | --label name | --local | --hosted [ids]   [--out name]
+//   node eval/run.ts compare <graded A> <graded B>            paired verdict: primary metric + guards
+//   node eval/run.ts meta    [--set graded] [--retest 2]      how far to trust the harness
+//   node eval/run.ts improve <graded>                         failure digest → one small prompt edit to A/B
 //
-// What it measures (cheap judge and twin, different families from the brain):
-//   twin      a stand-in twin answers what outsiders would ask the person, from the saved notes only;
-//             graded against the truth. The measure that matters: did the interview capture what's needed?
-//   recall    which hidden facts the person actually said, and which were saved.
-//   feel      per interviewer line: open, a genuine reaction, restating, multi-part, off-audience.
-//
-// Arms:
-//   ours      the product: Room + brain (craft prompts, memory, notes), exactly what the text channel runs.
-//   baseline  what you'd build first: the same brain model with one sensible prompt and the chat history.
-// Every run has a "call me later" break, then a second session, to test resume.
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+// Simulated people have gold facts and gold outsider questions (scenarios/personas.json): the primary
+// metric is the gold twin score. Real people have neither: the primary metric is coverage (questions
+// their twin's askers would ask, answered from the notes, checked against everything they said).
+import { execFileSync } from 'node:child_process';
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { chat, chatJson, MODELS, usage, type Msg } from '../src/brain/llm.ts';
-import { Room, type PersonStore } from '../src/room.ts';
-import { personId } from '../src/brain/ids.ts';
-import type { Person, Decision } from '../src/brain/types.ts';
+import { chat, MODELS } from '../src/brain/llm.ts';
+import { PRINCIPLES } from '../src/brain/prompts.ts';
+import { cacheStats, JUDGE, spent } from './lib/llm.ts';
+import { fromPerson, load, transcript, type Conv } from './lib/conversation.ts';
+import { PERSONAS, simulate } from './lib/sim.ts';
+import { gradeAll, METRICS } from './lib/score.ts';
+import { compare, summarise, type GradedItem, type GradedSet } from './lib/report.ts';
+import { coverageValidity, judgeRetest, judgeVsHuman, seedNoise, simRealism } from './lib/meta.ts';
 
-type Fact = { text: string; kind: string; disclosure: 'free' | 'asked' | 'probe' | 'trust'; vital: boolean };
-type Ask = { q: string; gold: string; facts: number[] };
-type Persona = { id: string; name: string; behaviour: string; who: string; style: string; facts: Fact[]; asks?: Ask[] };
-type Line = { role: 'agent' | 'person'; text: string; session: number; annoyance?: number };
-
-const arg = (k: string, d: string) => {
-  const i = process.argv.indexOf(`--${k}`);
-  return i > 0 ? process.argv[i + 1] : d;
+const R = join(import.meta.dirname, 'results');
+const RUNS = join(R, 'runs');
+const GRADED = join(R, 'graded');
+const argv = process.argv.slice(2);
+const mode = argv[0];
+const arg = (k: string, d = '') => {
+  const i = argv.indexOf(`--${k}`);
+  return i > 0 && argv[i + 1] && !argv[i + 1].startsWith('--') ? argv[i + 1] : i > 0 ? 'true' : d;
 };
-const ARMS = arg('arms', 'ours').split(',');
-const JUDGE = arg('judge', 'deepseek/deepseek-v4.1-flash');
-const TWIN = arg('twin', 'openai/gpt-6-luna');
-const LABEL = arg('label', '');
-// --from a.json,b.json: re-judge saved conversations (results/runs/*) without talking again.
-const FROM = arg('from', '').split(',').filter(Boolean).map((f) => JSON.parse(readFileSync(f, 'utf8')));
-const TURNS = Number(arg('turns', '12'));
-const BREAK = Number(arg('break', '6'));
-const SEEDS = Number(arg('seeds', '1'));
-const ALL: Persona[] = JSON.parse(readFileSync(join(import.meta.dirname, 'scenarios/personas.json'), 'utf8'));
-const PEOPLE = ALL.filter((p) => arg('people', ALL.map((x) => x.id).join(',')).split(',').includes(p.id));
+const files = argv.slice(1).filter((x, i, a) => !x.startsWith('--') && !(a[i - 1]?.startsWith('--')));
+const withName = (c: Conv) => (c.persona && c.name === c.persona ? { ...c, name: PERSONAS.find((p) => p.id === c.persona)?.name ?? c.name } : c);
+const write = (f: string, x: unknown) => (mkdirSync(join(f, '..'), { recursive: true }), writeFileSync(f, typeof x === 'string' ? x : JSON.stringify(x, null, 1)));
+const done = () => console.error(`\ncost this run $${spent().toFixed(3)} · cache ${cacheStats.hits} hits, ${cacheStats.misses} new calls`);
 
-// --compare a.json b.json: the same metrics side by side, per person and overall.
-if (process.argv.includes('--compare')) {
-  const [a, b] = process.argv.slice(process.argv.indexOf('--compare') + 1, process.argv.indexOf('--compare') + 3).map((f) => JSON.parse(readFileSync(f, 'utf8')));
-  const keys = ['twin', 'twinWrong', 'twinAbstain', 'recall', 'tacitRecall', 'memoryRecall', 'open', 'reaction', 'restates', 'multi', 'offAudience', 'personWords', 'agentWords', 'meanAnnoyance'];
-  const row = (ma: any, mb: any) => Object.fromEntries(keys.map((k) => [k, `${ma?.[k]?.toFixed?.(2) ?? '-'} → ${mb?.[k]?.toFixed?.(2) ?? '-'}`]));
-  const table: Record<string, any> = {};
-  for (const ra of a.results) {
-    const rb = b.results.find((x: any) => x.persona === ra.persona && x.arm === ra.arm && x.seed === ra.seed);
-    if (rb) table[`${ra.persona}/${ra.arm}`] = row(ra.metrics, rb.metrics);
+async function hosted(ids: string[]): Promise<Conv[]> {
+  const base = process.env.VIVEN_URL ?? 'https://viven-interviewer.utkarshkanwat.com';
+  const pass = process.env.VIVEN_PASSCODE ?? execFileSync('security', ['find-generic-password', '-s', 'viven-passcode', '-w']).toString().trim();
+  const get = async (p: string) => (await fetch(base + p, { headers: { 'x-passcode': pass } })).json() as Promise<any>;
+  if (!ids.length) ids = ((await get('/api/people')).people as any[]).map((p) => p.id);
+  const out: Conv[] = [];
+  for (const id of ids) {
+    const p = await get(`/api/person/${encodeURIComponent(id)}`);
+    if (p?.turns?.some((t: any) => t.role === 'person')) out.push(fromPerson(p));
   }
-  const sa = a.summary.find((x: any) => x.arm === 'ours') ?? a.summary[0];
-  const sb = b.summary.find((x: any) => x.arm === sa.arm);
-  table[`ALL/${sa.arm}`] = row(sa, sb);
-  console.log(`${a.label || a.at}  →  ${b.label || b.at}`);
-  console.table(table);
-  process.exit(0);
+  return out;
 }
-// Judge and twin calls: one retry, and say which model failed.
-async function askJson<T>(msgs: Msg[], opts: Parameters<typeof chatJson>[1]): Promise<T> {
-  for (let i = 0; ; i++) {
-    try {
-      // The cheap judge sometimes returns nothing; the retry goes to a steadier model.
-      return await chatJson<T>(msgs, i && opts.model === JUDGE ? { ...opts, model: 'google/gemini-3.8-flash' } : opts);
-    } catch (e) {
-      if (i >= 1) throw new Error(`${opts.model}: ${(e as Error).message.slice(0, 300)}`);
-    }
+
+function localPeople(): Conv[] {
+  const dir = join(import.meta.dirname, '../data/people');
+  return existsSync(dir) ? readdirSync(dir).filter((f) => f.endsWith('.json')).map((f) => load(join(dir, f))).filter((c) => c.lines.some((l) => l.role === 'person')) : [];
+}
+
+async function conversations(): Promise<Conv[]> {
+  if (arg('hosted')) return hosted(files);
+  if (arg('local')) return localPeople();
+  const label = arg('label');
+  const fs = label ? readdirSync(RUNS).filter((f) => f.endsWith(`-${label}.json`)).map((f) => join(RUNS, f)) : files;
+  return fs.map((f) => withName(load(f)));
+}
+
+if (mode === 'sim') {
+  const people = PERSONAS.filter((p) => arg('people', PERSONAS.map((x) => x.id).join(',')).split(',').includes(p.id));
+  const arms = arg('arms', 'ours').split(',');
+  const o = { turns: Number(arg('turns', '12')), breakAt: Number(arg('break', '6')), label: arg('label') || undefined };
+  const jobs = people.flatMap((p) => arms.flatMap((arm) => Array.from({ length: Number(arg('seeds', '1')) }, (_, s) => ({ p, arm, seed: 1000 + s }))));
+  await Promise.all(
+    jobs.map(async ({ p, arm, seed }) => {
+      try {
+        const r = await simulate(p, arm, { ...o, seed });
+        write(join(RUNS, `${r.id}.json`), r);
+        const ann = r.lines.filter((l) => l.role === 'person').map((l) => l.annoyance ?? 1);
+        console.log(`${r.id.padEnd(28)} ${r.lines.filter((l) => l.role === 'person').length} answers · ${r.notes.length} notes · annoyance max ${Math.max(...ann)}${r.left ? ' · LEFT' : ''}`);
+      } catch (e) {
+        console.error(`${p.id}/${arm} failed: ${(e as Error).message}`);
+      }
+    }),
+  );
+  done();
+} else if (mode === 'show') {
+  const r = JSON.parse(readFileSync(files[0], 'utf8'));
+  const c = withName(load(files[0]));
+  let a = 0;
+  for (const [i, l] of c.lines.entries()) {
+    if (i === 0 || c.lines[i - 1].session !== l.session) console.log(`\n--- session ${l.session} ---`);
+    console.log(`${l.role === 'agent' ? 'Q' : `A (${l.annoyance ?? '-'})`}: ${l.text}`);
+    if (l.role === 'person' && r.liveGaps?.[a] !== undefined) console.log(`   ↳ live read: ${r.liveGaps[a]}`);
+    if (l.role === 'person') a++;
   }
-}
-
-const CALL_LATER = 'Sorry, I have to go now. Can we continue later?';
-
-// ---------- the simulated person ----------
-
-const RELEASE = {
-  free: 'you may bring this up yourself when it fits',
-  asked: 'share only if they ask about this area of your life',
-  probe: 'share only if they ask for a specific instance, your reason, a comparison or exactly what you notice or do; a general question gets a general answer',
-  trust: 'share only once they have shown they really listened (built on something you said, or reflected it back accurately) and it feels safe',
-};
-
-function simSystem(p: Persona) {
-  return `You are role-playing ${p.who}
-Someone is interviewing you by chat. Stay fully in character. Never mention being an AI or a simulation.
-
-How you talk: ${p.style}
-
-What you know about yourself, and when you'd share each piece (never list them, never volunteer more than one or two per answer, and don't recite them word for word):
-${p.facts.map((f) => `- ${f.text} [${RELEASE[f.disclosure]}]`).join('\n')}
-
-You may add small realistic colour, but don't invent important new facts about yourself and never contradict the ones above.
-Like a real person, you get annoyed by: repeated questions, questions you already answered, generic "tell me more", being praised for answers, long or multi-part questions, being pushed after you pushed back, and the interviewer ignoring what you just said. You warm up when they are specific, curious and build on what you said. If your annoyance reaches 5, end the conversation in character.
-
-Reply ONLY with JSON: {"reply": "<what you say>", "annoyance": <1-5, how annoyed you are now>, "leave": <true if you end the conversation now>}`;
-}
-
-async function simReply(p: Persona, lines: Line[], seed: number) {
-  // From the sim's side, the interviewer is the "user" and it is the "assistant".
-  const msgs: Msg[] = [{ role: 'system', content: simSystem(p) }];
-  for (const l of lines) msgs.push({ role: l.role === 'agent' ? 'user' : 'assistant', content: l.role === 'agent' ? l.text : JSON.stringify({ reply: l.text, annoyance: l.annoyance ?? 1, leave: false }) });
-  const r = await askJson<{ reply: string; annoyance: number; leave: boolean }>(msgs, { model: MODELS.persona, temperature: 0.8, maxTokens: 2000, seed });
-  return { reply: String(r.reply ?? '').trim(), annoyance: Number(r.annoyance) || 1, leave: !!r.leave };
-}
-
-// ---------- the interviewers ----------
-
-type Interviewer = {
-  start(session: number): Promise<{ text: string; wrap?: boolean }>;
-  turn(text: string): Promise<{ text: string; wrap: boolean }>;
-  end(): Promise<void>;
-  memory(): string[];
-};
-
-function ours(p: Persona): Interviewer {
-  const mem = new Map<string, Person>();
-  const store: PersonStore = { load: async (id) => mem.get(id), save: (x) => void mem.set(x.id, x) };
-  const room = new Room(personId(p.name), store, async () => {
-    throw new Error('no voice in eval');
-  });
-  let sessionId = '';
-  const body = (r: { status: number; body: any }) => {
-    if (r.status !== 200) throw new Error(`room ${r.status}: ${JSON.stringify(r.body)}`);
-    return r.body;
-  };
-  return {
-    async start() {
-      const b = body(await room.api('text/start', { name: p.name }));
-      sessionId = b.sessionId;
-      return { text: (b.decision as Decision).say };
-    },
-    async turn(text) {
-      const b = body(await room.api('text/turn', { id: room.id, sessionId, text }));
-      const d = b.decision as Decision;
-      return { text: d.say, wrap: d.move === 'wrap' };
-    },
-    async end() {
-      body(await room.api('text/end', { id: room.id, sessionId, reason: 'later' }));
-    },
-    memory: () => Object.values(mem.get(room.id)?.notes ?? {}).map((n) => `[${n.path}] ${n.title}: ${n.body.replace(/\s+/g, ' ')}`),
-  };
-}
-
-const BASELINE = (name: string) =>
-  `You are a warm, curious interviewer talking with ${name}. Your goal is to get to know them well enough that a digital twin of them could answer, decide and react the way they would. Ask one short question at a time, conversationally. Cover the different sides of their life: work, values, relationships, how they make decisions. If they want to stop, wrap up kindly.`;
-
-function baseline(p: Persona): Interviewer {
-  let msgs: Msg[] = [];
-  let earlier = '';
-  const ask = async () => {
-    const text = (await chat(msgs, { model: MODELS.brain, temperature: 0.5, maxTokens: 700 })).trim();
-    msgs.push({ role: 'assistant', content: text });
-    return text;
-  };
-  return {
-    async start(session) {
-      // A second session gets the whole earlier transcript: a generous stand-in for memory.
-      const sys = BASELINE(p.name) + (earlier ? `\n\nYou talked before; here is that conversation:\n${earlier}\nThey are back now. Continue.` : '');
-      msgs = [{ role: 'system', content: sys }, { role: 'user', content: session === 1 ? `(${p.name} has joined. Start.)` : `(${p.name} is back. Start.)` }];
-      return { text: await ask() };
-    },
-    async turn(text) {
-      msgs.push({ role: 'user', content: text });
-      const reply = await ask();
-      return { text: reply, wrap: text === CALL_LATER };
-    },
-    async end() {
-      earlier += msgs
-        .slice(2)
-        .map((m) => `${m.role === 'assistant' ? 'Interviewer' : p.name}: ${m.content}`)
-        .join('\n');
-    },
-    memory: () => [],
-  };
-}
-
-// ---------- one run ----------
-
-async function run(p: Persona, arm: string, seed: number) {
-  const iv = arm === 'ours' ? ours(p) : baseline(p);
-  const lines: Line[] = [];
-  let session = 1;
-  let personTurns = 0;
-  let left = false;
-  let wrappedItself = false;
-  let opening = await iv.start(session);
-  lines.push({ role: 'agent', text: opening.text, session });
-  while (personTurns < TURNS) {
-    const breakNow = session === 1 && personTurns === BREAK - 1;
-    const sim = breakNow ? { reply: CALL_LATER, annoyance: lines.at(-2)?.annoyance ?? 1, leave: false } : await simReply(p, lines, seed);
-    personTurns++;
-    lines.push({ role: 'person', text: sim.reply, session, annoyance: sim.annoyance });
-    if (sim.leave) {
-      left = true;
-      break;
-    }
-    const r = await iv.turn(sim.reply);
-    lines.push({ role: 'agent', text: r.text, session });
-    if (breakNow) {
-      await iv.end();
-      session = 2;
-      opening = await iv.start(session);
-      lines.push({ role: 'agent', text: opening.text, session });
-    } else if (r.wrap) {
-      wrappedItself = true;
-      break;
-    }
+  console.log(`\n--- notes (${c.notes.length}) ---\n${c.notes.join('\n')}`);
+  if (r.gaps?.length) console.log(`\n--- gaps file ---\n${r.gaps.map((g: string) => `- ${g}`).join('\n')}`);
+} else if (mode === 'grade') {
+  const convs = await conversations();
+  if (!convs.length) throw new Error('no conversations to grade');
+  const items: GradedItem[] = [];
+  for (const c of convs) {
+    const p = PERSONAS.find((x) => x.id === c.persona);
+    const g = await gradeAll(c, p);
+    items.push({ id: c.id, name: c.name, source: c.source, persona: c.persona, arm: c.arm, seed: c.seed, metrics: g.metrics, detail: { conversation: g.conversation, notes: g.notes, coverage: g.coverage, facts: g.facts, twin: g.twin } });
+    console.error(`graded ${c.id}`);
   }
-  if (!left) await iv.end().catch(() => {});
-  return { persona: p.id, arm, seed, lines, left, wrappedItself, memory: iv.memory() };
+  const label = arg('out') || arg('label') || (arg('hosted') ? 'hosted' : arg('local') ? 'local' : 'set');
+  const set: GradedSet = { label, at: new Date().toISOString(), judge: JUDGE, items };
+  write(join(GRADED, `${label}.json`), set);
+  const md = summarise(set);
+  write(join(GRADED, `${label}.md`), md);
+  console.log(md);
+  done();
+} else if (mode === 'compare') {
+  const [a, b] = files.map((f) => JSON.parse(readFileSync(f, 'utf8')) as GradedSet);
+  const r = compare(a, b);
+  write(join(GRADED, `compare-${a.label}-vs-${b.label}.md`), r.text);
+  console.log(r.text);
+} else if (mode === 'meta') {
+  const sets = readdirSync(GRADED).filter((f) => f.endsWith('.json')).map((f) => JSON.parse(readFileSync(join(GRADED, f), 'utf8')) as GradedSet);
+  const sims = readdirSync(RUNS).map((f) => withName(load(join(RUNS, f))));
+  const real = [...localPeople(), ...(arg('hosted') ? await hosted([]) : [])];
+  const parts = ['# How far to trust the harness', `judge ${JUDGE}`, '', await judgeVsHuman()];
+  const n = Number(arg('retest', '0'));
+  if (n) parts.push(await judgeRetest(sims.slice(0, n)));
+  const all: GradedSet = { label: 'all', at: '', judge: JUDGE, items: sets.flatMap((s) => s.items) };
+  parts.push(seedNoise(all, Object.keys(METRICS)), simRealism(sims, real), coverageValidity(all));
+  const md = parts.join('\n\n');
+  write(join(R, 'meta.md'), md);
+  console.log(md);
+  done();
+} else if (mode === 'improve') {
+  // The failures, gathered from a graded set, for one small generic edit. Nothing is applied: the
+  // edit goes into a branch and through `compare`, and only a win is kept.
+  const set = JSON.parse(readFileSync(files[0], 'utf8')) as GradedSet;
+  const bad: string[] = [];
+  for (const i of set.items) {
+    const d = i.detail;
+    for (const l of d.conversation?.lines ?? []) {
+      const flags = Object.entries(l).filter(([k, v]) => v === true && METRICS[k] && !METRICS[k].up).map(([k]) => k);
+      if (flags.length) bad.push(`${i.id} Q${l.q}: ${flags.join(', ')}`);
+    }
+    for (const a of d.conversation?.answers ?? []) if (a.depth === 'thin' && a.gap) bad.push(`${i.id} A${a.a} thin; a fuller answer would add: ${a.gap}`);
+    for (const t of d.twin?.asks ?? []) if (t.grade !== 'right') bad.push(`${i.id} twin ${t.grade}: "${t.q}" truth: ${t.gold}`);
+    for (const t of d.coverage?.asks ?? []) if (t.grade === 'invented' || t.grade === 'abstain') bad.push(`${i.id} coverage ${t.grade}: "${t.q}"`);
+  }
+  const ask = `Below is the interviewer's system prompt, then the failures an eval found across ${set.items.length} conversations.
+Propose ONE small, generic edit to the prompt (a sentence added, changed or removed) most likely to fix the most common failure without causing others. No narrow examples that would be parroted; prefer giving the model judgement over rules.
+Return: the failure pattern you target (with counts), the exact old text and new text, and what might get worse.
+
+== Prompt ==
+${PRINCIPLES}
+
+== Failures ==
+${bad.join('\n')}`;
+  const md = `# Failure digest: ${set.label}\n\n${bad.map((b) => `- ${b}`).join('\n')}\n\n# Proposed edit\n\n${await chat([{ role: 'user', content: ask }], { model: MODELS.brain, temperature: 0.3, maxTokens: 2000 })}`;
+  write(join(GRADED, `improve-${set.label}.md`), md);
+  console.log(md);
+  done();
+} else {
+  console.log(readFileSync(import.meta.filename, 'utf8').split('\n').filter((l) => l.startsWith('//')).join('\n'));
 }
-
-// ---------- the judge (different family from the brain and the sim) ----------
-
-type Judged = {
-  facts: { n: number; said: 'yes' | 'partial' | 'no'; evidence: string }[];
-  memory?: { n: number; saved: 'yes' | 'partial' | 'no' }[];
-  issues: { repeated: string[]; praise: string[]; overdrill: string[]; ignored: string[]; pushedAfterPushback: string[] };
-  resume: { remembered: boolean; reAsked: string[]; note: string };
-  lines?: { q: number; open: boolean; reaction: boolean; restates: boolean; multi: boolean; offAudience: boolean }[];
-};
-
-async function judge(p: Persona, r: Awaited<ReturnType<typeof run>>) {
-  let q = 0;
-  const transcript = r.lines.map((l, i) => `${i === 0 || r.lines[i - 1].session !== l.session ? `--- session ${l.session} ---\n` : ''}${l.role === 'agent' ? `[Q${++q}] Interviewer` : p.name}: ${l.text}`).join('\n');
-  const facts = p.facts.map((f, i) => `${i + 1}. ${f.text}`).join('\n');
-  const memoryPart = r.memory.length
-    ? `\n\nThe interviewer's saved notes:\n${r.memory.map((m) => `- ${m}`).join('\n')}\n\nFor each fact, also say whether the saved notes contain it ("memory").`
-    : '';
-  const j = await askJson<Judged>(
-    [
-      { role: 'system', content: 'You audit interview transcripts strictly. A fact counts as said only if the person clearly said it (partial if only part of it, e.g. the rule but not its reason). Quote the person exactly as evidence.' },
-      {
-        role: 'user',
-        content: `Transcript:\n${transcript}\n\nFacts about ${p.name}:\n${facts}${memoryPart}
-
-Return ONLY JSON:
-{"facts":[{"n":1,"said":"yes|partial|no","evidence":"<exact quote from ${p.name}, or empty>"}],
- ${r.memory.length ? '"memory":[{"n":1,"saved":"yes|partial|no"}],' : ''}
- "issues":{"repeated":["<interviewer questions that re-ask something already asked or answered>"],
-           "praise":["<interviewer lines that praise, rate or flatter an answer (e.g. \"that's a sharp way to put it\")>"],
-           "overdrill":["<points pushed 3+ times after the person had already given their view and reason>"],
-           "ignored":["<interviewer lines that ignore what the person just said>"],
-           "pushedAfterPushback":["<lines that pressed on after the person pushed back or was annoyed>"]},
- "resume":{"remembered":<true if the session-2 opening shows it remembers session 1 accurately>,"reAsked":["<session-2 questions about things already covered in session 1>"],"note":"<one line>"},
- "lines":[{"q":1,"open":<true if it leaves room for a long answer, not yes/no or one fact>,"reaction":<true if it opens with a short response that adds something of its own (a thought, a link to earlier, a light remark), not a paraphrase or compliment>,"restates":<true only if it spends words handing their own answer back to them (a paraphrase, a summary or a quoted phrase as a statement, e.g. "So X was what hid it."); a question that builds on a detail they gave is NOT restating>,"multi":<true if it asks two or more things>,"offAudience":<true if it asks about something people who'd talk to their twin (colleagues, people wanting their advice, friends) would rarely need>}]}
-Label every [Qn] line in "lines".`,
-      },
-    ],
-    { model: JUDGE, temperature: 0, maxTokens: 16000 },
-  );
-  // Evidence must really be in the person's words, else no credit.
-  const said = r.lines.filter((l) => l.role === 'person').map((l) => l.text.toLowerCase()).join('\n');
-  const norm = (s: string) => s.toLowerCase().replace(/[^\p{L}\p{N} ]/gu, '').replace(/\s+/g, ' ').trim();
-  const saidNorm = norm(said);
-  // Quotes joined with "..." are checked piece by piece.
-  const inWords = (q: string) => q.split(/\.\.\.|…/).map(norm).filter((x) => x.length > 3).every((x) => saidNorm.includes(x.slice(0, 40)));
-  for (const f of j.facts) if (f.said !== 'no' && (!f.evidence || !inWords(f.evidence))) f.said = 'no';
-  return { transcript, ...j };
-}
-
-// ---------- the twin test: what outsiders would ask, answered from the saved notes only ----------
-
-type TwinAnswer = { q: string; gold: string; answer: string; grade: 'right' | 'partial' | 'wrong' | 'abstain' };
-
-async function twinTest(p: Persona, r: Awaited<ReturnType<typeof run>>, transcript: string): Promise<TwinAnswer[]> {
-  if (!p.asks?.length) return [];
-  // Ours keeps notes; an arm without notes gets its whole transcript, a generous stand-in.
-  const known = r.memory.length ? `Your notes about ${p.name}:\n${r.memory.map((m) => `- ${m}`).join('\n')}` : `Your conversation with ${p.name}:\n${transcript}`;
-  const a = await askJson<{ answers: string[] }>(
-    [
-      { role: 'system', content: `You are a digital twin of ${p.name}. You know only what is below. Answer each question the way ${p.name} would, in one or two sentences, first person. If what you know doesn't tell you how they'd answer, say exactly "I don't know." Don't guess from general knowledge.\n\n${known}` },
-      { role: 'user', content: `Questions:\n${p.asks.map((x, i) => `${i + 1}. ${x.q}`).join('\n')}\n\nReturn ONLY JSON: {"answers":["<answer to 1>", ...]}` },
-    ],
-    { model: TWIN, temperature: 0, maxTokens: 4000 },
-  );
-  const answers = p.asks.map((x, i) => ({ q: x.q, gold: x.gold, answer: String(a.answers?.[i] ?? "I don't know.") }));
-  const g = await askJson<{ grades: TwinAnswer['grade'][] }>(
-    [
-      { role: 'system', content: 'You grade a digital twin against the real person. right: the answer matches the substance of the truth, including any key condition or exception. partial: some of it, or the right direction without the reason. wrong: contradicts it or invents a different answer. abstain: says it does not know.' },
-      { role: 'user', content: `${answers.map((x, i) => `${i + 1}. Q: ${x.q}\n   Truth: ${x.gold}\n   Twin: ${x.answer}`).join('\n')}\n\nReturn ONLY JSON: {"grades":["right|partial|wrong|abstain", ...]}` },
-    ],
-    { model: JUDGE, temperature: 0, maxTokens: 4000 },
-  );
-  return answers.map((x, i) => ({ ...x, grade: g.grades?.[i] ?? 'wrong' }));
-}
-
-function score(p: Persona, r: Awaited<ReturnType<typeof run>>, j: Awaited<ReturnType<typeof judge>>, twin: TwinAnswer[]) {
-  const val = (s?: string) => (s === 'yes' ? 1 : s === 'partial' ? 0.5 : 0);
-  const recall = (pick: (f: Fact) => boolean, get: (i: number) => string | undefined) => {
-    let num = 0;
-    let den = 0;
-    p.facts.forEach((f, i) => {
-      if (!pick(f)) return;
-      const w = f.vital ? 2 : 1;
-      den += w;
-      num += w * val(get(i + 1));
-    });
-    return den ? num / den : 0;
-  };
-  const said = (n: number) => j.facts.find((f) => f.n === n)?.said;
-  const saved = (n: number) => j.memory?.find((f) => f.n === n)?.saved;
-  const agent = r.lines.filter((l) => l.role === 'agent');
-  const person = r.lines.filter((l) => l.role === 'person');
-  const L = j.lines ?? [];
-  const rate = (k: keyof NonNullable<Judged['lines']>[number]) => (L.length ? L.filter((x) => x[k]).length / L.length : 0);
-  const tg = (g: string) => (twin.length ? twin.filter((t) => t.grade === g).length / twin.length : 0);
-  return {
-    twin: twin.length ? tg('right') + tg('partial') / 2 : null,
-    twinWrong: tg('wrong'),
-    twinAbstain: tg('abstain'),
-    open: rate('open'),
-    reaction: rate('reaction'),
-    restates: rate('restates'),
-    multi: rate('multi'),
-    offAudience: rate('offAudience'),
-    personWords: Math.round(person.reduce((s, l) => s + l.text.split(/\s+/).length, 0) / Math.max(1, person.length)),
-    recall: recall(() => true, said),
-    vitalRecall: recall((f) => f.vital, said),
-    tacitRecall: recall((f) => f.disclosure === 'probe' || f.disclosure === 'trust', said),
-    memoryRecall: j.memory ? recall(() => true, saved) : null,
-    personTurns: person.length,
-    left: r.left,
-    meanAnnoyance: person.reduce((s, l) => s + (l.annoyance ?? 1), 0) / Math.max(1, person.length),
-    maxAnnoyance: Math.max(...person.map((l) => l.annoyance ?? 1)),
-    agentWords: Math.round(agent.reduce((s, l) => s + l.text.split(/\s+/).length, 0) / Math.max(1, agent.length)),
-    issues: Object.fromEntries(Object.entries(j.issues ?? {}).map(([k, v]) => [k, (v ?? []).length])),
-    resumeRemembered: j.resume?.remembered ?? false,
-    resumeReAsks: j.resume?.reAsked?.length ?? 0,
-  };
-}
-
-// ---------- main ----------
-
-const started = Date.now();
-const results: any[] = [];
-const cost: Record<string, number> = {};
-for (const arm of ARMS) {
-  const before = usage.costUsd;
-  const jobs = PEOPLE.flatMap((p) =>
-    Array.from({ length: SEEDS }, (_, s) =>
-      (async () => {
-        const saved = FROM.find((x) => x.persona === p.id && x.arm === arm && x.seed === 1000 + s);
-        if (FROM.length && !saved) return;
-        const r = saved ?? (await run(p, arm, 1000 + s));
-        if (!saved) mkdirSync(join(import.meta.dirname, 'results/runs'), { recursive: true });
-        if (!saved) writeFileSync(join(import.meta.dirname, `results/runs/${p.id}-${arm}-${s}${LABEL ? `-${LABEL}` : ''}.json`), JSON.stringify(r, null, 1));
-        const j = await judge(p, r);
-        const twin = await twinTest(p, r, j.transcript);
-        const m = score(p, r, j, twin);
-        console.log(`${arm.padEnd(8)} ${p.id.padEnd(6)} seed ${s}  twin ${m.twin == null ? '-' : (m.twin * 100).toFixed(0) + '%'}  recall ${(m.recall * 100).toFixed(0)}%  tacit ${(m.tacitRecall * 100).toFixed(0)}%  turns ${m.personTurns}  annoy ${m.meanAnnoyance.toFixed(1)}${m.left ? '  LEFT' : ''}`);
-        results.push({ persona: p.id, behaviour: p.behaviour, arm, seed: s, metrics: m, facts: p.facts.map((f, i) => ({ ...f, said: j.facts.find((x) => x.n === i + 1)?.said ?? 'no', evidence: j.facts.find((x) => x.n === i + 1)?.evidence ?? '', saved: j.memory?.find((x) => x.n === i + 1)?.saved })), issues: j.issues, resume: j.resume, twin, feel: j.lines, lines: r.lines, memory: r.memory });
-      })().catch((e) => console.error(`${arm} ${p.id} failed:`, (e as Error).message)),
-    ),
-  );
-  await Promise.all(jobs);
-  cost[arm] = usage.costUsd - before;
-}
-
-const fix = (s: Record<string, any>) => Object.fromEntries(Object.entries(s).map(([k, v]) => [k, typeof v === 'number' && !Number.isInteger(v) ? Number(v.toFixed(2)) : v]));
-const mean = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
-const summary = ARMS.map((arm) => {
-  const rs = results.filter((r) => r.arm === arm).map((r) => r.metrics);
-  const issueTotal = (k: string) => rs.reduce((s, m) => s + (m.issues[k] ?? 0), 0);
-  return {
-    arm,
-    runs: rs.length,
-    twin: mean(rs.filter((m) => m.twin != null).map((m) => m.twin!)),
-    twinWrong: mean(rs.map((m) => m.twinWrong)),
-    twinAbstain: mean(rs.map((m) => m.twinAbstain)),
-    open: mean(rs.map((m) => m.open)),
-    reaction: mean(rs.map((m) => m.reaction)),
-    restates: mean(rs.map((m) => m.restates)),
-    multi: mean(rs.map((m) => m.multi)),
-    offAudience: mean(rs.map((m) => m.offAudience)),
-    personWords: mean(rs.map((m) => m.personWords)),
-    recall: mean(rs.map((m) => m.recall)),
-    vitalRecall: mean(rs.map((m) => m.vitalRecall)),
-    tacitRecall: mean(rs.map((m) => m.tacitRecall)),
-    memoryRecall: arm === 'ours' ? mean(rs.map((m) => m.memoryRecall ?? 0)) : null,
-    meanAnnoyance: mean(rs.map((m) => m.meanAnnoyance)),
-    leftEarly: rs.filter((m) => m.left).length,
-    agentWords: mean(rs.map((m) => m.agentWords)),
-    repeated: issueTotal('repeated'),
-    praise: issueTotal('praise'),
-    overdrill: issueTotal('overdrill'),
-    ignored: issueTotal('ignored'),
-    pushedAfterPushback: issueTotal('pushedAfterPushback'),
-    resumeRemembered: rs.filter((m) => m.resumeRemembered).length,
-    resumeReAsks: rs.reduce((s, m) => s + m.resumeReAsks, 0),
-    costUsd: cost[arm],
-  };
-});
-console.table(summary.map((s) => ({ ...s, ...fix(s), recall: s.recall.toFixed(2), vitalRecall: s.vitalRecall.toFixed(2), tacitRecall: s.tacitRecall.toFixed(2), memoryRecall: s.memoryRecall?.toFixed(2), meanAnnoyance: s.meanAnnoyance.toFixed(2), costUsd: s.costUsd.toFixed(3) })));
-
-const out = { at: new Date().toISOString(), minutes: (Date.now() - started) / 60000, label: LABEL, config: { arms: ARMS, people: PEOPLE.map((p) => p.id), turns: TURNS, break: BREAK, seeds: SEEDS, models: { ...MODELS, judge: JUDGE, twin: TWIN } }, summary, results: results.sort((a, b) => a.persona.localeCompare(b.persona) || a.arm.localeCompare(b.arm)) };
-const dir = join(import.meta.dirname, 'results');
-mkdirSync(dir, { recursive: true });
-const file = join(dir, `${out.at.replace(/[:.]/g, '-')}${LABEL ? `-${LABEL}` : ''}.json`);
-writeFileSync(file, JSON.stringify(out, null, 2));
-// the site shows public/eval-results.json; only overwrite it on purpose
-if (process.env.PUBLISH) writeFileSync(join(import.meta.dirname, '../public/eval-results.json'), JSON.stringify(out));
-console.log(`wrote ${file}${process.env.PUBLISH ? ' and public/eval-results.json' : ''}; total cost $${usage.costUsd.toFixed(3)}`);

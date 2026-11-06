@@ -85,7 +85,7 @@ export function renderContext(p: Person, sessionId?: string): string {
   if (src) lines.push(`\n== Notes from their connected tools (read by an assistant, NOT said by them) ==\n${src}\nThis shows what's in their tools, possibly out of date. Use it to ask about the why and what isn't written down; say where you saw it. Never copy it into their notes: only what they say counts.`);
   if (p.summary) lines.push(`\n== Running summary ==\n${p.summary}`);
   lines.push(`\n== Their notes (what we know; don't re-ask it) ==\n${renderNotes(p)}`);
-  if (p.open?.length) lines.push(`\n== Still most worth learning ==\n${p.open.map((x) => `- ${x}`).join('\n')}`);
+  if (p.open?.length) lines.push(`\n== Your gaps file (private: what's still missing for their twin) ==\n${p.open.map((x) => `- ${x}`).join('\n')}`);
 
   const asked = p.turns.filter((t) => t.role === 'agent').map((t) => t.text);
   if (asked.length > POLICY.recentTurns) {
@@ -107,11 +107,11 @@ export function renderContext(p: Person, sessionId?: string): string {
 // ---------- the turn ----------
 
 type TurnOut = {
-  read: { label: AnswerLabel; why: string; covered?: string };
+  read: { label: AnswerLabel; why: string; gap?: string };
   language?: string;
   who?: string | null;
   notes?: NoteOp[];
-  open?: string[];
+  gaps?: string[];
   next: { move: Move; ack?: string; question: string; reason: string };
 };
 
@@ -188,6 +188,7 @@ export async function personTurn(
   if (!out) throw new Error('Brain returned no usable output');
 
   personTurnRec.label = out.read.label;
+  if (out.read.gap) personTurnRec.gap = out.read.gap;
   return applyTurn(p, out, sessionId, channel, opts.recordAgent ?? true);
 }
 
@@ -195,7 +196,7 @@ function applyTurn(p: Person, out: TurnOut, sessionId: string, channel: Channel,
   const label = out.read.label;
   if (out.language) p.language = out.language;
   if (out.who && out.who !== 'null') p.expertise = out.who;
-  if (Array.isArray(out.open)) p.open = out.open.slice(0, 4);
+  if (Array.isArray(out.gaps)) p.open = out.gaps.filter((x) => typeof x === 'string' && x.trim()).slice(0, 12);
 
   const lastPersonTurn = [...p.turns].reverse().find((t) => t.role === 'person')!;
   const changes = applyNoteOps(p, out.notes, { turnId: lastPersonTurn.id, sessionId });
@@ -206,7 +207,7 @@ function applyTurn(p: Person, out: TurnOut, sessionId: string, channel: Channel,
   // In voice the interviewer words its own reply; the transcript records what it actually said.
   if (recordAgent) p.turns.push({ id: id(), role: 'agent', text: say, channel, sessionId, at: Date.now(), move: next.move });
 
-  return { label, move: next.move, say, question: next.question ?? '', reason: next.reason ?? out.read.why ?? '', covered: out.read.covered, changes };
+  return { label, move: next.move, say, question: next.question ?? '', reason: next.reason ?? out.read.why ?? '', gap: out.read.gap, changes };
 }
 
 // ---------- opener / resume / wrap (agent speaks without a person turn) ----------

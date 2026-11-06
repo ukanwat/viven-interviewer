@@ -131,17 +131,17 @@ export async function consolidate(p: Person, opts: { sessionId: string; turns?: 
   const task = opts.fromScratch
     ? `Write ${p.name}'s notes from scratch from this transcript.`
     : `This conversation just ended. Tidy ${p.name}'s notes against it: add anything they said that's missing, fix any note their words don't support, remove anything that isn't about them (conversation logistics, the interviewer's guesses), merge duplicates and overlaps, and reorganise folders if a clearer structure is now visible. If the notes are already right, return no ops.`;
-  const out = await chatJson<{ notes?: NoteOp[]; open?: string[]; who?: string }>(
+  const out = await chatJson<{ notes?: NoteOp[]; gaps?: string[]; who?: string }>(
     [
       // Same system prompt as the interview turns, so the after-call pass reads it from the cache.
       { role: 'system', content: PRINCIPLES, cache: true },
       {
         role: 'user',
-        content: `You are now keeping the notes, not interviewing. Today: ${new Date().toISOString().slice(0, 10)}.\n\n== Current notes ==\n${opts.fromScratch ? '(none)' : renderNotes(p)}\n\n== Transcript ==\n${transcript}\n\n${task}
+        content: `You are now keeping the notes, not interviewing. Today: ${new Date().toISOString().slice(0, 10)}.\n\n== Current notes ==\n${opts.fromScratch ? '(none)' : renderNotes(p)}${p.open?.length ? `\n\n== Your gaps file before this conversation ==\n${p.open.map((x) => `- ${x}`).join('\n')}` : ''}\n\n== Transcript ==\n${transcript}\n\n${task}
 Return ONLY JSON:
 {
   "notes": ${NOTE_OPS_SCHEMA},
-  "open": ["<up to 4 things still most worth learning about them, for next time>"],
+  "gaps": ["<your private gaps file, updated against the tidied notes for next time: up to 12 short, specific lines of what's still missing for their twin, most valuable first; nothing the notes already hold>"],
   "who": "<one line: who they are, in plain words; name or they, never he/she>"
 }`,
       },
@@ -150,7 +150,7 @@ Return ONLY JSON:
   );
   if (opts.fromScratch) (p.notes = {}), (p.folders = {});
   const changes = applyNoteOps(p, out.notes, { sessionId: opts.sessionId });
-  if (out.open?.length) p.open = out.open.slice(0, 4);
+  if (out.gaps?.length) p.open = out.gaps.filter((x) => typeof x === 'string' && x.trim()).slice(0, 12);
   if (out.who) p.expertise = out.who;
   return changes;
 }

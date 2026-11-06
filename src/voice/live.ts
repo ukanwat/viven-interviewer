@@ -61,7 +61,7 @@ function historyInput(p: Person, opening: Decision) {
     renderSources(p, 4000) && `Notes from tools they connected (read by an assistant, NOT said by them; shows the what, ask about the why; say where you saw it): \n${renderSources(p, 4000)}`,
     connectedLabels(p).length ? `Tools they connected: ${connectedLabels(p).join(', ')}.` : '',
     Object.keys(p.notes).length ? `Their notes so far (what you already know; do not re-ask):\n${renderTree(p).slice(0, 6000)}` : '',
-    p.open?.length ? `Still most worth learning: ${p.open.join('; ')}` : '',
+    p.open?.length ? `What's still missing for their twin (private gaps file; never re-ask what's in the notes): ${p.open.join('; ')}` : '',
   ]
     .filter(Boolean)
     .join('\n');
@@ -324,8 +324,8 @@ function brief(d: Decision, p: Person) {
   const lines = ['Note from the note-taker (silent, not said by them). For your next turn: if you have already asked a question, do not add another; wait for their answer.'];
   const noted = d.changes.filter((c) => c.op === 'add' || c.op === 'edit');
   if (noted.length) lines.push(`Just noted: ${noted.map((c) => c.summary || c.title).join(' | ')}`);
-  if (p.open?.length) lines.push(`Still most worth learning: ${p.open.join('; ')}`);
-  if (d.covered) lines.push(`On the topic in play: ${d.covered}`);
+  if (d.gap) lines.push(`Their last answer: ${d.gap}`);
+  if (p.open?.length) lines.push(`Still missing (top of the gaps file): ${p.open.slice(0, 4).join('; ')}`);
   lines.push(`Suggested direction: ${d.reason}${d.question ? ` For example: "${d.question}"` : ''}`);
   if (p.language && p.language !== 'english') lines.push(`They speak ${p.language}.`);
   return lines.join('\n').slice(0, 1800);
