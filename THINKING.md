@@ -259,7 +259,7 @@ v1's UI looked like a debug console: chips, labels, a "why this question" box. P
 
 **Why that's right.** "Urgent first, small things first, I procrastinate a bit" is close to what a base model would guess for anyone. The craft already said "only the delta matters" (§0), but nothing told the interviewer *where* to look for the delta. Faced with a list, it took the topic that was easiest to probe, the routine, not the one that says most about the person, the move. The genuinely distinctive line ("automate everything that takes effort, protect whatever gives pleasure") got one follow-up that drew an "I don't know", then was dropped.
 
-**Change.** Principle 4 is now *breadth first, then depth where it pays*. While the notebook is thin, sketch the map of their life: what they do, where they're heading, the people who matter, what they spend time on, what they're deciding now. Then go deep only where an answer shows something a generic model wouldn't guess. When one answer lists several things, choices in their life beat routines. This is still guidance to the model, not a code rule (§3).
+**Change.** Principle 5 is now *breadth first, then depth where it pays*. While the notebook is thin, sketch the map of their life: what they do, where they're heading, the people who matter, what they spend time on, what they're deciding now. Then go deep only where an answer shows something a generic model wouldn't guess. When one answer lists several things, choices in their life beat routines. This is still guidance to the model, not a code rule (§3).
 
 **Evidence (replay, $0.25).** I replayed the real call through the note-taker, holding the real interviewer lines fixed, and recorded what it would ask after each of the first 8 answers.
 
@@ -270,8 +270,36 @@ v1's UI looked like a debug console: chips, labels, a "why this question" box. P
 
 The other 6 questions were near-identical in both. The old prompt drills into urgency; the new one goes to the life decision. One replay of one person is thin evidence: the next real call is the test.
 
-## 10. What I'd do next
+## 10. Experiment 10: what the competitor asks (TwinCafe, hands-on, 6 Nov)
 
+Utkarsh's next note: TwinCafe "asks valuable stuff, like I'm an AI engineer, so it tries to capture that", while ours "is trying to make my twin, which is amazing, but it asks things that aren't even relevant, digs deep and expects short answers". So I used TwinCafe on his account. I spoke to its story interview through a fake mic (macOS TTS, Indian English), saved the result, asked the twin preview outsider questions, then deleted the test story.
+
+**What they do.**
+- Everything is framed around what other people will ask the twin. Each suggested topic says "Helps answer questions about…".
+- The story interview picks from 12 topics generated from his LinkedIn, all of them expertise ("agent memory", "evaluating coding agents", "orchestration failures"…). Its first question was specific to his job: "what made agent memory actually useful in your ANZ engineering workflow agents?". The follow-ups were good, and it matched his Hinglish.
+- It stays locked to one topic. When I asked to switch, it said "let's wrap this memory thread quickly". About 4 questions in 6 minutes, ending on "stop".
+- What it stores is the raw transcript as one source item, with speech-to-text errors and call logistics included. Nothing is extracted or organised.
+- Twin preview, five outsider questions:
+  - It used the story right away and accurately.
+  - "Startup or big company?" got polished generic advice.
+  - Hobbies and the move got "I haven't shared that…".
+  - "Everything is urgent, what do you do?" got a confident senior-engineer answer that differs from what Utkarsh actually said in our call ("urgent first, small first, I procrastinate a bit"). So the personal layer is exactly where a twin falls back to a generic person.
+
+**What that says.** They're right about *whose questions matter*: the people talking to the twin, who mostly come for the person's work and expertise. We're right that the twin needs more than expertise, because their twin either hedges or invents on everything personal. Our interview went wrong on priority, not on reach. It treated a morning routine as being as worth asking about as his field. And its narrow questions ("which one was urgent today?") invited one-line answers.
+
+**Change.**
+- The purpose now names the audience: colleagues, people wanting advice, people deciding whether to work with them, friends. What they'd ask comes first.
+- Principle 2's check is now "would someone talking to their twin plausibly need this?". Private routines rarely pass.
+- Principle 5 now starts with what they're known for, then breadth, then depth.
+- Principle 3 asks for open questions that leave room to talk at length, and says a long answer is the goal.
+- The opener asks about what they do or are known for.
+- We keep what TwinCafe lacks: no fixed topic, switching when asked, live follow-up on anything they bring, an organised notebook instead of a raw transcript, and life beyond work once the core is in.
+
+**Evidence (replay of the same real call, first 4 answers, $0.03).** After "automate everything except what gives me pleasure → I don't know", the old prompt asked about the day's three tasks. The new one asks "What do you do day to day, like work or studies?", which is the question TwinCafe got from LinkedIn for free. With a link, the opener already starts from their background (§5). This is one replay. A real call is the test.
+
+## 11. What I'd do next
+
+- **Twin-gap questions.** Ask a cheap model "what would people who know this person's work ask their twin that these notes can't answer?", and feed the top gap to the note-taker as a direction. This is TwinCafe's "see what it missed" loop, but before the twin exists.
 - **The twin test (idea only, not built).** This is the real measure of capture. Hold out questions the interview never asked ("would you take this job?", "how would you reply to this message?"). Build a minimal twin from the captured notes only, and score its answers against the person's own. Report how often it abstains as well as how accurate it is: a twin that says "I don't know" beats one that invents. The facts-recall numbers above are a stand-in for this.
 - **Let the person correct the notes.** They can already see the notebook. Next, let them fix or strike a note in place. That gives precision on real people with no golden set, and builds trust.
 - **Saturation as the stopping signal.** The after-call page already plots notes changed per answer. When an area of the notebook stops changing for a few answers, it's done. When the whole notebook does, the session is done.
