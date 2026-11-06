@@ -253,7 +253,24 @@ v1's UI looked like a debug console: chips, labels, a "why this question" box. P
 
 ---
 
-## 9. What I'd do next
+## 9. Experiment 9: deep, but on the wrong thing (Utkarsh, voice, 6 Nov evening)
+
+**What happened.** About 5 minutes in Hinglish. In one answer Utkarsh mentioned work, an interview, office work and moving. The interviewer picked "how do you decide what to do first" and stayed there for five questions: urgent first, then the small task first, then that it feels good, then the procrastination. Every answer was captured faithfully in the notes. Utkarsh's verdict: "its going deep but that deep is not that useful… it can do some breadth first".
+
+**Why that's right.** "Urgent first, small things first, I procrastinate a bit" is close to what a base model would guess for anyone. The craft already said "only the delta matters" (§0), but nothing told the interviewer *where* to look for the delta. Faced with a list, it took the topic that was easiest to probe, the routine, not the one that says most about the person, the move. The genuinely distinctive line ("automate everything that takes effort, protect whatever gives pleasure") got one follow-up that drew an "I don't know", then was dropped.
+
+**Change.** Principle 4 is now *breadth first, then depth where it pays*. While the notebook is thin, sketch the map of their life: what they do, where they're heading, the people who matter, what they spend time on, what they're deciding now. Then go deep only where an answer shows something a generic model wouldn't guess. When one answer lists several things, choices in their life beat routines. This is still guidance to the model, not a code rule (§3).
+
+**Evidence (replay, $0.25).** I replayed the real call through the note-taker, holding the real interviewer lines fixed, and recorded what it would ask after each of the first 8 answers.
+
+| after | old principle | new principle |
+|---|---|---|
+| "did some work, did an interview, office work, moving places" | "Which one felt like the biggest drag today?" | "You said you're moving places. Where are you moving to?" |
+| "jo bhi zyada urgent hai, woh karta hoon" | "Aaj ke teen kaam mein se urgent kya tha, aur kaise pata chala?" | "Achha, shifting kahan ho rahi hai, aur kyun?" |
+
+The other 6 questions were near-identical in both. The old prompt drills into urgency; the new one goes to the life decision. One replay of one person is thin evidence: the next real call is the test.
+
+## 10. What I'd do next
 
 - **The twin test (idea only, not built).** This is the real measure of capture. Hold out questions the interview never asked ("would you take this job?", "how would you reply to this message?"). Build a minimal twin from the captured notes only, and score its answers against the person's own. Report how often it abstains as well as how accurate it is: a twin that says "I don't know" beats one that invents. The facts-recall numbers above are a stand-in for this.
 - **Let the person correct the notes.** They can already see the notebook. Next, let them fix or strike a note in place. That gives precision on real people with no golden set, and builds trust.
