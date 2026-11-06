@@ -7,37 +7,51 @@
 //   coverage valid   does the reference-free coverage score track the gold twin score on sims?
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { load, type Conv } from './conversation.ts';
+import type { Conv } from './conversation.ts';
 import { gradeConversation, LINE_DEFS } from './grade.ts';
 import { corr, kappa, mean, minDetectable, sd } from './stats.ts';
 import type { GradedSet } from './report.ts';
 
 const f2 = (x: number) => (Number.isFinite(x) ? x.toFixed(2) : '–');
 
+// Calibration labels come from the viewer's review mode (`run.ts review-import`): eval/calibration/lines.json
+// holds the conversations and, per interviewer line, the human's labels. The judge regrades them (cached).
+// Reported per label as TPR (it catches the failure when it's there) and TNR (it stays quiet when it
+// isn't), not only kappa, which hides which way the judge errs.
 export async function judgeVsHuman() {
   const file = join(import.meta.dirname, '../calibration/lines.json');
-  if (!existsSync(file)) return '- judge vs human: no hand labels yet (eval/calibration/lines.json)';
-  const cal: { file: string; labels: Record<string, Record<keyof typeof LINE_DEFS, boolean>> }[] = JSON.parse(readFileSync(file, 'utf8'));
+  if (!existsSync(file)) return '### Judge vs human labels\nNo labels yet: review a set with `run.ts view`, download labels, then `run.ts review-import <file>`.';
+  const cal: { convs: Record<string, Conv>; lines: { id: string; q: number; labels: Record<string, boolean> }[] } = JSON.parse(readFileSync(file, 'utf8'));
   const human: Record<string, boolean[]> = {};
   const judge: Record<string, boolean[]> = {};
-  for (const c of cal) {
-    const g = await gradeConversation(load(join(import.meta.dirname, '..', c.file)));
-    for (const [q, lab] of Object.entries(c.labels)) {
-      const j = g.lines.find((l) => l.q === Number(q));
+  for (const [id, conv] of Object.entries(cal.convs)) {
+    const g = await gradeConversation(conv);
+    for (const l of cal.lines.filter((x) => x.id === id)) {
+      const j = g.lines.find((x) => x.q === l.q);
       if (!j) continue;
       for (const k of Object.keys(LINE_DEFS) as (keyof typeof LINE_DEFS)[]) {
-        if (lab[k] === undefined) continue;
-        (human[k] ??= []).push(lab[k]);
+        (human[k] ??= []).push(!!l.labels[k]);
         (judge[k] ??= []).push(!!j[k]);
       }
     }
   }
   const rows = Object.keys(human).map((k) => {
-    const r = kappa(human[k], judge[k]);
-    const yes = human[k].filter(Boolean).length;
-    return `| ${k} | ${r.n} | ${yes} | ${f2(r.agree)} | ${f2(r.kappa)} |`;
+    const h = human[k];
+    const jj = judge[k];
+    const pos = h.filter(Boolean).length;
+    const tp = h.filter((x, i) => x && jj[i]).length;
+    const tn = h.filter((x, i) => !x && !jj[i]).length;
+    const r = kappa(h, jj);
+    return `| ${k} | ${h.length} | ${pos} | ${pos ? f2(tp / pos) : '–'} | ${h.length - pos ? f2(tn / (h.length - pos)) : '–'} | ${f2(r.kappa)} |`;
   });
-  return ['### Judge vs my hand labels', 'kappa: above 0.6 trust it, 0.4–0.6 use with care, below 0.4 don\'t steer by it. With few "yes" cases kappa is unstable; read agreement too.', '', '| label | lines | human yes | agree | kappa |', '|---|---|---|---|---|', ...rows].join('\n');
+  return [
+    '### Judge vs human labels',
+    'TPR: share of real cases the judge catches. TNR: share of clean lines it leaves alone. Both above ~0.8 = steer by it; with under ~10 human "yes" cases, TPR is a rough guess.',
+    '',
+    '| label | lines | human yes | TPR | TNR | kappa |',
+    '|---|---|---|---|---|---|',
+    ...rows,
+  ].join('\n');
 }
 
 export async function judgeRetest(convs: Conv[]) {

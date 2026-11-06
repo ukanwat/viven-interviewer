@@ -6,6 +6,8 @@
 //   node eval/run.ts show    <run.json>                       read one conversation with the interviewer's live gap reads
 //   node eval/run.ts grade   <runs...> | --label name | --local | --hosted [ids]   [--out name]
 //   node eval/run.ts compare <graded A> <graded B>            paired verdict: primary metric + guards
+//   node eval/run.ts view    <graded>                         HTML viewer + review (pass/fail, correct the judge)
+//   node eval/run.ts review-import <labels.json>              reviewed labels → eval/calibration (for meta)
 //   node eval/run.ts meta    [--set graded] [--retest 2]      how far to trust the harness
 //   node eval/run.ts improve <graded>                         failure digest → one small prompt edit to A/B
 //
@@ -17,11 +19,13 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 
 import { join } from 'node:path';
 import { chat, MODELS } from '../src/brain/llm.ts';
 import { PRINCIPLES } from '../src/brain/prompts.ts';
-import { cacheStats, JUDGE, spent } from './lib/llm.ts';
+import { answeredBy, cacheStats, JUDGE, SIM, TWIN, spent } from './lib/llm.ts';
+import { spec } from './lib/spec.ts';
 import { fromPerson, load, transcript, type Conv } from './lib/conversation.ts';
 import { PERSONAS, simulate } from './lib/sim.ts';
 import { gradeAll, METRICS } from './lib/score.ts';
 import { compare, summarise, type GradedItem, type GradedSet } from './lib/report.ts';
+import { viewHtml } from './lib/view.ts';
 import { coverageValidity, judgeRetest, judgeVsHuman, seedNoise, simRealism } from './lib/meta.ts';
 
 const R = join(import.meta.dirname, 'results');
@@ -98,14 +102,21 @@ if (mode === 'sim') {
   const convs = await conversations();
   if (!convs.length) throw new Error('no conversations to grade');
   const items: GradedItem[] = [];
+  const errors: { id: string; error: string }[] = [];
   for (const c of convs) {
     const p = PERSONAS.find((x) => x.id === c.persona);
-    const g = await gradeAll(c, p);
-    items.push({ id: c.id, name: c.name, source: c.source, persona: c.persona, arm: c.arm, seed: c.seed, metrics: g.metrics, detail: { conversation: g.conversation, notes: g.notes, coverage: g.coverage, facts: g.facts, twin: g.twin } });
-    console.error(`graded ${c.id}`);
+    try {
+      const g = await gradeAll(c, p);
+      const { spec: runSpec, ...conv } = c as any;
+      items.push({ id: c.id, name: c.name, source: c.source, persona: c.persona, arm: c.arm, seed: c.seed, metrics: g.metrics, detail: { conversation: g.conversation, notes: g.notes, coverage: g.coverage, facts: g.facts, twin: g.twin }, conv, runSpec });
+      console.error(`graded ${c.id}`);
+    } catch (e) {
+      errors.push({ id: c.id, error: (e as Error).message.slice(0, 300) });
+      console.error(`FAILED ${c.id}: ${(e as Error).message.slice(0, 200)}`);
+    }
   }
   const label = arg('out') || arg('label') || (arg('hosted') ? 'hosted' : arg('local') ? 'local' : 'set');
-  const set: GradedSet = { label, at: new Date().toISOString(), judge: JUDGE, items };
+  const set: GradedSet = { label, at: new Date().toISOString(), judge: JUDGE, items, spec: spec({ judge: JUDGE, twin: TWIN, sim: SIM }), answeredBy, errors };
   write(join(GRADED, `${label}.json`), set);
   const md = summarise(set);
   write(join(GRADED, `${label}.md`), md);
@@ -116,6 +127,30 @@ if (mode === 'sim') {
   const r = compare(a, b);
   write(join(GRADED, `compare-${a.label}-vs-${b.label}.md`), r.text);
   console.log(r.text);
+} else if (mode === 'view') {
+  const set = JSON.parse(readFileSync(files[0], 'utf8')) as GradedSet;
+  // Older sets didn't keep the conversation: take it from the saved run.
+  for (const i of set.items) if (!i.conv && existsSync(join(RUNS, `${i.id}.json`))) i.conv = withName(load(join(RUNS, `${i.id}.json`)));
+  const f = join(GRADED, `${set.label}.html`);
+  write(f, viewHtml(set));
+  console.log(`open ${f}`);
+} else if (mode === 'review-import') {
+  // Merge reviewed labels into the calibration set: conversations by id, newest label per line wins.
+  const lab = JSON.parse(readFileSync(files[0], 'utf8'));
+  const set = JSON.parse(readFileSync(join(GRADED, `${lab.set}.json`), 'utf8')) as GradedSet;
+  const CAL = join(import.meta.dirname, 'calibration');
+  const calFile = join(CAL, 'lines.json');
+  const cal = existsSync(calFile) ? JSON.parse(readFileSync(calFile, 'utf8')) : { convs: {}, lines: [] };
+  for (const l of lab.lines) {
+    const it = set.items.find((x) => x.id === l.id);
+    cal.convs[l.id] ??= it?.conv ?? withName(load(join(RUNS, `${l.id}.json`)));
+    cal.lines = cal.lines.filter((x: any) => !(x.id === l.id && x.q === l.q)).concat(l);
+  }
+  write(calFile, cal);
+  const revFile = join(CAL, 'reviews.jsonl');
+  const old = existsSync(revFile) ? readFileSync(revFile, 'utf8') : '';
+  write(revFile, old + lab.reviews.map((r: any) => JSON.stringify({ ...r, set: lab.set, at: lab.at })).join('\n') + '\n');
+  console.log(`${lab.lines.length} lines and ${lab.reviews.length} reviews imported; ${cal.lines.length} labelled lines in total`);
 } else if (mode === 'meta') {
   const sets = readdirSync(GRADED).filter((f) => f.endsWith('.json')).map((f) => JSON.parse(readFileSync(join(GRADED, f), 'utf8')) as GradedSet);
   const sims = readdirSync(RUNS).map((f) => withName(load(join(RUNS, f))));

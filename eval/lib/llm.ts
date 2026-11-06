@@ -14,6 +14,8 @@ export const SIM = process.env.PERSONA_MODEL ?? 'openai/gpt-6-luna';
 const DIR = join(import.meta.dirname, '../results/cache');
 const NO_CACHE = !!process.env.NO_CACHE;
 export const cacheStats = { hits: 0, misses: 0 };
+// Which model actually answered (by model id), so a run that fell back to the second judge says so.
+export const answeredBy: Record<string, number> = {};
 
 type Opts = { model: string; temperature?: number; maxTokens?: number; seed?: number; tag?: string };
 
@@ -31,6 +33,7 @@ export async function askJson<T>(msgs: Msg[], opts: Opts): Promise<T> {
     try {
       const model = i && call.model === JUDGE ? JUDGE_FALLBACK : call.model;
       const out = await chatJson<T>(msgs, { ...call, model });
+      answeredBy[model] = (answeredBy[model] ?? 0) + 1;
       mkdirSync(DIR, { recursive: true });
       writeFileSync(file, JSON.stringify(out));
       return out;

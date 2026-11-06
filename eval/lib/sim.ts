@@ -7,7 +7,8 @@ import { chat, MODELS, type Msg } from '../../src/brain/llm.ts';
 import { Room, type PersonStore } from '../../src/room.ts';
 import { personId } from '../../src/brain/ids.ts';
 import type { Person, Decision } from '../../src/brain/types.ts';
-import { askJson, SIM } from './llm.ts';
+import { askJson, JUDGE, SIM, TWIN } from './llm.ts';
+import { spec, type Spec } from './spec.ts';
 import type { Persona } from './grade.ts';
 import type { Conv, Line } from './conversation.ts';
 
@@ -117,7 +118,7 @@ function baseline(p: Persona): Interviewer {
 export type RunOpts = { turns: number; breakAt: number; seed: number; label?: string };
 
 // A saved run: the conversation plus what the product kept (notes, gaps file, its live read of each answer).
-export type Run = Conv & { label?: string; gaps?: string[]; liveGaps?: (string | undefined)[]; wrappedItself: boolean; at: string };
+export type Run = Conv & { label?: string; gaps?: string[]; liveGaps?: (string | undefined)[]; wrappedItself: boolean; at: string; spec?: Spec };
 
 export async function simulate(p: Persona, arm: string, o: RunOpts): Promise<Run> {
   const iv = arm === 'baseline' ? baseline(p) : ours(p);
@@ -152,5 +153,5 @@ export async function simulate(p: Persona, arm: string, o: RunOpts): Promise<Run
   if (!left) await iv.end().catch(() => {});
   const kept = iv.person();
   const notes = Object.values(kept?.notes ?? {}).map((n) => `[${n.path}] ${n.title}: ${n.body.replace(/\s+/g, ' ')}`);
-  return { id: `${p.id}-${arm}-${o.seed}${o.label ? `-${o.label}` : ''}`, name: p.name, source: 'sim', lines, notes, persona: p.id, arm, seed: o.seed, left, wrappedItself, label: o.label, gaps: kept?.open, liveGaps, at: new Date().toISOString() };
+  return { id: `${p.id}-${arm}-${o.seed}${o.label ? `-${o.label}` : ''}`, name: p.name, source: 'sim', lines, notes, persona: p.id, arm, seed: o.seed, left, wrappedItself, label: o.label, gaps: kept?.open, liveGaps, at: new Date().toISOString(), spec: spec({ brain: arm === 'baseline' ? `baseline:${MODELS.brain}` : MODELS.brain, sim: SIM, twin: TWIN, judge: JUDGE }) };
 }
