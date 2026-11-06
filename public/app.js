@@ -343,7 +343,7 @@ function renderPerson(p) {
   $('threads').innerHTML = p.threads
     .map(
       (t) =>
-        `<div class="thread${t.id === p.activeThreadId ? ' active' : ''}">${esc(t.title)}<span class="st">${t.status}${t.weakStreak ? ` · ${t.weakStreak} weak` : ''}</span>${t.gaps?.length ? `<div class="gaps">missing: ${esc(t.gaps.slice(0, 2).join('; '))}</div>` : ''}</div>`,
+        `<div class="thread${t.id === p.activeThreadId ? ' active' : ''}">${esc(t.title)}<span class="st">${t.status}</span>${t.gaps?.length ? `<div class="gaps">missing: ${esc(t.gaps.slice(0, 2).join('; '))}</div>` : ''}</div>`,
     )
     .join('') || '<p class="empty">—</p>';
 }
@@ -351,10 +351,9 @@ function renderPerson(p) {
 function showWhy(d, ms, early) {
   if (!d) return;
   const parts = [];
-  if (d.label) parts.push(`Read their answer as <b>${d.label}</b>.`);
-  parts.push(`Move: <b>${d.move}${d.angle ? ` / ${d.angle}` : ''}</b>${ms ? ` <span class="muted">(${(ms / 1000).toFixed(1)}s${early ? ', spoken early' : ''})</span>` : ''}`);
   if (d.reason) parts.push(esc(d.reason));
-  if (d.enforced) parts.push(`<i>Code overrode the planner: ${esc(d.enforced)}</i>`);
+  if (state.mode !== 'text' && d.question) parts.push(`<span class="muted">e.g. “${esc(d.question)}”</span>`);
+  if (ms) parts.push(`<span class="muted small">${d.label ? `read as ${esc(d.label)} · ` : ''}${(ms / 1000).toFixed(1)}s${early ? ', spoken early' : ''}</span>`);
   $('why').innerHTML = parts.join('<br>');
 }
 

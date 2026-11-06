@@ -23,18 +23,8 @@ import type {
   Turn,
 } from './types.ts';
 
-// Policy numbers live in code, not in the prompt: soft caps in prompts get overrun.
-export const POLICY = {
-  maxDigs: 2, // different-angle probes on one thread after weak answers, then switch
-  saturationTurns: 2, // person turns in a row with no new item on a thread -> move on
-  maxThreadTurns: 7, // even a rich thread gets switched after this many turns
-  hostileWrap: 3, // this many hostile/bored readings in one session -> offer to stop
-  recentTurns: 10,
-  maxItemsInContext: 60,
-};
-
-const WEAK: AnswerLabel[] = ['vague', 'short', 'idk'];
-const ALL_ANGLES: Angle[] = ['case', 'contrast', 'options', 'novice', 'example_answer', 'timeline'];
+// No policy caps in code: when to dig, move on or stop is the model's judgement (see prompts.ts).
+const POLICY = { recentTurns: 10, maxItemsInContext: 60 };
 
 const id = () => randomUUID().slice(0, 8);
 
@@ -140,54 +130,21 @@ type TurnOut = {
   next: { move: Move; angle?: Angle | 'null' | null; target?: string; ack?: string; question: string; reason: string };
 };
 
-function constraintsFor(p: Person, sessionId: string): string {
+// Facts for this turn, not rules: the model decides what to do with them.
+function turnFacts(p: Person, sessionId: string): string {
   const t = activeThread(p);
-  const c: string[] = [];
-  if (t) {
-    const digsLeft = Math.max(0, POLICY.maxDigs - t.weakStreak);
-    c.push(
-      `Active thread "${t.title}" (${t.id}): ${t.weakStreak} weak answer(s) in a row; ${digsLeft} different-angle dig(s) left. ` +
-        (digsLeft === 0
-          ? `If this answer is weak (vague/short/idk), you MUST NOT dig again: move "switch" to a different thread (park this one).`
-          : `If this answer is weak, use move "dig" with an angle NOT already tried (${t.anglesTried.join(', ') || 'none tried yet'}), or "switch" if the thread looks thin.`),
-    );
-    if (t.emptyTurns >= POLICY.saturationTurns - 1)
-      c.push(`This thread has given no new knowledge for ${t.emptyTurns} turn(s). If this answer adds nothing new, "switch".`);
-    if (t.turns >= POLICY.maxThreadTurns) c.push(`This thread has had ${t.turns} turns: reflect back a rule and then "switch" unless the person is clearly enthusiastic.`);
-  } else {
-    c.push('No active thread yet: find where their expertise is and open a thread on ONE concrete case.');
-  }
-  const sessHostile = p.hostility;
-  if (sessHostile >= 1)
-    c.push(`They've been hostile/bored ${sessHostile} time(s) this session. If again hostile/bored: never dig; "explain" (purpose + choice) only if you haven't yet, else "switch" to something they'd enjoy talking about${sessHostile + 1 >= POLICY.hostileWrap ? ', or "wrap" and offer to continue another time' : ''}.`);
-  else c.push('If hostile or bored: move "explain" (acknowledge, purpose in one sentence, offer to skip or switch). Never dig on hostility.');
-  c.push('If they ask to be called later or to stop: move "wrap".');
-  c.push('If they asked you a question: move "answer" (brief honest answer) then continue.');
   const sessTurns = p.turns.filter((x) => x.sessionId === sessionId && x.role === 'person').length;
-  c.push(`Person turns this session so far: ${sessTurns}.`);
-  return c.join('\n');
+  return [
+    t ? `Current thread: "${t.title}" (${t.id}), ${t.turns} turn(s) so far.` : 'No thread yet.',
+    `Their turns this session: ${sessTurns}.`,
+    'If they want to stop or talk later: move "wrap". If they asked you something: move "answer", then continue.',
+  ].join('\n');
 }
 
-function validate(out: TurnOut, p: Person): string | undefined {
-  const t = activeThread(p);
-  const label = out.read?.label;
-  const move = out.next?.move;
-  if (!move || !out.next) return 'Missing next.move';
-  if ((label === 'callback' || label === 'stop') && move !== 'wrap') return `They asked to stop or be called later: move must be "wrap".`;
-  if ((label === 'hostile' || label === 'bored') && (move === 'dig' || move === 'deepen'))
-    return `They are ${label}: you may not "${move}". Use "explain", "switch" or "wrap".`;
-  if (move === 'dig' && t && WEAK.includes(label) && t.weakStreak >= POLICY.maxDigs)
-    return `Dig budget for "${t.title}" is spent (${POLICY.maxDigs} angles tried). Move must be "switch" (or "wrap").`;
-  if (move === 'dig' && t && out.next.angle && t.anglesTried.includes(out.next.angle as Angle))
-    return `Angle "${out.next.angle}" was already tried on this thread. Pick a different angle: ${ALL_ANGLES.filter((a) => !t.anglesTried.includes(a)).join(', ')}.`;
-  if ((out.next.question?.match(/[?？]/g)?.length ?? 0) > 1) return 'That is two questions. Ask exactly ONE question (one question mark).';
-  if (move !== 'wrap') {
-    const q = out.next.question?.trim();
-    if (!q) return 'Missing question.';
-    const rep = mostSimilarAsked(p, q);
-    if (rep.score > 0.62) return `Your question is too close to one already asked: "${rep.text}". Ask something new.`;
-    if (q.split(/\s+/).length > 40) return 'Question is too long for speech. Under 30 words.';
-  }
+// Only shape, never judgement.
+function validate(out: TurnOut): string | undefined {
+  if (!out.next?.move) return 'Missing next.move.';
+  if (out.next.move !== 'wrap' && !out.next.question?.trim()) return 'Missing next.question.';
   return undefined;
 }
 
@@ -196,17 +153,16 @@ export async function personTurn(
   text: string,
   channel: Channel,
   sessionId: string,
-  opts: { signal?: AbortSignal; onEarly?: (early: { label: AnswerLabel; move: Move; say: string; question: string; reason: string }) => void } = {},
+  opts: { signal?: AbortSignal; recordAgent?: boolean; onEarly?: (early: { label: AnswerLabel; move: Move; say: string; question: string; reason: string }) => void } = {},
 ): Promise<Decision> {
   const personTurnRec: Turn = { id: id(), role: 'person', text: text.trim(), channel, sessionId, at: Date.now(), threadId: p.activeThreadId };
   p.turns.push(personTurnRec);
 
   const ctx = renderContext(p, sessionId);
   const sys: Msg = { role: 'system', content: PRINCIPLES };
-  const messages: Msg[] = [sys, { role: 'user', content: turnPrompt(ctx, constraintsFor(p, sessionId)) }];
+  const messages: Msg[] = [sys, { role: 'user', content: turnPrompt(ctx, turnFacts(p, sessionId)) }];
 
   let out: TurnOut | undefined;
-  let enforced: string | undefined;
   let sentEarly = false;
   for (let attempt = 0; attempt < 3; attempt++) {
     let earlySent = false;
@@ -223,7 +179,7 @@ export async function personTurn(
         const next = read && completedObject(soFar, 'next');
         if (!next) return;
         earlySent = true;
-        if (validate({ read, next } as TurnOut, p)) return;
+        if (validate({ read, next } as TurnOut)) return;
         sentEarly = true;
         opts.onEarly({ label: read.label, move: next.move, say: [next.ack, next.question].filter((x: string) => x?.trim()).join(' '), question: next.question ?? '', reason: next.reason ?? '' });
       },
@@ -235,47 +191,20 @@ export async function personTurn(
       messages.push({ role: 'assistant', content: raw }, { role: 'user', content: 'That was not valid JSON. Return only the JSON object.' });
       continue;
     }
-    const problem = validate(parsed, p);
-    out = parsed;
-    if (!problem || sentEarly) break;
-    enforced = problem;
-    messages.push({ role: 'assistant', content: raw }, { role: 'user', content: `Rejected by the interview policy: ${problem} Return the corrected JSON.` });
+    const problem = validate(parsed);
+    if (!problem || sentEarly) {
+      out = parsed;
+      break;
+    }
+    messages.push({ role: 'assistant', content: raw }, { role: 'user', content: `${problem} Return the complete JSON.` });
   }
   if (!out) throw new Error('Brain returned no usable output');
-  // Last resort: if the model still breaks a hard cap, code decides.
-  let stillBad = validate(out, p);
-  if (stillBad?.startsWith('That is two questions')) {
-    // Keep only the first question rather than throwing the whole move away.
-    const q = out.next.question;
-    out.next.question = q.slice(0, q.search(/[?？]/) + 1);
-    stillBad = validate(out, p);
-  }
-  if (stillBad) out = forceSafe(out, p, stillBad);
 
   personTurnRec.label = out.read.label;
-  return applyTurn(p, out, sessionId, channel, enforced);
+  return applyTurn(p, out, sessionId, channel, opts.recordAgent ?? true);
 }
 
-function forceSafe(out: TurnOut, p: Person, problem: string): TurnOut {
-  const label = out.read.label;
-  if (label === 'callback' || label === 'stop') return { ...out, next: { move: 'wrap', question: '', ack: out.next?.ack ?? '', reason: `forced by code: ${problem}` } };
-  const name = p.name.split(' ')[0];
-  const parked = activeThread(p)?.title ?? 'that';
-  return {
-    ...out,
-    next: {
-      move: 'switch',
-      target: `new: something else ${name} knows well`,
-      ack: label === 'hostile' || label === 'bored' ? 'Fair enough, let me not keep you on that.' : `Okay, let's leave ${parked} there for now.`,
-      question: p.topicHint
-        ? `Different direction: what's one thing about ${p.topicHint} that you think most people get wrong?`
-        : `Different direction: what do people usually come to you for help with?`,
-      reason: `forced by code: ${problem}`,
-    },
-  };
-}
-
-function applyTurn(p: Person, out: TurnOut, sessionId: string, channel: Channel, enforced?: string): Decision {
+function applyTurn(p: Person, out: TurnOut, sessionId: string, channel: Channel, recordAgent: boolean): Decision {
   const label = out.read.label;
   if (out.language) p.language = out.language;
   if (out.expertise && out.expertise !== 'null') p.expertise = out.expertise;
@@ -312,25 +241,17 @@ function applyTurn(p: Person, out: TurnOut, sessionId: string, channel: Channel,
     newItems.push(item);
   }
 
-  // Thread bookkeeping (the numbers the caps run on).
+  // Thread bookkeeping, for the panel and the report.
   t.turns++;
   if (out.thread?.gaps) t.gaps = out.thread.gaps.slice(0, 5);
   if (newItems.some((i) => i.novelty === 'new')) t.emptyTurns = 0;
   else t.emptyTurns++;
-  if (WEAK.includes(label)) t.weakStreak++;
-  else if (label === 'rich' || label === 'partial') {
-    t.weakStreak = 0;
-    t.anglesTried = [];
-  }
-  if (label === 'hostile' || label === 'bored') p.hostility++;
-  else if (label === 'rich') p.hostility = Math.max(0, p.hostility - 1);
 
   // Apply the move.
   const next = out.next;
   const angle = next.angle && next.angle !== 'null' ? (next.angle as Angle) : undefined;
-  if (next.move === 'dig' && angle) t.anglesTried.push(angle);
   if (next.move === 'switch' || next.move === 'redirect') {
-    t.status = WEAK.includes(label) || label === 'hostile' || label === 'bored' ? (t.weakStreak >= POLICY.maxDigs ? 'thin' : 'parked') : 'done';
+    t.status = ['vague', 'short', 'idk', 'hostile', 'bored'].includes(label) ? 'parked' : 'done';
     const target = next.target ?? '';
     const existing = p.threads.find((x) => x.id === target && x.id !== t!.id);
     const nt = existing ?? makeThread(p, target.replace(/^new:\s*/i, '') || 'New thread');
@@ -341,8 +262,8 @@ function applyTurn(p: Person, out: TurnOut, sessionId: string, channel: Channel,
   }
 
   const say = [next.ack, next.question].filter((s) => s && s.trim()).join(' ').trim();
-  const agentTurn: Turn = { id: id(), role: 'agent', text: say, channel, sessionId, at: Date.now(), move: next.move, threadId: p.activeThreadId };
-  p.turns.push(agentTurn);
+  // In voice the interviewer words its own reply; the transcript records what it actually said.
+  if (recordAgent) p.turns.push({ id: id(), role: 'agent', text: say, channel, sessionId, at: Date.now(), move: next.move, threadId: p.activeThreadId });
 
   return {
     label,
@@ -353,7 +274,6 @@ function applyTurn(p: Person, out: TurnOut, sessionId: string, channel: Channel,
     question: next.question ?? '',
     reason: next.reason ?? out.read.why ?? '',
     newItems,
-    enforced,
   };
 }
 
@@ -391,10 +311,6 @@ async function speak(p: Person, sessionId: string, channel: Channel, instr: stri
     { model: MODELS.brain, temperature: 0.6, maxTokens: 600, signal: opts.signal },
   );
   const next = out.next;
-  // Same one-question rule as normal turns: keep only the first question.
-  const qi = next.question?.search(/[?？]/) ?? -1;
-  if (qi >= 0) next.question = next.question.slice(0, qi + 1);
-  if ((next.ack?.match(/[?？]/g)?.length ?? 0) > 0 && next.question) next.ack = next.ack!.replace(/[^.!]*[?？]/g, '').trim();
   if (move === 'open' && !p.activeThreadId) {
     const t = makeThread(p, p.topicHint || 'Getting to know them');
     p.activeThreadId = t.id;
@@ -454,15 +370,6 @@ export function similarity(a: string, b: string) {
   let inter = 0;
   for (const w of A) if (B.has(w)) inter++;
   return inter / Math.min(A.size, B.size) * (Math.min(A.size, B.size) / Math.max(A.size, B.size)) ** 0.25;
-}
-export function mostSimilarAsked(p: Person, q: string) {
-  let best = { score: 0, text: '' };
-  for (const t of p.turns) {
-    if (t.role !== 'agent') continue;
-    const s = similarity(q, t.text);
-    if (s > best.score) best = { score: s, text: t.text };
-  }
-  return best;
 }
 function isDuplicateItem(p: Person, text: string) {
   return p.items.some((i) => similarity(i.text, text) > 0.8);
