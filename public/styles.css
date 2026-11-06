@@ -28,7 +28,10 @@ input:focus, textarea:focus { outline: 2px solid color-mix(in srgb, var(--accent
 label { display: block; font-size: 14px; font-weight: 500; margin-bottom: 14px; }
 
 /* Start */
-#start #name { font-size: 20px; padding: 14px 16px; margin: 18px 0 16px; }
+#start #name { font-size: 20px; padding: 14px 16px; margin: 18px 0 10px; }
+#start .link-input { font-size: 14px; margin: 0 0 16px; }
+.bg-box { margin: -6px 0 14px; font-size: 13px; }
+.bg-box summary { cursor: pointer; color: var(--muted); }
 .lab { margin-bottom: 14px; }
 #start h1 { font-size: 32px; }
 #start { min-height: 100vh; display: grid; place-items: center; padding: 24px; }

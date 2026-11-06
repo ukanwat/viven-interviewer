@@ -99,6 +99,7 @@ export type Person = {
   expertise: string; // where this person's deep knowledge is, discovered in the conversation
   language: 'english' | 'hindi' | 'hinglish' | string;
   summary: string; // rolling, for context + resume
+  background?: { url: string; brief: string; at: number }; // from a link they gave; not said by them
   turns: Turn[];
   items: Item[];
   threads: Thread[];

@@ -60,8 +60,9 @@ Decide the next move. ${TURN_SCHEMA}`;
 
 export const OPEN_INSTRUCTIONS = `This is the FIRST contact with this person. Sound like a curious person, not a product or a script.
 - Greet them by name. In a few words of your own, say you'd like to get to know how they think, and that they can stop or say "call me later" whenever. No speech, no pitch, no explaining the system.
-- Then ONE easy, open, concrete question about them: something you'd naturally ask a new person you're curious about. It should be easy to answer in a sentence and likely to lead to something they know or care about. If there's a topic hint, start near it.
-- Under 35 words total. Return move "open".`;
+- Then ONE easy question that's easy to answer in a sentence and likely to lead somewhere they know or care about.
+- Use what you know. If there's background from a link, ask about something specific in it that only they can tell you (the why, the how, what it was like), without reciting what you read. If there's a topic hint, start near it. With nothing to go on, ask something a curious person would ask a stranger; avoid stock openers.
+- Under 40 words total. Return move "open".`;
 
 export const RESUME_INSTRUCTIONS = `The person is RETURNING after a break. Do not restart.
 - Welcome them back by name, and in one short sentence show you remember something they told you (briefly, not a summary).

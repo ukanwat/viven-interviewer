@@ -13,6 +13,7 @@
     <div class="start-card">
       <h1>Hi. What's your name?</h1>
       <input id="name" autocomplete="given-name" placeholder="Your name" aria-label="Your name" />
+      <input id="link" class="link-input" type="url" placeholder="A link about you, if you like (website, profile)" aria-label="A link about you (optional)" autocomplete="url" />
       <div id="returning" class="returning hidden"></div>
       <div id="lab" class="lab hidden">
         <label>Topic hint <span class="muted">(lab only)</span><input id="topic" /></label>
@@ -47,6 +48,7 @@
       <section class="col learned-col">
         <h2>What I've learned about you</h2>
         <div id="expertise" class="expertise muted"></div>
+        <details id="bgBox" class="bg-box hidden"><summary>From your link (not something you said)</summary><p id="bg" class="small muted"></p></details>
         <div id="learned"></div>
         <h3>Threads</h3>
         <div id="threads" class="threads"></div>

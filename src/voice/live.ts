@@ -52,11 +52,12 @@ function historyInput(p: Person, opening: Decision) {
     `Context for this call (from the interviewer's notes, not said by the user):`,
     p.summary && `Summary so far: ${p.summary}`,
     p.expertise && `Who they are: ${p.expertise}`,
+    p.background?.brief && `Background from a link they shared so you'd know a bit about them (may be out of date; use it to ask more specific questions, ask rather than assume): ${p.background.brief}`,
     p.items.length ? `Things they already taught (do not re-ask): ${p.items.slice(-15).map((i) => i.text).join(' | ')}` : '',
   ]
     .filter(Boolean)
     .join('\n');
-  if (p.items.length || p.summary) input.push(msg('developer', brief));
+  if (p.items.length || p.summary || p.background?.brief) input.push(msg('developer', brief));
   // Seed the last few real turns so the voice model has the thread (Live accepts history only at start).
   const prior = p.turns.slice(0, -1).slice(-10); // last turn is the opener we're about to say
   for (const t of prior) input.push(t.role === 'agent' ? msg('assistant', t.text) : msg('user', t.text));
@@ -317,6 +318,7 @@ export function publicPerson(p: Person) {
     expertise: p.expertise,
     language: p.language,
     summary: p.summary,
+    background: p.background,
     items: p.items,
     threads: p.threads,
     activeThreadId: p.activeThreadId,

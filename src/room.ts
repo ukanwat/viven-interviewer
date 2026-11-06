@@ -4,6 +4,7 @@
 import * as brain from './brain/brain.ts';
 import { personId } from './brain/ids.ts';
 import { sessionReport } from './brain/report.ts';
+import { lookUp } from './brain/lookup.ts';
 import type { Person } from './brain/types.ts';
 import { startCall, publicPerson, type CallHandle, type Connect } from './voice/live.ts';
 
@@ -44,11 +45,12 @@ export class Room {
     return this.person;
   }
 
-  private async getOrCreate(name: string, topic = '', golden?: string[]): Promise<Person> {
+  private async getOrCreate(name: string, topic = '', golden?: string[], link?: string): Promise<Person> {
     let p = await this.get();
     if (!p) p = this.person = brain.newPerson(name, topic);
     else if (topic && !p.topicHint) p.topicHint = topic;
     if (golden?.length) p.sealedGolden = golden;
+    if (link) await lookUp(p, link).catch((e) => console.error('lookup failed', (e as Error).message));
     return p;
   }
 
@@ -69,7 +71,7 @@ export class Room {
     return this.serial(async () => {
       if (route === 'text/start') {
         if (!b.name?.trim() || personId(b.name) !== this.id) return err(400, 'name required');
-        const p = await this.getOrCreate(b.name, b.topic, b.golden);
+        const p = await this.getOrCreate(b.name, b.topic, b.golden, b.link);
         const s = brain.startSession(p, 'text');
         const d = await brain.opener(p, s.id, 'text');
         this.save();
@@ -123,7 +125,7 @@ export class Room {
         if (m.type === 'start' && !handle) {
           if (!m.name?.trim() || !m.sdp || personId(m.name) !== room.id) return notify({ type: 'error', message: 'name and offer required' });
           try {
-            const p = await room.getOrCreate(m.name, m.topic, m.golden);
+            const p = await room.getOrCreate(m.name, m.topic, m.golden, m.link);
             const c = await startCall({ store: saver, connect: room.connect, person: p, offerSdp: m.sdp, notify });
             handle = c.handle;
             notify({ type: 'answer', sdp: c.answerSdp, sessionId: c.sessionId, personId: p.id });

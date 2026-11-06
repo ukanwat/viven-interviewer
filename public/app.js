@@ -62,14 +62,15 @@ async function start() {
   const name = $('name').value.trim();
   if (!name) return $('name').focus();
   const topic = $('topic').value.trim();
+  const link = $('link').value.trim();
   const golden = $('golden').value.split('\n').map((s) => s.trim()).filter(Boolean);
   $('startErr').classList.add('hidden');
   $('call').disabled = true;
   $('call').classList.add('connecting');
   try {
     resetCallView(name);
-    if (state.mode === 'text') await startText(name, topic, golden);
-    else await startVoice(name, topic, golden);
+    if (state.mode === 'text') await startText(name, topic, golden, link);
+    else await startVoice(name, topic, golden, link);
     show('callView');
     startTimer();
   } catch (e) {
@@ -107,8 +108,8 @@ function startTimer() {
 }
 
 // ---------- text channel ----------
-async function startText(name, topic, golden) {
-  const r = await api('/api/text/start', { name, topic, golden });
+async function startText(name, topic, golden, link) {
+  const r = await api('/api/text/start', { name, topic, golden, link });
   state.person = r.person;
   state.sessionId = r.sessionId;
   renderPerson(r.person);
@@ -144,7 +145,7 @@ $('typeForm').addEventListener('submit', async (e) => {
 });
 
 // ---------- voice channel ----------
-async function startVoice(name, topic, golden) {
+async function startVoice(name, topic, golden, link) {
   const mic = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } }).catch(() => {
     throw new Error('Microphone access is needed for the call. Allow it, or tick "Type instead".');
   });
@@ -165,7 +166,7 @@ async function startVoice(name, topic, golden) {
 
   await new Promise((resolve, reject) => {
     const timeout = setTimeout(() => reject(new Error('Could not connect the call. Try again.')), 30000);
-    ws.onopen = () => ws.send(JSON.stringify({ type: 'start', name, topic, golden, sdp: pc.localDescription.sdp }));
+    ws.onopen = () => ws.send(JSON.stringify({ type: 'start', name, topic, golden, link, sdp: pc.localDescription.sdp }));
     ws.onerror = () => reject(new Error('Could not reach the server.'));
     ws.onclose = () => {
       clearTimeout(timeout);
@@ -319,6 +320,8 @@ const GROUPS = [
 function renderPerson(p) {
   if (!p) return;
   $('expertise').textContent = p.expertise ? p.expertise : '';
+  $('bgBox').classList.toggle('hidden', !p.background?.brief);
+  $('bg').textContent = p.background?.brief ?? '';
   const box = $('learned');
   box.innerHTML = '';
   if (!p.items.length) box.innerHTML = '<p class="empty">Nothing yet. It fills in as you talk.</p>';

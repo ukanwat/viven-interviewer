@@ -81,6 +81,8 @@ export function renderContext(p: Person, sessionId?: string): string {
   if (p.topicHint) lines.push(`Topic they asked for: ${p.topicHint}`);
   if (p.expertise) lines.push(`Where their expertise seems to be: ${p.expertise}`);
   lines.push(`Language they use: ${p.language}`);
+  if (p.background?.brief)
+    lines.push(`\n== Background from a link they gave (public web, NOT said by them) ==\n${p.background.brief}\nThey shared this link so you'd know a bit about them: use it to ask more specific questions (you can say you had a look). It may be out of date or incomplete, so ask rather than assume, and never capture it as an item: only what they say counts.`);
   if (p.summary) lines.push(`\n== Running summary ==\n${p.summary}`);
 
   if (p.threads.length) {
