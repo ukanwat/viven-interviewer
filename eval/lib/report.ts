@@ -5,7 +5,7 @@ import { METRICS, PRIMARY } from './score.ts';
 export type GradedItem = { id: string; name: string; source: 'sim' | 'real'; persona?: string; arm?: string; seed?: number; metrics: Record<string, number | null>; detail: any };
 export type GradedSet = { label: string; at: string; judge: string; items: GradedItem[] };
 
-const pct = (x: number | null | undefined) => (x == null || !Number.isFinite(x) ? '–' : Math.abs(x) <= 1.5 ? `${(x * 100).toFixed(0)}%` : x.toFixed(1));
+const show = (x: number | null | undefined, k?: string) => (x == null || !Number.isFinite(x) ? '–' : k && METRICS[k]?.count ? x.toFixed(1) : `${(x * 100).toFixed(0)}%`);
 const cluster = (i: GradedItem) => i.persona ?? i.id;
 
 export function summarise(set: GradedSet) {
@@ -17,10 +17,10 @@ export function summarise(set: GradedSet) {
     const ci = clusterCI([...by.values()]);
     // Worst case matters as much as the mean: one person badly served is a failure the average hides.
     const per = [...by.values()].map((v) => v.reduce((s, x) => s + x, 0) / v.length);
-    out.push(`| ${k}${m.guard ? ' (guard)' : ''} | ${pct(ci.mean)} | ${pct(ci.lo)} – ${pct(ci.hi)} | ${pct(m.up ? Math.min(...per) : Math.max(...per))} | ${m.what} |`);
+    out.push(`| ${k}${m.guard ? ' (guard)' : ''} | ${show(ci.mean, k)} | ${show(ci.lo, k)} – ${show(ci.hi, k)} | ${show(m.up ? Math.min(...per) : Math.max(...per), k)} | ${m.what} |`);
   }
   out.push('', '## Per conversation', '', `| conversation | ${Object.keys(METRICS).join(' | ')} |`, `|---|${Object.keys(METRICS).map(() => '---').join('|')}|`);
-  for (const i of set.items) out.push(`| ${i.id} | ${Object.keys(METRICS).map((k) => pct(i.metrics[k])).join(' | ')} |`);
+  for (const i of set.items) out.push(`| ${i.id} | ${Object.keys(METRICS).map((k) => show(i.metrics[k], k)).join(' | ')} |`);
   return out.join('\n');
 }
 
@@ -54,7 +54,7 @@ export function compare(a: GradedSet, b: GradedSet) {
     const xs = s.items.map((i) => i.metrics[k]).filter((v): v is number => v != null);
     return xs.length ? xs.reduce((p, q) => p + q, 0) / xs.length : null;
   };
-  for (const { k, d } of rows) out.push(`| ${k === primary ? `**${k}**` : k}${METRICS[k].guard ? ' (guard)' : ''} | ${pct(meanOf(a, k))} | ${pct(meanOf(b, k))} | ${pct(d.mean)} | ${pct(d.lo)} – ${pct(d.hi)} | ${d.verdict} |`);
+  for (const { k, d } of rows) out.push(`| ${k === primary ? `**${k}**` : k}${METRICS[k].guard ? ' (guard)' : ''} | ${show(meanOf(a, k), k)} | ${show(meanOf(b, k), k)} | ${show(d.mean, k)} | ${show(d.lo, k)} – ${show(d.hi, k)} | ${d.verdict} |`);
   out.push('', 'With a few people per side, "can\'t tell" is the honest default: see `meta` for the smallest difference this setup can detect.');
   return { overall, primary: prim, hurt, text: out.join('\n') };
 }

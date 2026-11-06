@@ -7,7 +7,8 @@ export type Graded = { conv: Conv; conversation: ConvGrade; notes: NotesGrade | 
 
 // What decides a comparison, and what may not get worse. `up`: higher is better.
 export const PRIMARY = { sim: 'twin', real: 'coverage' } as const;
-export const METRICS: Record<string, { up: boolean; what: string; guard?: boolean }> = {
+// `count`: a plain number (not a share), shown as such.
+export const METRICS: Record<string, { up: boolean; what: string; guard?: boolean; count?: boolean }> = {
   twin: { up: true, what: 'gold outsider questions answered right from the notes (partial = ½)' },
   coverage: { up: true, what: 'generated outsider questions the notes answer with what they really said (partly = ½)' },
   twinAbstain: { up: false, what: 'gold questions the twin had to say "I don\'t know" to' },
@@ -15,7 +16,7 @@ export const METRICS: Record<string, { up: boolean; what: string; guard?: boolea
   rich: { up: true, what: 'answers that were rich (their view + reason + a real case)' },
   thin: { up: false, what: 'answers that were thin' },
   faithful: { up: true, what: 'notes fully supported by their words', guard: true },
-  missed: { up: false, what: 'things they said that no note keeps, per conversation' },
+  missed: { up: false, count: true, what: 'things they said that no note keeps, per conversation' },
   recall: { up: true, what: 'hidden facts they said (vital ×2)' },
   saved: { up: true, what: 'hidden facts in the notes (vital ×2)' },
   open: { up: true, what: 'interviewer lines that leave room for a long answer' },
@@ -26,9 +27,10 @@ export const METRICS: Record<string, { up: boolean; what: string; guard?: boolea
   repeat: { up: false, what: 'lines re-asking something already covered', guard: true },
   pushes: { up: false, what: 'lines pressing on after pushback', guard: true },
   offAudience: { up: false, what: 'lines asking what their twin\'s askers wouldn\'t need' },
-  annoyance: { up: false, what: 'sim annoyance, 1-5 (sims only)', guard: true },
+  annoyance: { up: false, count: true, what: 'sim annoyance, 1-5 (sims only)', guard: true },
   left: { up: false, what: 'sim walked out (sims only)', guard: true },
-  words: { up: true, what: 'mean words per answer' },
+  words: { up: true, count: true, what: 'mean words per answer' },
+  areas: { up: true, count: true, what: 'distinct top-level note folders (breadth of their life covered)' },
 };
 
 const frac = <T>(xs: T[], f: (x: T) => number) => (xs.length ? xs.reduce((s, x) => s + f(x), 0) / xs.length : null);
@@ -66,6 +68,7 @@ export async function gradeAll(c: Conv, p?: Persona, who?: string): Promise<Grad
     annoyance: c.source === 'sim' ? frac(person, (l) => l.annoyance ?? 1) : null,
     left: c.source === 'sim' ? +!!c.left : null,
     words: frac(person, (l) => l.text.split(/\s+/).length),
+    areas: c.notes.length ? new Set(c.notes.map((n) => n.match(/^\[([^/\]]+)/)?.[1])).size : null,
   };
   return { conv: c, conversation, notes, coverage: cov, facts, twin, metrics };
 }

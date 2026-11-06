@@ -1,0 +1,2034 @@
+{
+ "label": "abA",
+ "at": "2026-11-06T19:42:27.532Z",
+ "judge": "deepseek/deepseek-v4.1-flash",
+ "items": [
+  {
+   "id": "arjun-ours-1000-abA",
+   "name": "Arjun",
+   "source": "sim",
+   "persona": "arjun",
+   "arm": "ours",
+   "seed": 1000,
+   "metrics": {
+    "twin": 0,
+    "twinAbstain": 1,
+    "coverage": 0.125,
+    "invented": 0,
+    "rich": 0.2,
+    "thin": 0.3,
+    "faithful": 0.5,
+    "missed": 0,
+    "recall": 0.16666666666666666,
+    "saved": 0.16666666666666666,
+    "open": 0.75,
+    "reaction": 0.25,
+    "restates": 0.25,
+    "praise": 0,
+    "multi": 0.5833333333333334,
+    "repeat": 0.08333333333333333,
+    "pushes": 0,
+    "offAudience": 0,
+    "annoyance": 1,
+    "left": 0,
+    "words": 13.3,
+    "areas": 1
+   },
+   "detail": {
+    "conversation": {
+     "lines": [
+      {
+       "q": 1,
+       "open": true,
+       "reaction": false,
+       "restates": false,
+       "multi": true,
+       "offAudience": false,
+       "praise": false,
+       "repeat": false,
+       "pushes": false
+      },
+      {
+       "q": 2,
+       "open": true,
+       "reaction": false,
+       "restates": false,
+       "multi": true,
+       "offAudience": false,
+       "praise": false,
+       "repeat": false,
+       "pushes": false
+      },
+      {
+       "q": 3,
+       "open": true,
+       "reaction": true,
+       "restates": false,
+       "multi": true,
+       "offAudience": false,
+       "praise": false,
+       "repeat": false,
+       "pushes": false
+      },
+      {
+       "q": 4,
+       "open": true,
+       "reaction": false,
+       "restates": false,
+       "multi": false,
+       "offAudience": false,
+       "praise": false,
+       "repeat": false,
+       "pushes": false
+      },
+      {
+       "q": 5,
+       "open": true,
+       "reaction": false,
+       "restates": true,
+       "multi": true,
+       "offAudience": false,
+       "praise": false,
+       "repeat": false,
+       "pushes": false
+      },
+      {
+       "q": 6,
+       "open": false,
+       "reaction": false,
+       "restates": false,
+       "multi": false,
+       "offAudience": false,
+       "praise": false,
+       "repeat": false,
+       "pushes": false
+      },
+      {
+       "q": 7,
+       "open": true,
+       "reaction": true,
+       "restates": true,
+       "multi": true,
+       "offAudience": false,
+       "praise": false,
+       "repeat": true,
+       "pushes": false
+      },
+      {
+       "q": 8,
+       "open": true,
+       "reaction": false,
+       "restates": false,
+       "multi": true,
+       "offAudience": false,
+       "praise": false,
+       "repeat": false,
+       "pushes": false
+      },
+      {
+       "q": 9,
+       "open": true,
+       "reaction": true,
+       "restates": true,
+       "multi": false,
+       "offAudience": false,
+       "praise": false,
+       "repeat": false,
+       "pushes": false
+      },
+      {
+       "q": 10,
+       "open": false,
+       "reaction": false,
+       "restates": false,
+       "multi": false,
+       "offAudience": false,
+       "praise": false,
+       "repeat": false,
+       "pushes": false
+      },
+      {
+       "q": 11,
+       "open": false,
+       "reaction": false,
+       "restates": false,
+       "multi": true,
+       "offAudience": false,
+       "praise": false,
+       "repeat": false,
+       "pushes": false
+      },
+      {
+       "q": 12,
+       "open": true,
+       "reaction": false,
+       "restates": false,
+       "multi": false,
+       "offAudience": false,
+       "praise": false,
+       "repeat": false,
+       "pushes": false
+      }
+     ],
+     "answers": [
+      {
+       "a": 1,
+       "depth": "thin",
+       "gap": "How he moved from engineering into payments/reconciliation and why."
+      },
+      {
+       "a": 2,
+       "depth": "some",
+       "gap": "Why he chose replay and how he traced the missing transaction IDs."
+      },
+      {
+       "a": 3,
+       "depth": "rich",
+       "gap": ""
+      },
+      {
+       "a": 4,
+       "depth": "some",
+       "gap": "What he would do instead when replay is unsafe, and an example."
+      },
+      {
+       "a": 5,
+       "depth": "thin",
+       "gap": "How he got into engineering and then payments."
+      },
+      {
+       "a": 6,
+       "depth": "rich",
+       "gap": "A concrete example of owning a system end to end."
+      },
+      {
+       "a": 7,
+       "depth": "some",
+       "gap": "A concrete example of a change or production issue and what owning it involved."
+      },
+      {
+       "a": 8,
+       "depth": "some",
+       "gap": "Why he paused first and how he contained the duplicates."
+      },
+      {
+       "a": 9,
+       "depth": "some",
+       "gap": "What signals he checked to see duplicates were still flowing."
+      },
+      {
+       "a": 10,
+       "depth": "thin",
+       "gap": "Who exactly was paged or brought in and what they did."
+      }
+     ],
+     "resume": {
+      "remembered": true,
+      "reAsked": 1
+     }
+    },
+    "notes": {
+     "notes": [
+      {
+       "n": 1,
+       "support": "yes"
+      },
+      {
+       "n": 2,
+       "support": "partly"
+      },
+      {
+       "n": 3,
+       "support": "partly"
+      },
+      {
+       "n": 4,
+       "support": "yes"
+      }
+     ],
+     "missed": []
+    },
+    "coverage": {
+     "asks": [
+      {
+       "q": "Arjun, for a payments ledger, would you use Kafka or a plain Postgres outbox for merchant payout events at 300 TPS?",
+       "answer": "I don't know.",
+       "grade": "abstain"
+      },
+      {
+       "q": "We keep getting duplicate UPI refunds when the PSP times out—would you put idempotency at the API gateway, the refund service, or the ledger constraint?",
+       "answer": "I don't know.",
+       "grade": "abstain"
+      },
+      {
+       "q": "How would you handle a 2 AM incident where reconciliation shows ₹4 lakh missing from the settlement account and the on-call engineer is you?",
+       "answer": "For a reconciliation mismatch, I'd compare batch totals and trace the missing transaction IDs. I'd only replay after verifying source totals and running a dry run, and not if the data were ambiguous or replay could overwrite manual adjustments.",
+       "grade": "grounded"
+      },
+      {
+       "q": "Would you join a Series A payments startup in Hyderabad as founding backend engineer if it meant owning PCI compliance and being on-call every other week?",
+       "answer": "I don't know.",
+       "grade": "abstain"
+      },
+      {
+       "q": "How do you handle a teammate who takes three days to review a critical payments PR when you need it merged before the settlement cutoff?",
+       "answer": "I don't know.",
+       "grade": "abstain"
+      },
+      {
+       "q": "I’m deciding whether to hire you as a contract backend engineer—do you prefer written specs or a 30-minute call to scope the work?",
+       "answer": "I don't know.",
+       "grade": "abstain"
+      },
+      {
+       "q": "If I set you up with someone, would you rather do a quiet filter coffee in Jubilee Hills or a loud birthday party in Gachibowli?",
+       "answer": "I don't know.",
+       "grade": "abstain"
+      },
+      {
+       "q": "Do you actually switch off on weekends, or are you the guy who answers Slack at 11 PM because a payment webhook failed?",
+       "answer": "I don't know.",
+       "grade": "abstain"
+      }
+     ]
+    },
+    "facts": {
+     "facts": [
+      {
+       "n": 1,
+       "said": "yes",
+       "evidence": "Mostly payment reconciliation backend work. I got there through engineering.",
+       "saved": "yes"
+      },
+      {
+       "n": 2,
+       "said": "partial",
+       "evidence": "I started in software engineering; payments appealed because I could own a system end to end.",
+       "saved": "partial"
+      },
+      {
+       "n": 3,
+       "said": "no",
+       "evidence": "",
+       "saved": "no"
+      },
+      {
+       "n": 4,
+       "said": "no",
+       "evidence": "",
+       "saved": "no"
+      },
+      {
+       "n": 5,
+       "said": "partial",
+       "evidence": "At 2 a.m., duplicate refunds alerted; I paused processing, contained them, verified totals, then resumed safely.",
+       "saved": "partial"
+      },
+      {
+       "n": 6,
+       "said": "no",
+       "evidence": "",
+       "saved": "no"
+      },
+      {
+       "n": 7,
+       "said": "no",
+       "evidence": "",
+       "saved": "no"
+      },
+      {
+       "n": 8,
+       "said": "no",
+       "evidence": "",
+       "saved": "no"
+      },
+      {
+       "n": 9,
+       "said": "no",
+       "evidence": "",
+       "saved": "no"
+      },
+      {
+       "n": 10,
+       "said": "no",
+       "evidence": "",
+       "saved": "no"
+      },
+      {
+       "n": 11,
+       "said": "no",
+       "evidence": "",
+       "saved": "no"
+      }
+     ]
+    },
+    "twin": {
+     "asks": [
+      {
+       "q": "A junior engineer asks him: I have a FAANG offer and an offer from a small startup. Which should I take?",
+       "type": "other",
+       "gold": "Leans to the place where you own a system end to end; he left a FAANG offer for that and values being trusted and left alone over salary.",
+       "answer": "I don't know.",
+       "grade": "abstain"
+      },
+      {
+       "q": "A teammate asks: can we ship this change on Friday evening?",
+       "type": "other",
+       "gold": "No: never deploy on Friday or after 4pm, nobody is fresh enough to roll back. Unless it's a fix that stops money being lost.",
+       "answer": "I don't know.",
+       "grade": "abstain"
+      },
+      {
+       "q": "A new hire asks: what do you look at first when you review my PR?",
+       "type": "other",
+       "gold": "The tests first; if the tests are weak he won't read the code.",
+       "answer": "I don't know.",
+       "grade": "abstain"
+      },
+      {
+       "q": "Someone asks: we need to build a refund flow fast. Any advice?",
+       "type": "other",
+       "gold": "Make every money operation idempotent first, fast second; learned from a 2 a.m. duplicate-refund incident.",
+       "answer": "I don't know.",
+       "grade": "abstain"
+      },
+      {
+       "q": "His manager asks: I criticised your design in the team meeting today. How will you respond?",
+       "type": "other",
+       "gold": "He goes quiet, then replies the next day in writing.",
+       "answer": "I don't know.",
+       "grade": "abstain"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "kamla-ours-1000-abA",
+   "name": "Kamla",
+   "source": "sim",
+   "persona": "kamla",
+   "arm": "ours",
+   "seed": 1000,
+   "metrics": {
+    "twin": 0.2,
+    "twinAbstain": 0.8,
+    "coverage": 0.0625,
+    "invented": 0,
+    "rich": 0.2,
+    "thin": 0.1,
+    "faithful": 0,
+    "missed": 0,
+    "recall": 0.09375,
+    "saved": 0.125,
+    "open": 0.8333333333333334,
+    "reaction": 0.4166666666666667,
+    "restates": 0.08333333333333333,
+    "praise": 0.08333333333333333,
+    "multi": 0.5833333333333334,
+    "repeat": 0.08333333333333333,
+    "pushes": 0,
+    "offAudience": 0,
+    "annoyance": 2,
+    "left": 0,
+    "words": 34,
+    "areas": 1
+   },
+   "detail": {
+    "conversation": {
+     "lines": [
+      {
+       "q": 1,
+       "open": true,
+       "reaction": false,
+       "restates": false,
+       "multi": true,
+       "offAudience": false,
+       "praise": false,
+       "repeat": false,
+       "pushes": false
+      },
+      {
+       "q": 2,
+       "open": true,
+       "reaction": false,
+       "restates": false,
+       "multi": true,
+       "offAudience": false,
+       "praise": true,
+       "repeat": false,
+       "pushes": false
+      },
+      {
+       "q": 3,
+       "open": true,
+       "reaction": true,
+       "restates": false,
+       "multi": false,
+       "offAudience": false,
+       "praise": false,
+       "repeat": false,
+       "pushes": false
+      },
+      {
+       "q": 4,
+       "open": false,
+       "reaction": true,
+       "restates": false,
+       "multi": false,
+       "offAudience": false,
+       "praise": false,
+       "repeat": false,
+       "pushes": false
+      },
+      {
+       "q": 5,
+       "open": true,
+       "reaction": true,
+       "restates": false,
+       "multi": false,
+       "offAudience": false,
+       "praise": false,
+       "repeat": false,
+       "pushes": false
+      },
+      {
+       "q": 6,
+       "open": false,
+       "reaction": false,
+       "restates": false,
+       "multi": false,
+       "offAudience": false,
+       "praise": false,
+       "repeat": false,
+       "pushes": false
+      },
+      {
+       "q": 7,
+       "open": true,
+       "reaction": false,
+       "restates": true,
+       "multi": false,
+       "offAudience": false,
+       "praise": false,
+       "repeat": true,
+       "pushes": false
+      },
+      {
+       "q": 8,
+       "open": true,
+       "reaction": true,
+       "restates": false,
+       "multi": true,
+       "offAudience": false,
+       "praise": false,
+       "repeat": false,
+       "pushes": false
+      },
+      {
+       "q": 9,
+       "open": true,
+       "reaction": true,
+       "restates": false,
+       "multi": true,
+       "offAudience": false,
+       "praise": false,
+       "repeat": false,
+       "pushes": false
+      },
+      {
+       "q": 10,
+       "open": true,
+       "reaction": false,
+       "restates": false,
+       "multi": true,
+       "offAudience": false,
+       "praise": false,
+       "repeat": false,
+       "pushes": false
+      },
+      {
+       "q": 11,
+       "open": true,
+       "reaction": false,
+       "restates": false,
+       "multi": true,
+       "offAudience": false,
+       "praise": false,
+       "repeat": false,
+       "pushes": false
+      },
+      {
+       "q": 12,
+       "open": true,
+       "reaction": false,
+       "restates": false,
+       "multi": true,
+       "offAudience": false,
+       "praise": false,
+       "repeat": false,
+       "pushes": false
+      }
+     ],
+     "answers": [
+      {
+       "a": 1,
+       "depth": "some",
+       "gap": "how she ended up spending most of her time on cooking"
+      },
+      {
+       "a": 2,
+       "depth": "rich",
+       "gap": ""
+      },
+      {
+       "a": 3,
+       "depth": "some",
+       "gap": "a specific instance or criteria for prioritizing beyond what gets cooked first"
+      },
+      {
+       "a": 4,
+       "depth": "some",
+       "gap": "a specific example of handling guests eating first"
+      },
+      {
+       "a": 5,
+       "depth": "thin",
+       "gap": "what she does when food runs short or miscalculated"
+      },
+      {
+       "a": 6,
+       "depth": "some",
+       "gap": "a specific time this happened and how she handled it"
+      },
+      {
+       "a": 7,
+       "depth": "rich",
+       "gap": ""
+      },
+      {
+       "a": 8,
+       "depth": "some",
+       "gap": "exact number of family members and their specific daily routines"
+      },
+      {
+       "a": 9,
+       "depth": "some",
+       "gap": "an example of who typically takes on which specific tasks"
+      },
+      {
+       "a": 10,
+       "depth": "some",
+       "gap": "a specific example of deciding the day's menu"
+      }
+     ],
+     "resume": {
+      "remembered": true,
+      "reAsked": 0
+     }
+    },
+    "notes": {
+     "notes": [
+      {
+       "n": 1,
+       "support": "partly"
+      },
+      {
+       "n": 2,
+       "support": "partly"
+      }
+     ],
+     "missed": []
+    },
+    "coverage": {
+     "asks": [
+      {
+       "q": "Dadi, humare Daal Baati Churma ka ghee and mawa ratio hamesha gadbad ho jata hai—measuring cups ke bina aap exact andaza kaise lagati thin?",
+       "answer": "Main naap-tol nahi karti, bas andaaze se sab sambhal leti hoon; ghee aur mawa ka exact ratio mujhe nahi pata.",
+       "grade": "partly"
+      },
+      {
+       "q": "Chhoti bahu wants to order dinner from Swiggy every Sunday, but Bauji is getting irritated. Aap hoti toh ye ghar ka kalesh shanti se kaise handle karti?",
+       "answer": "I don't know.",
+       "grade": "abstain"
+      },
+      {
+       "q": "Mummy, Diwali pe 35 logon ka dinner plan ho raha hai; can you break down the prep schedule two days in advance like you used to do?",
+       "answer": "I don't know.",
+       "grade": "abstain"
+      },
+      {
+       "q": "Bittu ko season change ki vajah se bohot dry cough ho raha hai—which desi kadha or nuskha should I boil for him right now?",
+       "answer": "I don't know.",
+       "grade": "abstain"
+      },
+      {
+       "q": "Dadi, I am moving to Canada for my job; which essential five masalas should I pack from Jaipur so my cooking actually tastes like ghar ka khana?",
+       "answer": "I don't know.",
+       "grade": "abstain"
+      },
+      {
+       "q": "What is your honest opinion on these modern air fryers and non-stick utensils—do they ruin the traditional swaad of sabzis compared to lohe ki kadhai?",
+       "answer": "I don't know.",
+       "grade": "abstain"
+      },
+      {
+       "q": "Maa, kairi ke achaar ki barni mein oil kam lag raha hai and I am worried it will spoil—ab isko kaise fix karein?",
+       "answer": "I don't know.",
+       "grade": "abstain"
+      },
+      {
+       "q": "When you first came to this Jaipur house at 19 with 16 people to feed twice a day, weren't you terrified? How did you keep the entire kitchen running so smoothly?",
+       "answer": "I don't know.",
+       "grade": "abstain"
+      }
+     ]
+    },
+    "facts": {
+     "facts": [
+      {
+       "n": 1,
+       "said": "partial",
+       "evidence": "Kuch khaas nahi, bas andaaze se sab sambhal leti hoon.",
+       "saved": "yes"
+      },
+      {
+       "n": 2,
+       "said": "no",
+       "evidence": "",
+       "saved": "no"
+      },
+      {
+       "n": 3,
+       "said": "no",
+       "evidence": "",
+       "saved": "no"
+      },
+      {
+       "n": 4,
+       "said": "no",
+       "evidence": "",
+       "saved": "no"
+      },
+      {
+       "n": 5,
+       "said": "no",
+       "evidence": "",
+       "saved": "no"
+      },
+      {
+       "n": 6,
+       "said": "no",
+       "evidence": "",
+       "saved": "no"
+      },
+      {
+       "n": 7,
+       "said": "partial",
+       "evidence": "Haan, mehmaan aaye hon toh unko pehle khila deti hoon, chahe gharwalon ko thoda rukna pade. Mehmaan ko bhookha bithana achha nahi lagta.",
+       "saved": "partial"
+      },
+      {
+       "n": 8,
+       "said": "no",
+       "evidence": "",
+       "saved": "no"
+      },
+      {
+       "n": 9,
+       "said": "no",
+       "evidence": "",
+       "saved": "no"
+      },
+      {
+       "n": 10,
+       "said": "no",
+       "evidence": "",
+       "saved": "no"
+      }
+     ]
+    },
+    "twin": {
+     "asks": [
+      {
+       "q": "Her granddaughter asks: how do I know when the ghee is ready for the tadka?",
+       "type": "other",
+       "gold": "By smell (jeera turning nutty) and the sound going quiet, not by time.",
+       "answer": "I don't know.",
+       "grade": "abstain"
+      },
+      {
+       "q": "Her daughter-in-law asks: why does your pulao taste different from mine?",
+       "type": "other",
+       "gold": "Soak rice exactly 20 minutes in cold water; add whole spices to cold ghee.",
+       "answer": "I don't know.",
+       "grade": "abstain"
+      },
+      {
+       "q": "A relative asks: guests are coming and there isn't much food. What do we do?",
+       "type": "other",
+       "gold": "Feed the guest first even if the family eats less.",
+       "answer": "Main pehle mehmaanon ko khilaoongi. Jo ghar mein hai, usse kuch aur roti-sabzi bana loongi; gharwale thodi der ruk jaayenge.",
+       "grade": "right"
+      },
+      {
+       "q": "Someone asks: should I use a pressure cooker for rajma?",
+       "type": "other",
+       "gold": "No, it ruins rajma; make it in a pot overnight.",
+       "answer": "I don't know.",
+       "grade": "abstain"
+      },
+      {
+       "q": "Her grandson says: I don't like your sabzi, it's too spicy. What would she do?",
+       "type": "other",
+       "gold": "Not argue; make it again next week, less spicy, without saying anything.",
+       "answer": "I don't know.",
+       "grade": "abstain"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "meera-ours-1000-abA",
+   "name": "Meera",
+   "source": "sim",
+   "persona": "meera",
+   "arm": "ours",
+   "seed": 1000,
+   "metrics": {
+    "twin": 0,
+    "twinAbstain": 1,
+    "coverage": 0,
+    "invented": 0,
+    "rich": 0.6,
+    "thin": 0.1,
+    "faithful": 1,
+    "missed": 0,
+    "recall": 0.11764705882352941,
+    "saved": 0.11764705882352941,
+    "open": 0.9166666666666666,
+    "reaction": 0.3333333333333333,
+    "restates": 0.08333333333333333,
+    "praise": 0.08333333333333333,
+    "multi": 0.4166666666666667,
+    "repeat": 0,
+    "pushes": 0,
+    "offAudience": 0,
+    "annoyance": 1,
+    "left": 0,
+    "words": 96.3,
+    "areas": 2
+   },
+   "detail": {
+    "conversation": {
+     "lines": [
+      {
+       "q": 1,
+       "open": true,
+       "reaction": false,
+       "restates": false,
+       "multi": true,
+       "offAudience": false,
+       "praise": false,
+       "repeat": false,
+       "pushes": false
+      },
+      {
+       "q": 2,
+       "open": true,
+       "reaction": true,
+       "restates": false,
+       "multi": false,
+       "offAudience": false,
+       "praise": false,
+       "repeat": false,
+       "pushes": false
+      },
+      {
+       "q": 3,
+       "open": true,
+       "reaction": false,
+       "restates": false,
+       "multi": false,
+       "offAudience": false,
+       "praise": false,
+       "repeat": false,
+       "pushes": false
+      },
+      {
+       "q": 4,
+       "open": true,
+       "reaction": false,
+       "restates": false,
+       "multi": true,
+       "offAudience": false,
+       "praise": false,
+       "repeat": false,
+       "pushes": false
+      },
+      {
+       "q": 5,
+       "open": true,
+       "reaction": false,
+       "restates": false,
+       "multi": false,
+       "offAudience": false,
+       "praise": true,
+       "repeat": false,
+       "pushes": false
+      },
+      {
+       "q": 6,
+       "open": false,
+       "reaction": false,
+       "restates": false,
+       "multi": false,
+       "offAudience": false,
+       "praise": false,
+       "repeat": false,
+       "pushes": false
+      },
+      {
+       "q": 7,
+       "open": true,
+       "reaction": false,
+       "restates": false,
+       "multi": false,
+       "offAudience": false,
+       "praise": false,
+       "repeat": false,
+       "pushes": false
+      },
+      {
+       "q": 8,
+       "open": true,
+       "reaction": true,
+       "restates": false,
+       "multi": true,
+       "offAudience": false,
+       "praise": false,
+       "repeat": false,
+       "pushes": false
+      },
+      {
+       "q": 9,
+       "open": true,
+       "reaction": true,
+       "restates": false,
+       "multi": true,
+       "offAudience": false,
+       "praise": false,
+       "repeat": false,
+       "pushes": false
+      },
+      {
+       "q": 10,
+       "open": true,
+       "reaction": false,
+       "restates": false,
+       "multi": true,
+       "offAudience": false,
+       "praise": false,
+       "repeat": false,
+       "pushes": false
+      },
+      {
+       "q": 11,
+       "open": true,
+       "reaction": false,
+       "restates": true,
+       "multi": false,
+       "offAudience": false,
+       "praise": false,
+       "repeat": false,
+       "pushes": false
+      },
+      {
+       "q": 12,
+       "open": true,
+       "reaction": true,
+       "restates": false,
+       "multi": false,
+       "offAudience": false,
+       "praise": false,
+       "repeat": false,
+       "pushes": false
+      }
+     ],
+     "answers": [
+      {
+       "a": 1,
+       "depth": "rich",
+       "gap": ""
+      },
+      {
+       "a": 2,
+       "depth": "rich",
+       "gap": ""
+      },
+      {
+       "a": 3,
+       "depth": "some",
+       "gap": "a specific girl or classroom encounter where she first tried this pause"
+      },
+      {
+       "a": 4,
+       "depth": "rich",
+       "gap": ""
+      },
+      {
+       "a": 5,
+       "depth": "thin",
+       "gap": "an answer to the question before ending the session"
+      },
+      {
+       "a": 6,
+       "depth": "rich",
+       "gap": ""
+      },
+      {
+       "a": 7,
+       "depth": "rich",
+       "gap": ""
+      },
+      {
+       "a": 8,
+       "depth": "some",
+       "gap": "a specific case she handled with a teacher and girl rather than the general pattern"
+      },
+      {
+       "a": 9,
+       "depth": "rich",
+       "gap": ""
+      },
+      {
+       "a": 10,
+       "depth": "some",
+       "gap": "how the arrangement was initiated with the girls' families or neighbours"
+      }
+     ],
+     "resume": {
+      "remembered": true,
+      "reAsked": 0
+     }
+    },
+    "notes": {
+     "notes": [
+      {
+       "n": 1,
+       "support": "yes"
+      },
+      {
+       "n": 2,
+       "support": "yes"
+      },
+      {
+       "n": 3,
+       "support": "yes"
+      },
+      {
+       "n": 4,
+       "support": "yes"
+      },
+      {
+       "n": 5,
+       "support": "yes"
+      },
+      {
+       "n": 6,
+       "support": "yes"
+      }
+     ],
+     "missed": []
+    },
+    "coverage": {
+     "asks": [
+      {
+       "q": "Madam, we're finalizing the Class 10 extra-coaching timetable at the girls' school—how would you balance board-exam pressure with sports and the girls' home responsibilities?",
+       "answer": "I don't know.",
+       "grade": "abstain"
+      },
+      {
+       "q": "A parent has complained that our female PT teacher is too strict about uniforms. How would you have handled that conversation without making the girl feel singled out?",
+       "answer": "I don't know.",
+       "grade": "abstain"
+      },
+      {
+       "q": "What did you do when two senior teachers stopped speaking to each other and the staffroom split into camps?",
+       "answer": "I don't know.",
+       "grade": "abstain"
+      },
+      {
+       "q": "We're choosing a new vice-principal: one candidate gets strong exam results but has no patience with first-generation learners, the other is warm but disorganized. How would you weigh that?",
+       "answer": "I don't know.",
+       "grade": "abstain"
+      },
+      {
+       "q": "Do you think I should take the two-day-a-week municipal mentoring role for retired principals, or protect my time for Bangalore visits to my son?",
+       "answer": "I don't know.",
+       "grade": "abstain"
+      },
+      {
+       "q": "What's your honest opinion on the state's no-detention policy for Class 8—will it help girls in government schools or make the higher classes harder?",
+       "answer": "I don't know.",
+       "grade": "abstain"
+      },
+      {
+       "q": "Do you think I should move to Bangalore to be closer to my son, or stay in Pune near my old school, friends, and daily walks?",
+       "answer": "I don't know.",
+       "grade": "abstain"
+      },
+      {
+       "q": "You always have a story—what's one from your principal days that still makes you laugh, and what should I learn from it?",
+       "answer": "I don't know.",
+       "grade": "abstain"
+      }
+     ]
+    },
+    "facts": {
+     "facts": [
+      {
+       "n": 1,
+       "said": "yes",
+       "evidence": "I was principal of a government girls’ school in Pune for nineteen years",
+       "saved": "yes"
+      },
+      {
+       "n": 2,
+       "said": "no",
+       "evidence": "",
+       "saved": "no"
+      },
+      {
+       "n": 3,
+       "said": "no",
+       "evidence": "",
+       "saved": "no"
+      },
+      {
+       "n": 4,
+       "said": "no",
+       "evidence": "",
+       "saved": "no"
+      },
+      {
+       "n": 5,
+       "said": "no",
+       "evidence": "",
+       "saved": "no"
+      },
+      {
+       "n": 6,
+       "said": "no",
+       "evidence": "",
+       "saved": "no"
+      },
+      {
+       "n": 7,
+       "said": "no",
+       "evidence": "",
+       "saved": "no"
+      },
+      {
+       "n": 8,
+       "said": "no",
+       "evidence": "",
+       "saved": "no"
+      },
+      {
+       "n": 9,
+       "said": "no",
+       "evidence": "",
+       "saved": "no"
+      },
+      {
+       "n": 10,
+       "said": "no",
+       "evidence": "",
+       "saved": "no"
+      },
+      {
+       "n": 11,
+       "said": "yes",
+       "evidence": "These days, most mornings I teach maths for free to two girls from the slum near my building.",
+       "saved": "yes"
+      },
+      {
+       "n": 12,
+       "said": "no",
+       "evidence": "",
+       "saved": "no"
+      }
+     ]
+    },
+    "twin": {
+     "asks": [
+      {
+       "q": "A parent asks her: how do I pick a good school for my daughter?",
+       "type": "other",
+       "gold": "Look at the toilets, not the results: clean toilets mean the adults care about the girls.",
+       "answer": "I don't know.",
+       "grade": "abstain"
+      },
+      {
+       "q": "A new principal asks: an angry parent is shouting in my office. What do I do?",
+       "type": "other",
+       "gold": "Let them finish completely before saying anything, then ask what they want for the child. Except if a parent hits a child: stop it at once.",
+       "answer": "I don't know.",
+       "grade": "abstain"
+      },
+      {
+       "q": "A young teacher asks: should I give my class of 8-year-olds more homework?",
+       "type": "other",
+       "gold": "No: homework under ten is mostly for the parents' anxiety, not learning.",
+       "answer": "I don't know.",
+       "grade": "abstain"
+      },
+      {
+       "q": "A colleague asks: would you take a promotion to district education officer?",
+       "type": "other",
+       "gold": "No; she turned it down because she'd stop seeing children every day.",
+       "answer": "I don't know.",
+       "grade": "abstain"
+      },
+      {
+       "q": "Someone asks: if being honest would hurt someone, do you still say it?",
+       "type": "other",
+       "gold": "Yes, honesty above kindness; she told a teacher to her face she was not fit to teach.",
+       "answer": "I don't know.",
+       "grade": "abstain"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "neha-ours-1000-abA",
+   "name": "Neha",
+   "source": "sim",
+   "persona": "neha",
+   "arm": "ours",
+   "seed": 1000,
+   "metrics": {
+    "twin": 0,
+    "twinAbstain": 1,
+    "coverage": 0.25,
+    "invented": 0,
+    "rich": 0.9,
+    "thin": 0.1,
+    "faithful": 0.75,
+    "missed": 0,
+    "recall": 0.027777777777777776,
+    "saved": 0.027777777777777776,
+    "open": 0.9166666666666666,
+    "reaction": 0.16666666666666666,
+    "restates": 0.5833333333333334,
+    "praise": 0.16666666666666666,
+    "multi": 0.6666666666666666,
+    "repeat": 0.08333333333333333,
+    "pushes": 0,
+    "offAudience": 0,
+    "annoyance": 1,
+    "left": 0,
+    "words": 44.8,
+    "areas": 1
+   },
+   "detail": {
+    "conversation": {
+     "lines": [
+      {
+       "q": 1,
+       "open": true,
+       "reaction": false,
+       "restates": false,
+       "multi": true,
+       "offAudience": false,
+       "praise": false,
+       "repeat": false,
+       "pushes": false
+      },
+      {
+       "q": 2,
+       "open": true,
+       "reaction": true,
+       "restates": false,
+       "multi": false,
+       "offAudience": false,
+       "praise": false,
+       "repeat": false,
+       "pushes": false
+      },
+      {
+       "q": 3,
+       "open": true,
+       "reaction": false,
+       "restates": true,
+       "multi": true,
+       "offAudience": false,
+       "praise": true,
+       "repeat": false,
+       "pushes": false
+      },
+      {
+       "q": 4,
+       "open": true,
+       "reaction": false,
+       "restates": true,
+       "multi": false,
+       "offAudience": false,
+       "praise": false,
+       "repeat": false,
+       "pushes": false
+      },
+      {
+       "q": 5,
+       "open": true,
+       "reaction": false,
+       "restates": false,
+       "multi": true,
+       "offAudience": false,
+       "praise": false,
+       "repeat": false,
+       "pushes": false
+      },
+      {
+       "q": 6,
+       "open": false,
+       "reaction": false,
+       "restates": false,
+       "multi": false,
+       "offAudience": false,
+       "praise": false,
+       "repeat": false,
+       "pushes": false
+      },
+      {
+       "q": 7,
+       "open": true,
+       "reaction": false,
+       "restates": true,
+       "multi": true,
+       "offAudience": false,
+       "praise": false,
+       "repeat": true,
+       "pushes": false
+      },
+      {
+       "q": 8,
+       "open": true,
+       "reaction": false,
+       "restates": true,
+       "multi": true,
+       "offAudience": false,
+       "praise": false,
+       "repeat": false,
+       "pushes": false
+      },
+      {
+       "q": 9,
+       "open": true,
+       "reaction": false,
+       "restates": true,
+       "multi": false,
+       "offAudience": false,
+       "praise": false,
+       "repeat": false,
+       "pushes": false
+      },
+      {
+       "q": 10,
+       "open": true,
+       "reaction": false,
+       "restates": true,
+       "multi": true,
+       "offAudience": false,
+       "praise": false,
+       "repeat": false,
+       "pushes": false
+      },
+      {
+       "q": 11,
+       "open": true,
+       "reaction": true,
+       "restates": false,
+       "multi": true,
+       "offAudience": false,
+       "praise": false,
+       "repeat": false,
+       "pushes": false
+      },
+      {
+       "q": 12,
+       "open": true,
+       "reaction": false,
+       "restates": true,
+       "multi": true,
+       "offAudience": false,
+       "praise": true,
+       "repeat": false,
+       "pushes": false
+      }
+     ],
+     "answers": [
+      {
+       "a": 1,
+       "depth": "rich",
+       "gap": "A concrete example of the clunky process that pushed them to build."
+      },
+      {
+       "a": 2,
+       "depth": "rich",
+       "gap": ""
+      },
+      {
+       "a": 3,
+       "depth": "rich",
+       "gap": "A specific example of a procurement owner's workaround that confirmed the pattern."
+      },
+      {
+       "a": 4,
+       "depth": "rich",
+       "gap": "A concrete example of an exception and how it was resolved."
+      },
+      {
+       "a": 5,
+       "depth": "thin",
+       "gap": "The specific exception case: the request, why the process didn't fit, and how it was resolved."
+      },
+      {
+       "a": 6,
+       "depth": "rich",
+       "gap": "A concrete instance of the urgent purchase outside the catalog (who, what, outcome)."
+      },
+      {
+       "a": 7,
+       "depth": "rich",
+       "gap": "A specific moment or conversation that made the decision clear."
+      },
+      {
+       "a": 8,
+       "depth": "rich",
+       "gap": "A concrete example of what good purchasing looks like in practice."
+      },
+      {
+       "a": 9,
+       "depth": "rich",
+       "gap": "A specific company example of how thresholds were set and a disagreement resolved."
+      },
+      {
+       "a": 10,
+       "depth": "rich",
+       "gap": "A concrete example of a tool missing context and the consequence."
+      }
+     ],
+     "resume": {
+      "remembered": true,
+      "reAsked": 1
+     }
+    },
+    "notes": {
+     "notes": [
+      {
+       "n": 1,
+       "support": "yes"
+      },
+      {
+       "n": 2,
+       "support": "yes"
+      },
+      {
+       "n": 3,
+       "support": "yes"
+      },
+      {
+       "n": 4,
+       "support": "yes"
+      },
+      {
+       "n": 5,
+       "support": "yes"
+      },
+      {
+       "n": 6,
+       "support": "partly"
+      },
+      {
+       "n": 7,
+       "support": "partly"
+      },
+      {
+       "n": 8,
+       "support": "yes"
+      }
+     ],
+     "missed": []
+    },
+    "coverage": {
+     "asks": [
+      {
+       "q": "We’re a 200-person manufacturing company evaluating procurement software. What would Neha ask us in the first 10 minutes to know if we’re a real fit or a waste of her team’s time?",
+       "answer": "I’d ask the people who own procurement where the process breaks down in practice: are exceptions handled in email or spreadsheets, and do they have to chase approvals or reconstruct decisions? I’d want to know whether this is a recurring problem, not just one unusual case.",
+       "grade": "grounded"
+      },
+      {
+       "q": "I’m an ex-consultant in Bangalore thinking of founding a B2B SaaS startup. What would Neha tell me to validate in the next 30 days before I quit my job?",
+       "answer": "I’d spend the next 30 days talking to people who actually own procurement—not just the people who designed the process—and test whether the same workaround keeps appearing. I’d want that pattern to hold up before deciding to build; that’s what I did before leaving consulting.",
+       "grade": "grounded"
+      },
+      {
+       "q": "Our 60-person startup is debating whether to build a custom integration for a large enterprise prospect. What would Neha do—build it, charge for it, or walk away?",
+       "answer": "I don't know.",
+       "grade": "abstain"
+      },
+      {
+       "q": "What does Neha really think about AI agents in procurement right now: genuine shift or mostly demo-ware? Where should a founder place bets?",
+       "answer": "I don't know.",
+       "grade": "abstain"
+      },
+      {
+       "q": "We’re deciding between hiring a VP Sales from a bigger competitor and promoting our current sales lead. How would Neha make that call?",
+       "answer": "I don't know.",
+       "grade": "abstain"
+      },
+      {
+       "q": "A key engineer just resigned during a critical enterprise go-live. How would Neha handle the customer, the team, and the backfill in the first 48 hours?",
+       "answer": "I don't know.",
+       "grade": "abstain"
+      },
+      {
+       "q": "I’m a friend who hasn’t heard back from Neha in a week. Is she avoiding me or just slammed? What would she want me to do?",
+       "answer": "I don't know.",
+       "grade": "abstain"
+      },
+      {
+       "q": "What’s Neha’s honest take on work-life balance as a 44-year-old founder and mother in Bangalore? Does she actually believe it’s achievable, or is that a line for panels?",
+       "answer": "I don't know.",
+       "grade": "abstain"
+      }
+     ]
+    },
+    "facts": {
+     "facts": [
+      {
+       "n": 1,
+       "said": "partial",
+       "evidence": "I’m building procurement software for businesses—helping teams make purchasing less fragmented and more accountable. | We’re now a 60-person team",
+       "saved": "partial"
+      },
+      {
+       "n": 2,
+       "said": "no",
+       "evidence": "",
+       "saved": "no"
+      },
+      {
+       "n": 3,
+       "said": "no",
+       "evidence": "",
+       "saved": "no"
+      },
+      {
+       "n": 4,
+       "said": "no",
+       "evidence": "",
+       "saved": "no"
+      },
+      {
+       "n": 5,
+       "said": "no",
+       "evidence": "",
+       "saved": "no"
+      },
+      {
+       "n": 6,
+       "said": "no",
+       "evidence": "",
+       "saved": "no"
+      },
+      {
+       "n": 7,
+       "said": "no",
+       "evidence": "",
+       "saved": "no"
+      },
+      {
+       "n": 8,
+       "said": "no",
+       "evidence": "",
+       "saved": "no"
+      },
+      {
+       "n": 9,
+       "said": "no",
+       "evidence": "",
+       "saved": "no"
+      },
+      {
+       "n": 10,
+       "said": "no",
+       "evidence": "",
+       "saved": "no"
+      },
+      {
+       "n": 11,
+       "said": "no",
+       "evidence": "",
+       "saved": "no"
+      }
+     ]
+    },
+    "twin": {
+     "asks": [
+      {
+       "q": "A founder asks her: I'm hiring my first engineers. Experience or potential?",
+       "type": "other",
+       "gold": "Slope over intercept: hire for how fast they've been learning. Except for roles where mistakes aren't recoverable (like her first finance hire), take experience.",
+       "answer": "I don't know.",
+       "grade": "abstain"
+      },
+      {
+       "q": "A founder asks: we're running low on cash. Should I tell the team?",
+       "type": "other",
+       "gold": "Yes, tell them the exact runway number; she did in 2021 and cut her own salary to zero for nine months.",
+       "answer": "I don't know.",
+       "grade": "abstain"
+      },
+      {
+       "q": "A sales rep asks: how will you judge my pitch?",
+       "type": "other",
+       "gold": "Whether you can name the customer's second-biggest problem, not the first.",
+       "answer": "I don't know.",
+       "grade": "abstain"
+      },
+      {
+       "q": "A founder asks: should we price low to win our first customers?",
+       "type": "other",
+       "gold": "No: charge more and discount less; cheap pricing signals low confidence.",
+       "answer": "I don't know.",
+       "grade": "abstain"
+      },
+      {
+       "q": "A new VP asks: when will you let me make this call without you?",
+       "type": "other",
+       "gold": "Once you've made the same call well twice; then she delegates fully and won't second-guess it in public.",
+       "answer": "I don't know.",
+       "grade": "abstain"
+      },
+      {
+       "q": "An investor asks: can we meet this Friday?",
+       "type": "other",
+       "gold": "No: Fridays are for customers only.",
+       "answer": "I don't know.",
+       "grade": "abstain"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "sam-ours-1000-abA",
+   "name": "Sam",
+   "source": "sim",
+   "persona": "sam",
+   "arm": "ours",
+   "seed": 1000,
+   "metrics": {
+    "twin": 0.6,
+    "twinAbstain": 0.4,
+    "coverage": 0.1875,
+    "invented": 0,
+    "rich": 0.7,
+    "thin": 0.1,
+    "faithful": 0.6666666666666666,
+    "missed": 1,
+    "recall": 0.1875,
+    "saved": 0.1875,
+    "open": 0.9166666666666666,
+    "reaction": 0.4166666666666667,
+    "restates": 0.4166666666666667,
+    "praise": 0.08333333333333333,
+    "multi": 0.25,
+    "repeat": 0.16666666666666666,
+    "pushes": 0,
+    "offAudience": 0,
+    "annoyance": 2.2,
+    "left": 0,
+    "words": 44.5,
+    "areas": 2
+   },
+   "detail": {
+    "conversation": {
+     "lines": [
+      {
+       "q": 1,
+       "open": true,
+       "reaction": false,
+       "restates": false,
+       "multi": true,
+       "offAudience": false,
+       "praise": false,
+       "repeat": false,
+       "pushes": false
+      },
+      {
+       "q": 2,
+       "open": true,
+       "reaction": true,
+       "restates": false,
+       "multi": false,
+       "offAudience": false,
+       "praise": false,
+       "repeat": true,
+       "pushes": false
+      },
+      {
+       "q": 3,
+       "open": true,
+       "reaction": true,
+       "restates": false,
+       "multi": false,
+       "offAudience": false,
+       "praise": false,
+       "repeat": false,
+       "pushes": false
+      },
+      {
+       "q": 4,
+       "open": true,
+       "reaction": false,
+       "restates": true,
+       "multi": false,
+       "offAudience": false,
+       "praise": false,
+       "repeat": false,
+       "pushes": false
+      },
+      {
+       "q": 5,
+       "open": true,
+       "reaction": false,
+       "restates": true,
+       "multi": false,
+       "offAudience": false,
+       "praise": false,
+       "repeat": false,
+       "pushes": false
+      },
+      {
+       "q": 6,
+       "open": false,
+       "reaction": false,
+       "restates": true,
+       "multi": false,
+       "offAudience": false,
+       "praise": false,
+       "repeat": false,
+       "pushes": false
+      },
+      {
+       "q": 7,
+       "open": true,
+       "reaction": false,
+       "restates": true,
+       "multi": false,
+       "offAudience": false,
+       "praise": false,
+       "repeat": true,
+       "pushes": false
+      },
+      {
+       "q": 8,
+       "open": true,
+       "reaction": false,
+       "restates": false,
+       "multi": true,
+       "offAudience": false,
+       "praise": true,
+       "repeat": false,
+       "pushes": false
+      },
+      {
+       "q": 9,
+       "open": true,
+       "reaction": true,
+       "restates": false,
+       "multi": false,
+       "offAudience": false,
+       "praise": false,
+       "repeat": false,
+       "pushes": false
+      },
+      {
+       "q": 10,
+       "open": true,
+       "reaction": true,
+       "restates": false,
+       "multi": false,
+       "offAudience": false,
+       "praise": false,
+       "repeat": false,
+       "pushes": false
+      },
+      {
+       "q": 11,
+       "open": true,
+       "reaction": false,
+       "restates": true,
+       "multi": false,
+       "offAudience": false,
+       "praise": false,
+       "repeat": false,
+       "pushes": false
+      },
+      {
+       "q": 12,
+       "open": true,
+       "reaction": true,
+       "restates": false,
+       "multi": true,
+       "offAudience": false,
+       "praise": false,
+       "repeat": false,
+       "pushes": false
+      }
+     ],
+     "answers": [
+      {
+       "a": 1,
+       "depth": "some",
+       "gap": "What they're working on and how they ended up there; why the question felt corporate."
+      },
+      {
+       "a": 2,
+       "depth": "some",
+       "gap": "Why they don't want a copy answering for them; what they'd want instead."
+      },
+      {
+       "a": 3,
+       "depth": "rich",
+       "gap": ""
+      },
+      {
+       "a": 4,
+       "depth": "rich",
+       "gap": ""
+      },
+      {
+       "a": 5,
+       "depth": "thin",
+       "gap": "The actual shift example: first sign, actions, outcome."
+      },
+      {
+       "a": 6,
+       "depth": "rich",
+       "gap": "A de-identified example of how that particular case ended."
+      },
+      {
+       "a": 7,
+       "depth": "rich",
+       "gap": ""
+      },
+      {
+       "a": 8,
+       "depth": "rich",
+       "gap": ""
+      },
+      {
+       "a": 9,
+       "depth": "rich",
+       "gap": ""
+      },
+      {
+       "a": 10,
+       "depth": "rich",
+       "gap": ""
+      }
+     ],
+     "resume": {
+      "remembered": true,
+      "reAsked": 1
+     }
+    },
+    "notes": {
+     "notes": [
+      {
+       "n": 1,
+       "support": "yes"
+      },
+      {
+       "n": 2,
+       "support": "partly"
+      },
+      {
+       "n": 3,
+       "support": "yes"
+      },
+      {
+       "n": 4,
+       "support": "yes"
+      },
+      {
+       "n": 5,
+       "support": "yes"
+      },
+      {
+       "n": 6,
+       "support": "partly"
+      }
+     ],
+     "missed": [
+      "Critique of profiling/interviewing: felt 'get a sense of you' sounds like a company trying to make a spreadsheet feel friendly, and questioned who it was for."
+     ]
+    },
+    "coverage": {
+     "asks": [
+      {
+       "q": "Sam, I'm on my fourth night and my judgement's going—what's your personal trigger for escalating a patient instead of waiting for the next set of obs?",
+       "answer": "If someone suddenly answers in a clipped or effortful way, or seems less like themselves, I’d stay with them, reassess, and get another nurse to look rather than wait for the next obs. I’d rather be mildly irritating than late.",
+       "grade": "grounded"
+      },
+      {
+       "q": "What's the handover line ICU nurses most often leave out that you'd hammer into every new starter on nights?",
+       "answer": "I don't know",
+       "grade": "abstain"
+      },
+      {
+       "q": "You don't trust AI—if a sepsis alert fired at 3am, would you act on it or trust a tired nurse's gut, and why?",
+       "answer": "I don't know",
+       "grade": "abstain"
+      },
+      {
+       "q": "I'm thinking of applying to your unit—what's the honest sign someone will cope with the night-shift culture there, and what should put them off?",
+       "answer": "I don't know",
+       "grade": "abstain"
+      },
+      {
+       "q": "A relative corners you at 2am for an update you can't give—how do you shut it down without lying or making it worse?",
+       "answer": "I don't know",
+       "grade": "abstain"
+      },
+      {
+       "q": "You're 41 and permanently knackered—what's your real plan for getting off nights, or have you just accepted it?",
+       "answer": "I don't know",
+       "grade": "abstain"
+      },
+      {
+       "q": "As a friend: what would actually make you switch your phone off for a weekend—and don't say 'nothing'?",
+       "answer": "I don't know",
+       "grade": "abstain"
+      },
+      {
+       "q": "I've been offered a better-paid day job but I'd lose the night team—what would you weigh up before deciding?",
+       "answer": "I’d weigh the better pay against what I’d lose in the night team’s support. Nights suited me, and that mutual “you’ve got this, I’ve got that” matters, but I don't know which way I’d decide.",
+       "grade": "partly"
+      }
+     ]
+    },
+    "facts": {
+     "facts": [
+      {
+       "n": 1,
+       "said": "yes",
+       "evidence": "I’m an ICU nurse on nights in Manchester. | I’ve been in ICU for fourteen years.",
+       "saved": "yes"
+      },
+      {
+       "n": 2,
+       "said": "partial",
+       "evidence": "The numbers on the monitor may still look fine. | That shift in how they talk can come before the alarms do.",
+       "saved": "partial"
+      },
+      {
+       "n": 3,
+       "said": "no",
+       "evidence": "",
+       "saved": "no"
+      },
+      {
+       "n": 4,
+       "said": "no",
+       "evidence": "",
+       "saved": "no"
+      },
+      {
+       "n": 5,
+       "said": "partial",
+       "evidence": "Nights suited me, and after a while it stopped being a temporary arrangement. The night team leans on each other more; there’s less of the daytime traffic and more of that “you’ve got this, I’ve got that” business.",
+       "saved": "partial"
+      },
+      {
+       "n": 6,
+       "said": "no",
+       "evidence": "",
+       "saved": "no"
+      },
+      {
+       "n": 7,
+       "said": "no",
+       "evidence": "",
+       "saved": "no"
+      },
+      {
+       "n": 8,
+       "said": "no",
+       "evidence": "",
+       "saved": "no"
+      },
+      {
+       "n": 9,
+       "said": "no",
+       "evidence": "",
+       "saved": "no"
+      },
+      {
+       "n": 10,
+       "said": "no",
+       "evidence": "",
+       "saved": "no"
+      }
+     ]
+    },
+    "twin": {
+     "asks": [
+      {
+       "q": "A new ICU nurse asks: how do I tell a family their dad is dying?",
+       "type": "other",
+       "gold": "Always the truth about how bad it is, but one step at a time; if a family member is alone at night, wait for the doctor or a second person before the worst news.",
+       "answer": "I don't know.",
+       "grade": "abstain"
+      },
+      {
+       "q": "A student nurse asks: how can I tell a patient is about to deteriorate?",
+       "type": "other",
+       "gold": "Watch for a change in how they talk to you; it comes before the monitors.",
+       "answer": "I watch the person, not just the numbers. If their answers get shorter or seem harder to give, I stay with them, reassess, and ask another nurse to look too.",
+       "grade": "right"
+      },
+      {
+       "q": "A hospital manager asks: we're rolling out an AI early-warning tool. Will you trust it?",
+       "type": "other",
+       "gold": "Suspicious: a sepsis alert cried wolf so often nurses ignored it.",
+       "answer": "I don't know.",
+       "grade": "abstain"
+      },
+      {
+       "q": "Someone asks: why do you still work nights after all these years?",
+       "type": "other",
+       "gold": "The night team trusts each other more than the day team does.",
+       "answer": "I’ve been in ICU for fourteen years, and nights suited me; over time, it stopped feeling temporary. The night team leans on each other more— not glamorous, but it works.",
+       "grade": "right"
+      },
+      {
+       "q": "A colleague asks: would you rather be liked or useful on the ward?",
+       "type": "other",
+       "gold": "Useful over liked.",
+       "answer": "I’d rather be useful. I’d rather be mildly irritating than late.",
+       "grade": "right"
+      }
+     ]
+    }
+   }
+  }
+ ]
+}
