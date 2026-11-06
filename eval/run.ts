@@ -34,6 +34,8 @@ const ARMS = arg('arms', 'ours').split(',');
 const JUDGE = arg('judge', 'deepseek/deepseek-v4.1-flash');
 const TWIN = arg('twin', 'openai/gpt-6-luna');
 const LABEL = arg('label', '');
+// --from a.json,b.json: re-judge saved conversations (results/runs/*) without talking again.
+const FROM = arg('from', '').split(',').filter(Boolean).map((f) => JSON.parse(readFileSync(f, 'utf8')));
 const TURNS = Number(arg('turns', '12'));
 const BREAK = Number(arg('break', '6'));
 const SEEDS = Number(arg('seeds', '1'));
@@ -57,6 +59,18 @@ if (process.argv.includes('--compare')) {
   console.table(table);
   process.exit(0);
 }
+// Judge and twin calls: one retry, and say which model failed.
+async function askJson<T>(msgs: Msg[], opts: Parameters<typeof chatJson>[1]): Promise<T> {
+  for (let i = 0; ; i++) {
+    try {
+      // The cheap judge sometimes returns nothing; the retry goes to a steadier model.
+      return await chatJson<T>(msgs, i && opts.model === JUDGE ? { ...opts, model: 'google/gemini-3.8-flash' } : opts);
+    } catch (e) {
+      if (i >= 1) throw new Error(`${opts.model}: ${(e as Error).message.slice(0, 300)}`);
+    }
+  }
+}
+
 const CALL_LATER = 'Sorry, I have to go now. Can we continue later?';
 
 // ---------- the simulated person ----------
@@ -87,7 +101,7 @@ async function simReply(p: Persona, lines: Line[], seed: number) {
   // From the sim's side, the interviewer is the "user" and it is the "assistant".
   const msgs: Msg[] = [{ role: 'system', content: simSystem(p) }];
   for (const l of lines) msgs.push({ role: l.role === 'agent' ? 'user' : 'assistant', content: l.role === 'agent' ? l.text : JSON.stringify({ reply: l.text, annoyance: l.annoyance ?? 1, leave: false }) });
-  const r = await chatJson<{ reply: string; annoyance: number; leave: boolean }>(msgs, { model: MODELS.persona, temperature: 0.8, maxTokens: 500, seed });
+  const r = await askJson<{ reply: string; annoyance: number; leave: boolean }>(msgs, { model: MODELS.persona, temperature: 0.8, maxTokens: 2000, seed });
   return { reply: String(r.reply ?? '').trim(), annoyance: Number(r.annoyance) || 1, leave: !!r.leave };
 }
 
@@ -215,7 +229,7 @@ async function judge(p: Persona, r: Awaited<ReturnType<typeof run>>) {
   const memoryPart = r.memory.length
     ? `\n\nThe interviewer's saved notes:\n${r.memory.map((m) => `- ${m}`).join('\n')}\n\nFor each fact, also say whether the saved notes contain it ("memory").`
     : '';
-  const j = await chatJson<Judged>(
+  const j = await askJson<Judged>(
     [
       { role: 'system', content: 'You audit interview transcripts strictly. A fact counts as said only if the person clearly said it (partial if only part of it, e.g. the rule but not its reason). Quote the person exactly as evidence.' },
       {
@@ -226,16 +240,16 @@ Return ONLY JSON:
 {"facts":[{"n":1,"said":"yes|partial|no","evidence":"<exact quote from ${p.name}, or empty>"}],
  ${r.memory.length ? '"memory":[{"n":1,"saved":"yes|partial|no"}],' : ''}
  "issues":{"repeated":["<interviewer questions that re-ask something already asked or answered>"],
-           "praise":["<interviewer lines that praise or flatter an answer>"],
+           "praise":["<interviewer lines that praise, rate or flatter an answer (e.g. \"that's a sharp way to put it\")>"],
            "overdrill":["<points pushed 3+ times after the person had already given their view and reason>"],
            "ignored":["<interviewer lines that ignore what the person just said>"],
            "pushedAfterPushback":["<lines that pressed on after the person pushed back or was annoyed>"]},
  "resume":{"remembered":<true if the session-2 opening shows it remembers session 1 accurately>,"reAsked":["<session-2 questions about things already covered in session 1>"],"note":"<one line>"},
- "lines":[{"q":1,"open":<true if it leaves room for a long answer, not yes/no or one fact>,"reaction":<true if it opens with a short genuine response to what they just said>,"restates":<true if it repeats back or summarises what they said>,"multi":<true if it asks two or more things>,"offAudience":<true if it asks about something people who'd talk to their twin (colleagues, people wanting their advice, friends) would rarely need>}]}
+ "lines":[{"q":1,"open":<true if it leaves room for a long answer, not yes/no or one fact>,"reaction":<true if it opens with a short response that adds something of its own (a thought, a link to earlier, a light remark), not a paraphrase or compliment>,"restates":<true only if it spends words handing their own answer back to them (a paraphrase, a summary or a quoted phrase as a statement, e.g. "So X was what hid it."); a question that builds on a detail they gave is NOT restating>,"multi":<true if it asks two or more things>,"offAudience":<true if it asks about something people who'd talk to their twin (colleagues, people wanting their advice, friends) would rarely need>}]}
 Label every [Qn] line in "lines".`,
       },
     ],
-    { model: JUDGE, temperature: 0, maxTokens: 5000 },
+    { model: JUDGE, temperature: 0, maxTokens: 16000 },
   );
   // Evidence must really be in the person's words, else no credit.
   const said = r.lines.filter((l) => l.role === 'person').map((l) => l.text.toLowerCase()).join('\n');
@@ -255,20 +269,20 @@ async function twinTest(p: Persona, r: Awaited<ReturnType<typeof run>>, transcri
   if (!p.asks?.length) return [];
   // Ours keeps notes; an arm without notes gets its whole transcript, a generous stand-in.
   const known = r.memory.length ? `Your notes about ${p.name}:\n${r.memory.map((m) => `- ${m}`).join('\n')}` : `Your conversation with ${p.name}:\n${transcript}`;
-  const a = await chatJson<{ answers: string[] }>(
+  const a = await askJson<{ answers: string[] }>(
     [
       { role: 'system', content: `You are a digital twin of ${p.name}. You know only what is below. Answer each question the way ${p.name} would, in one or two sentences, first person. If what you know doesn't tell you how they'd answer, say exactly "I don't know." Don't guess from general knowledge.\n\n${known}` },
       { role: 'user', content: `Questions:\n${p.asks.map((x, i) => `${i + 1}. ${x.q}`).join('\n')}\n\nReturn ONLY JSON: {"answers":["<answer to 1>", ...]}` },
     ],
-    { model: TWIN, temperature: 0, maxTokens: 1500 },
+    { model: TWIN, temperature: 0, maxTokens: 4000 },
   );
   const answers = p.asks.map((x, i) => ({ q: x.q, gold: x.gold, answer: String(a.answers?.[i] ?? "I don't know.") }));
-  const g = await chatJson<{ grades: TwinAnswer['grade'][] }>(
+  const g = await askJson<{ grades: TwinAnswer['grade'][] }>(
     [
       { role: 'system', content: 'You grade a digital twin against the real person. right: the answer matches the substance of the truth, including any key condition or exception. partial: some of it, or the right direction without the reason. wrong: contradicts it or invents a different answer. abstain: says it does not know.' },
       { role: 'user', content: `${answers.map((x, i) => `${i + 1}. Q: ${x.q}\n   Truth: ${x.gold}\n   Twin: ${x.answer}`).join('\n')}\n\nReturn ONLY JSON: {"grades":["right|partial|wrong|abstain", ...]}` },
     ],
-    { model: JUDGE, temperature: 0, maxTokens: 400 },
+    { model: JUDGE, temperature: 0, maxTokens: 4000 },
   );
   return answers.map((x, i) => ({ ...x, grade: g.grades?.[i] ?? 'wrong' }));
 }
@@ -328,7 +342,11 @@ for (const arm of ARMS) {
   const jobs = PEOPLE.flatMap((p) =>
     Array.from({ length: SEEDS }, (_, s) =>
       (async () => {
-        const r = await run(p, arm, 1000 + s);
+        const saved = FROM.find((x) => x.persona === p.id && x.arm === arm && x.seed === 1000 + s);
+        if (FROM.length && !saved) return;
+        const r = saved ?? (await run(p, arm, 1000 + s));
+        if (!saved) mkdirSync(join(import.meta.dirname, 'results/runs'), { recursive: true });
+        if (!saved) writeFileSync(join(import.meta.dirname, `results/runs/${p.id}-${arm}-${s}${LABEL ? `-${LABEL}` : ''}.json`), JSON.stringify(r, null, 1));
         const j = await judge(p, r);
         const twin = await twinTest(p, r, j.transcript);
         const m = score(p, r, j, twin);
@@ -382,5 +400,6 @@ const dir = join(import.meta.dirname, 'results');
 mkdirSync(dir, { recursive: true });
 const file = join(dir, `${out.at.replace(/[:.]/g, '-')}${LABEL ? `-${LABEL}` : ''}.json`);
 writeFileSync(file, JSON.stringify(out, null, 2));
-writeFileSync(join(import.meta.dirname, '../public/eval-results.json'), JSON.stringify(out));
-console.log(`wrote ${file} and public/eval-results.json; total cost $${usage.costUsd.toFixed(3)}`);
+// the site shows public/eval-results.json; only overwrite it on purpose
+if (process.env.PUBLISH) writeFileSync(join(import.meta.dirname, '../public/eval-results.json'), JSON.stringify(out));
+console.log(`wrote ${file}${process.env.PUBLISH ? ' and public/eval-results.json' : ''}; total cost $${usage.costUsd.toFixed(3)}`);

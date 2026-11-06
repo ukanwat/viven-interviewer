@@ -41,7 +41,7 @@ store: files | Postgres | S3/R2 | D1
 | Note-taker / interviewer brain | `anthropic/claude-sonnet-5.5` |
 | Fast tasks (link summary, running summary) | `anthropic/claude-haiku-5.5` |
 | Simulated people (eval) | `openai/gpt-6-luna` |
-| Judge (report, eval) | `google/gemini-4-argon` |
+| Judge (report, eval) | `google/gemini-4-argon` (report); `deepseek/deepseek-v4.1-flash` (eval, falls back to `google/gemini-3.8-flash`) |
 
 All text models go through OpenRouter via the Vercel AI SDK (`src/brain/llm.ts`), with prompt caching. The stable prefix (principles, reply format) is marked once and reused by every turn and by the after-call pass; about 80% of a turn's input is read from cache. Set `LLM_LOG=1` to log tokens, cache hits and cost per call. The OpenAI key is used only for voice.
 
@@ -63,7 +63,7 @@ Storage is picked from the environment: `DATABASE_URL` → Postgres, `S3_BUCKET`
 
 **Cloudflare (how the live site runs):** `src/worker.ts` runs the same Room inside one Durable Object per person, with D1 for storage. Set secrets with `wrangler secret put OPENROUTER_API_KEY` (and `OPENAI_API_KEY`, `PASSCODE`), create the D1 database named in `wrangler.jsonc`, then `pnpm run deploy`.
 
-**Eval:** `pnpm eval --arms ours,baseline --turns 12 --break 6 --seeds 1` (about $1.25 for four people, both arms). Results go to `eval/results/` and `public/eval-results.json`.
+**Eval:** `pnpm eval --arms ours,baseline --turns 12 --break 6 --seeds 1` (about $1.25 for four people, both arms). Results go to `eval/results/` (add `PUBLISH=1` to update the site's `/eval` page). The twin test (a stand-in twin answers outsiders' questions from the notes only) and per-line feel labels are scored too; `--from <runs>` re-judges saved conversations; `BRAIN_MODEL=anthropic/claude-haiku-5.5` for cheap iterations (about $0.10 for five people). See THINKING.md §11.
 
 **Typecheck:** `pnpm typecheck` (Node and Worker configs).
 

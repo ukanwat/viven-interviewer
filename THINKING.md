@@ -314,10 +314,32 @@ The goodbye now names one thing about them that surprised the interviewer, somet
 - It fits where Viven is going, since a twin at work will sit on top of work tools anyway. It also doesn't exclude "any human": without tools, the interview works as before.
 - Not tested end to end with a real account. That needs someone to sign in; sign-in and the UI were checked, but the read loop wasn't.
 
-## 11. What I'd do next
+## 11. Experiment 11: the twin test, and three prompt edits that didn't win (7 Nov)
+
+The harness now measures what matters more directly. Each simulated person has five or six "asks": questions an outsider would put to their twin, with the answer the person would give ("what would Kamla tell me to do if my dal tastes flat?"). After the interview, a stand-in twin gets only the saved notes and answers each one. A judge from a different model family grades every answer right, partial, wrong or abstained. The judge also labels each interviewer line: open question or not, own reaction or not, hands their words back or not, several questions in one, off-audience. Raw runs are saved, so a changed judge can re-score old conversations (`--from`) without paying for new ones.
+
+Five people (a new one, Neha, is a busy founder who gives short answers), 10 turns with a break at 5, Haiku as the brain to keep it cheap. "Twin" = share of asks answered right (partial counts half).
+
+| Prompt | Seeds | Twin | Recall | Hands words back | Several Qs in one | Praise (per 5 runs) | Left early |
+|---|---|---|---|---|---|---|---|
+| Current (baseline) | 2 | 0.24 | 0.19 | 0.45 | 0.46 | 13 | 0 |
+| Shorter rules, same ideas | 1 | 0.23 | — | 0.68* | 0.17 | — | 0 |
+| "Start with what they're known for" + "go broad" | 1 | 0.12 | 0.12 | 0.44 | 0.15 | 7 | 1 |
+| Same, softened, + "don't press after pushback" | 2 | 0.11 | 0.11 | 0.34 | 0.28 | 6 | 1 |
+| **Current + "never quote or compliment what they said"** | 1 | **0.25** | **0.25** | **0.35** | 0.37 | 8 | 0 |
+
+*older judge definition, which over-counted.
+
+- The rewrites lost. Telling it to go broad made it worse: it dug into one topic more (overdrill 11 vs 1). Sam, the sceptic, walked out twice when a question came back after his pushback. Shorter rules did cut stacked questions, but they didn't raise what the twin could answer.
+- The one change kept is a few words. The current prompt already said "never praise" and "never repeat back"; Haiku still said "that's a sharp detail" and quoted people. Naming quoting and compliments directly cut handed-back words from about half the turns to a third, with no loss elsewhere. The same line went into the voice prompt.
+- Noise is large: one seed moves a person's twin score by 0.1–0.2, so 0.24 vs 0.25 is a tie. The claim is only "fewer quotes and compliments, no regression".
+- Even the best run answers only a quarter of the asks, and abstains on most of the rest. Ten turns don't reach most of what people would ask. The gap is coverage, not accuracy (wrong answers are 0–4%). That points at the twin-gap idea below rather than at more prompt wording.
+- Not confirmed on Sonnet (the production brain), to stay within budget. An earlier Sonnet smoke test showed the same habit of quoting and complimenting, so the fix should carry over.
+
+## 12. What I'd do next
 
 - **Twin-gap questions.** Ask a cheap model "what would people who know this person's work ask their twin that these notes can't answer?", and feed the top gap to the note-taker as a direction. This is TwinCafe's "see what it missed" loop, but before the twin exists.
-- **The twin test (idea only, not built).** This is the real measure of capture. Hold out questions the interview never asked ("would you take this job?", "how would you reply to this message?"). Build a minimal twin from the captured notes only, and score its answers against the person's own. Report how often it abstains as well as how accurate it is: a twin that says "I don't know" beats one that invents. The facts-recall numbers above are a stand-in for this.
+- **The twin test on real people.** It now runs on simulated people (§11). Next: on real people, with asks they write themselves.
 - **Let the person correct the notes.** They can already see the notebook. Next, let them fix or strike a note in place. That gives precision on real people with no golden set, and builds trust.
 - **Saturation as the stopping signal.** The after-call page already plots notes changed per answer. When an area of the notebook stops changing for a few answers, it's done. When the whole notebook does, the session is done.
 - **Scaling the notebook.** Past roughly 100k characters, the note-taker would get the tree and summaries only, plus tools to `ls`, `read` and `grep` (a small tool loop, where an agent framework starts to earn its keep). RAG over notes comes after that, for the twin rather than the interviewer.

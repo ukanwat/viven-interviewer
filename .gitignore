@@ -7,3 +7,4 @@ public/test-audio/
 .wrangler/
 .wrangler/
 worker-configuration.d.ts
+eval/results/runs/
