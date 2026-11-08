@@ -8,181 +8,131 @@
   * { box-sizing: border-box; }
   html, body { margin: 0; }
   :root { --ink: #16181d; --muted: #6b6f78; --line: #e6e4df; --accent: #c2691a; --indigo: #2f3a8f; --paper: #fbfaf7; }
-  body { font: 9.2pt/1.45 Charter, "Iowan Old Style", Georgia, serif; color: var(--ink); background: #fff; }
+  body { font: 9.6pt/1.5 Charter, "Iowan Old Style", Georgia, serif; color: var(--ink); background: #fff; }
+  .sans { font-family: -apple-system, "SF Pro Text", "Helvetica Neue", Arial, sans-serif; }
   .page { width: 210mm; height: 297mm; display: flex; flex-direction: column; overflow: hidden; }
 
-  header { background: var(--ink); color: #fff; padding: 10mm 16mm 7.5mm; position: relative; overflow: hidden; }
+  header { background: var(--ink); color: #fff; padding: 12mm 16mm 9mm; position: relative; overflow: hidden; }
   header::after { content: ""; position: absolute; right: -30mm; top: -30mm; width: 90mm; height: 90mm; border-radius: 50%;
     background: radial-gradient(circle at center, rgba(194,105,26,0.55), rgba(194,105,26,0) 70%); }
   .eyebrow { font: 600 7.2pt/1 -apple-system, "Helvetica Neue", Arial, sans-serif; letter-spacing: 1.6px; text-transform: uppercase; color: #f0b27a; }
-  h1 { font: 700 19pt/1.15 -apple-system, "SF Pro Display", "Helvetica Neue", Arial, sans-serif; margin: 2.2mm 0 2mm; letter-spacing: -0.4px; max-width: 160mm; }
-  .intro { font-size: 9.6pt; line-height: 1.45; color: #d9dbe0; max-width: 170mm; margin: 0; position: relative; z-index: 1; }
+  h1 { font: 700 21pt/1.15 -apple-system, "SF Pro Display", "Helvetica Neue", Arial, sans-serif; margin: 2.5mm 0 2.5mm; letter-spacing: -0.4px; max-width: 150mm; }
+  .intro { font-size: 10pt; line-height: 1.5; color: #d9dbe0; max-width: 165mm; margin: 0; position: relative; z-index: 1; }
 
-  main { padding: 6mm 16mm 0; display: flex; flex-direction: column; gap: 4.5mm; flex: 1; }
-  h2 { font: 700 7.4pt/1 -apple-system, "Helvetica Neue", Arial, sans-serif; letter-spacing: 1.4px; text-transform: uppercase; color: var(--accent); margin: 0 0 2mm; }
-  figure { margin: 0; background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 2.5mm 3mm 2mm; }
-  figcaption { font: 7.6pt/1.35 -apple-system, "Helvetica Neue", Arial, sans-serif; color: var(--muted); text-align: center; margin-top: 1mm; }
+  main { padding: 8mm 16mm 0; display: flex; flex-direction: column; gap: 6mm; flex: 1; }
+  figure { margin: 0; background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 3mm 4mm 2.5mm; }
+  figcaption { font: 7.8pt -apple-system, "Helvetica Neue", Arial, sans-serif; color: var(--muted); text-align: center; }
   svg text { font-family: -apple-system, "Helvetica Neue", Arial, sans-serif; }
 
-  table { width: 100%; border-collapse: collapse; }
-  td { vertical-align: top; padding: 1.5mm 0; border-top: 1px solid var(--line); }
-  tr:first-child td { border-top: 0; padding-top: 0; }
-  td.q { width: 63mm; padding-right: 5mm; font-style: italic; color: #4a4e57; }
-  td.a b { font: 700 8.6pt -apple-system, "Helvetica Neue", Arial, sans-serif; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; }
+  .card { border: 1px solid var(--line); border-radius: 10px; padding: 3.6mm 4mm 3.4mm; position: relative; background: #fff; }
+  .num { position: absolute; right: 3.5mm; top: 1mm; font: 800 24pt/1 -apple-system, "Helvetica Neue", Arial, sans-serif; color: #f1ede6; }
+  .card h3 { font: 700 10.2pt/1.25 -apple-system, "Helvetica Neue", Arial, sans-serif; margin: 0 0 2mm; position: relative; }
+  .row { display: grid; grid-template-columns: 12.5mm 1fr; gap: 1mm; margin-top: 1.2mm; }
+  .tag { font: 700 6.6pt/1.9 -apple-system, "Helvetica Neue", Arial, sans-serif; letter-spacing: 0.8px; text-transform: uppercase; }
+  .tag.b { color: #a3a6ad; }
+  .tag.n { color: var(--accent); }
+  .row p { margin: 0; }
+  .row.before p { color: #555a63; }
+  .card.check { background: var(--indigo); border-color: var(--indigo); color: #fff; }
+  .card.check h3 { color: #fff; }
+  .card.check p { margin: 0; color: #dfe2f5; }
+  .stat { display: flex; align-items: baseline; gap: 2mm; margin-top: 2.4mm; font-family: -apple-system, "Helvetica Neue", Arial, sans-serif; }
+  .stat b { font-size: 17pt; font-weight: 800; color: #fff; letter-spacing: -0.5px; }
+  .stat span { font-size: 7.6pt; color: #c3c8ee; line-height: 1.3; }
 
-  .stats { display: grid; grid-template-columns: repeat(4, 1fr); background: var(--indigo); border-radius: 10px; color: #fff;
-    font-family: -apple-system, "Helvetica Neue", Arial, sans-serif; }
-  .stats div { padding: 3mm 3.5mm; border-left: 1px solid rgba(255,255,255,0.15); }
-  .stats div:first-child { border-left: 0; }
-  .stats b { display: block; font-size: 14pt; font-weight: 800; letter-spacing: -0.4px; }
-  .stats span { font-size: 7.3pt; line-height: 1.3; color: #c9cdf0; }
-
-  footer { margin: auto 16mm 0; padding: 2.5mm 0 6mm; border-top: 1px solid var(--line); display: flex; justify-content: space-between; gap: 6mm;
-    font: 7.2pt/1.4 -apple-system, "Helvetica Neue", Arial, sans-serif; color: var(--muted); }
+  footer { margin: auto 16mm 0; padding: 3mm 0 7mm; border-top: 1px solid var(--line); display: flex; justify-content: space-between;
+    font: 7.4pt -apple-system, "Helvetica Neue", Arial, sans-serif; color: var(--muted); }
 </style>
 </head>
 <body>
 <div class="page">
 
 <header>
-  <div class="eyebrow">Viven AI · Interviewer and eval harness · November 2026</div>
-  <h1>How the interviewer gets what someone knows onto paper, and how I measure it</h1>
-  <p class="intro">You asked for two things: an interviewer that can draw out what any person knows, by voice, without annoying them; and a way to tell how much it actually captured and what got worse when the prompt changed. Below is how the system is built and where each part of your ask lives.</p>
+  <div class="eyebrow">Viven AI · Interviewer · November 2026</div>
+  <h1>How the interviewer works, and why it's built this way</h1>
+  <p class="intro">The goal: talk with someone for twenty minutes, by voice, and come away with notes good enough for a digital twin to answer the way they would. It has to work for anyone, not just people who explain themselves well. Five things shaped the design. Each one started as a mistake.</p>
 </header>
 
 <main>
 <figure>
-<svg viewBox="0 0 680 330" width="100%">
+<svg viewBox="0 0 680 134" width="100%">
   <defs>
     <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#5b5f68"/></marker>
     <marker id="o" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#c2691a"/></marker>
-    <marker id="i" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#2f3a8f"/></marker>
     <linearGradient id="gv" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3f4bb0"/><stop offset="1" stop-color="#2f3a8f"/></linearGradient>
     <linearGradient id="gn" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d9802f"/><stop offset="1" stop-color="#c2691a"/></linearGradient>
-    <filter id="s" x="-20%" y="-20%" width="140%" height="160%"><feDropShadow dx="0" dy="1.2" stdDeviation="1.6" flood-opacity="0.13"/></filter>
+    <filter id="s" x="-20%" y="-20%" width="140%" height="160%"><feDropShadow dx="0" dy="1.5" stdDeviation="2" flood-opacity="0.14"/></filter>
   </defs>
 
-  <!-- bands -->
-  <rect x="4" y="4" width="672" height="118" rx="8" fill="#fff" stroke="#ece9e3"/>
-  <rect x="4" y="130" width="672" height="92" rx="8" fill="#fff" stroke="#ece9e3"/>
-  <rect x="4" y="230" width="672" height="96" rx="8" fill="#f3f4fb" stroke="#dfe2f3"/>
-  <text x="14" y="19" font-size="8" font-weight="700" letter-spacing="1.2" fill="#c2691a">1 · DURING THE CALL</text>
-  <text x="14" y="145" font-size="8" font-weight="700" letter-spacing="1.2" fill="#c2691a">2 · MEMORY</text>
-  <text x="14" y="245" font-size="8" font-weight="700" letter-spacing="1.2" fill="#2f3a8f">3 · EVAL HARNESS, OFFLINE</text>
-  <text x="666" y="245" font-size="7.8" text-anchor="end" fill="#5b638f">real calls are pulled into the same viewer for review</text>
-
-  <!-- band 1 -->
   <g filter="url(#s)">
-    <rect x="14" y="46" width="78" height="40" rx="20" fill="#fff" stroke="#d8d5ce"/>
-    <rect x="124" y="36" width="130" height="62" rx="10" fill="url(#gv)"/>
-    <rect x="310" y="26" width="204" height="88" rx="10" fill="url(#gn)"/>
-    <rect x="560" y="40" width="108" height="52" rx="9" fill="#fff" stroke="#d8d5ce"/>
+    <rect x="10" y="30" width="112" height="54" rx="27" fill="#fff" stroke="#d8d5ce"/>
+    <rect x="186" y="26" width="140" height="62" rx="12" fill="url(#gv)"/>
+    <rect x="390" y="26" width="140" height="62" rx="12" fill="url(#gn)"/>
+    <rect x="574" y="30" width="96" height="54" rx="10" fill="#fff" stroke="#d8d5ce"/>
   </g>
-  <text x="53" y="70" font-size="11.5" font-weight="700" text-anchor="middle" fill="#16181d">Person</text>
-  <text x="189" y="58" font-size="11.5" font-weight="700" text-anchor="middle" fill="#fff">Voice model</text>
-  <text x="189" y="72" font-size="8.2" text-anchor="middle" fill="#cdd2f3">OpenAI GPT-Live, WebRTC</text>
-  <text x="189" y="85" font-size="8.2" text-anchor="middle" fill="#cdd2f3">does the talking</text>
-  <text x="412" y="43" font-size="11.5" font-weight="700" text-anchor="middle" fill="#fff">Note-taker · Claude Sonnet</text>
-  <text x="322" y="62" font-size="8.4" fill="#fff">1  Was that answer complete? What's missing?</text>
-  <text x="322" y="78" font-size="8.4" fill="#fff">2  Write or update notes in their words</text>
-  <text x="322" y="94" font-size="8.4" fill="#fff">3  Pick where to go next, or move on</text>
-  <text x="322" y="108" font-size="7.4" fill="#fbe2c9">runs after every answer, in the background</text>
-  <text x="614" y="62" font-size="10" font-weight="700" text-anchor="middle" fill="#16181d">What I've learned</text>
-  <text x="614" y="77" font-size="8" text-anchor="middle" fill="#6b6f78">live, beside the call</text>
+  <text x="66" y="62" font-size="12.5" font-weight="700" text-anchor="middle" fill="#16181d">Person</text>
+  <text x="256" y="53" font-size="12.5" font-weight="700" text-anchor="middle" fill="#fff">Voice model</text>
+  <text x="256" y="70" font-size="9" text-anchor="middle" fill="#cdd2f3">OpenAI GPT-Live</text>
+  <text x="460" y="53" font-size="12.5" font-weight="700" text-anchor="middle" fill="#fff">Note-taker</text>
+  <text x="460" y="70" font-size="9" text-anchor="middle" fill="#fbe2c9">Claude Sonnet</text>
+  <text x="622" y="54" font-size="12.5" font-weight="700" text-anchor="middle" fill="#16181d">Notes</text>
+  <text x="622" y="69" font-size="8.5" text-anchor="middle" fill="#6b6f78">on screen, live</text>
 
-  <line x1="94" y1="60" x2="122" y2="60" stroke="#5b5f68" stroke-width="1.3" marker-end="url(#a)"/>
-  <line x1="122" y1="72" x2="94" y2="72" stroke="#5b5f68" stroke-width="1.3" marker-end="url(#a)"/>
-  <line x1="256" y1="52" x2="308" y2="52" stroke="#5b5f68" stroke-width="1.3" marker-end="url(#a)"/>
-  <text x="282" y="46" font-size="7.8" text-anchor="middle" fill="#6b6f78">answer</text>
-  <line x1="308" y1="84" x2="256" y2="84" stroke="#c2691a" stroke-width="1.4" stroke-dasharray="4 3" marker-end="url(#o)"/>
-  <text x="282" y="97" font-size="7.8" text-anchor="middle" fill="#c2691a" font-weight="600">silent hint</text>
-  <line x1="516" y1="66" x2="558" y2="66" stroke="#5b5f68" stroke-width="1.3" marker-end="url(#a)"/>
-
-  <!-- band 2 -->
-  <g filter="url(#s)" fill="#fff" stroke="#d8d5ce">
-    <rect x="14" y="152" width="120" height="58" rx="9"/>
-    <rect x="146" y="152" width="140" height="58" rx="9"/>
-    <rect x="298" y="152" width="112" height="58" rx="9" stroke="#c2691a"/>
-    <rect x="422" y="152" width="100" height="58" rx="9" stroke="#c2691a"/>
-    <rect x="534" y="152" width="134" height="58" rx="9"/>
-  </g>
-  <g font-size="8" text-anchor="middle" fill="#6b6f78">
-    <text x="74" y="171" font-size="10" font-weight="700" fill="#16181d">"Call me later"</text>
-    <text x="74" y="185">next call starts from</text><text x="74" y="197">the notes and the gaps</text>
-    <text x="216" y="171" font-size="10" font-weight="700" fill="#16181d">Transcript</text>
-    <text x="216" y="185">plus a short summary</text><text x="216" y="197">every few turns</text>
-    <text x="354" y="171" font-size="10" font-weight="700" fill="#16181d">Notebook</text>
-    <text x="354" y="185">folders of short notes</text><text x="354" y="197">in their own words</text>
-    <text x="472" y="171" font-size="10" font-weight="700" fill="#16181d">Gaps list</text>
-    <text x="472" y="185">what's still missing</text><text x="472" y="197">or unclear</text>
-    <text x="601" y="171" font-size="10" font-weight="700" fill="#16181d">After each call</text>
-    <text x="601" y="185">notes checked against transcript;</text><text x="601" y="197">report of gaps and what to ask</text>
-  </g>
-  <line x1="354" y1="116" x2="354" y2="150" stroke="#c2691a" stroke-width="1.3" marker-start="url(#o)" marker-end="url(#o)"/>
-  <line x1="472" y1="116" x2="472" y2="150" stroke="#c2691a" stroke-width="1.3" marker-start="url(#o)" marker-end="url(#o)"/>
-  <path d="M96,150 C96,124 150,118 160,100" stroke="#5b5f68" stroke-width="1.3" fill="none" marker-end="url(#a)"/>
-  <line x1="614" y1="150" x2="614" y2="94" stroke="#5b5f68" stroke-width="1.3" marker-end="url(#a)"/>
-  <text x="620" y="125" font-size="7.6" fill="#6b6f78">review page</text>
-
-  <!-- band 3 -->
-  <g filter="url(#s)" fill="#fff" stroke="#c9cdea">
-    <rect x="14" y="254" width="114" height="60" rx="9"/>
-    <rect x="149" y="254" width="114" height="60" rx="9"/>
-    <rect x="284" y="254" width="114" height="60" rx="9"/>
-    <rect x="419" y="254" width="114" height="60" rx="9"/>
-    <rect x="554" y="254" width="114" height="60" rx="9" fill="url(#gv)" stroke="none"/>
-  </g>
-  <g font-size="7.8" text-anchor="middle" fill="#5b5f68">
-    <text x="71" y="274" font-size="9.6" font-weight="700" fill="#16181d">Simulated people</text>
-    <text x="71" y="288">hidden facts = golden set</text><text x="71" y="300">can get bored, leave, call back</text>
-    <text x="206" y="274" font-size="9.6" font-weight="700" fill="#16181d">Same interviewer</text>
-    <text x="206" y="288">the real code, via the API</text><text x="206" y="300">text in place of voice</text>
-    <text x="341" y="274" font-size="9.6" font-weight="700" fill="#16181d">Twin test</text>
-    <text x="341" y="288">questions about the person,</text><text x="341" y="300">answered from notes only</text>
-    <text x="476" y="274" font-size="9.6" font-weight="700" fill="#16181d">Judge</text>
-    <text x="476" y="288">a model from another</text><text x="476" y="300">company grades it</text>
-    <text x="611" y="274" font-size="9.6" font-weight="700" fill="#fff">Compare versions</text>
-    <text x="611" y="288" fill="#cdd2f3">held-out people, error bars</text><text x="611" y="300" fill="#cdd2f3">flags what got worse</text>
-  </g>
-  <g stroke="#2f3a8f" stroke-width="1.3">
-    <line x1="129" y1="284" x2="147" y2="284" marker-end="url(#i)"/>
-    <line x1="264" y1="284" x2="282" y2="284" marker-end="url(#i)"/>
-    <line x1="399" y1="284" x2="417" y2="284" marker-end="url(#i)"/>
-    <line x1="534" y1="284" x2="552" y2="284" marker-end="url(#i)"/>
-  </g>
+  <line x1="124" y1="49" x2="184" y2="49" stroke="#5b5f68" stroke-width="1.4" marker-end="url(#a)"/>
+  <line x1="184" y1="65" x2="124" y2="65" stroke="#5b5f68" stroke-width="1.4" marker-end="url(#a)"/>
+  <text x="154" y="20" font-size="8.8" text-anchor="middle" fill="#6b6f78">talk, ~1 s replies</text>
+  <line x1="328" y1="57" x2="388" y2="57" stroke="#5b5f68" stroke-width="1.4" marker-end="url(#a)"/>
+  <text x="358" y="20" font-size="8.8" text-anchor="middle" fill="#6b6f78">their answer</text>
+  <line x1="532" y1="57" x2="572" y2="57" stroke="#5b5f68" stroke-width="1.4" marker-end="url(#a)"/>
+  <path d="M460,90 C460,122 256,122 256,90" stroke="#c2691a" stroke-width="1.5" stroke-dasharray="4 3" fill="none" marker-end="url(#o)"/>
+  <text x="358" y="124" font-size="8.8" text-anchor="middle" fill="#c2691a" font-weight="600">a quiet hint for the next question</text>
 </svg>
-<figcaption>The question "was that answer complete, and what's missing?" is asked twice: live, to choose the next question, and offline, to score a version of the interviewer.</figcaption>
+<figcaption>The voice model does the talking. The note-taker listens, writes the notes, and suggests where to go next.</figcaption>
 </figure>
 
-<section>
-<h2>What you asked for, and where it lives</h2>
-<table>
-  <tr><td class="q">"Tacit knowledge from any human. Any human."</td>
-    <td class="a"><b>No question list.</b> It first finds out what the person does and what they're known for, then goes deep only where an answer differs from what anyone would say.</td></tr>
-  <tr><td class="q">"Is that the complete answer? What is a fuller answer? Is there a knowledge gap?"</td>
-    <td class="a"><b>Step 1 of the note-taker</b>, after every answer. Open gaps go into the gaps list and steer the next question.</td></tr>
-  <tr><td class="q">"Try it once more, twice, then move on… you don't want to piss them off."</td>
-    <td class="a"><b>Same check decides "enough".</b> A vague answer gets a different angle, not the same question again. If they push back, it moves on.</td></tr>
-  <tr><td class="q">"Can you call me later?… not starting all over again."</td>
-    <td class="a"><b>One memory per person.</b> Hang up any time; the next call opens on what they said last and picks up the next gap.</td></tr>
-  <tr><td class="q">"Golden set… you captured 50%, tuned the prompt, now 70%."</td>
-    <td class="a"><b>Hidden facts per simulated person.</b> I score how many came out, how many reached the notes, and compare two versions on the same people.</td></tr>
-  <tr><td class="q">"Did something else fail? Did people drop off, go off on a tangent?"</td>
-    <td class="a"><b>Regression checks in every run:</b> who left early and why, repeated or two-part questions, filler, notes not backed by the transcript.</td></tr>
-  <tr><td class="q">"How do you know you've actually captured all the knowledge?"</td>
-    <td class="a"><b>The twin test.</b> Another model answers outsiders' questions about the person from the notes alone. Wrong or made-up answers show what's missing.</td></tr>
-</table>
-</section>
+<div class="grid">
 
-<div class="stats">
-  <div><b>2–8 s → 1 s</b><span>reply time, after letting the voice model lead</span></div>
-  <div><b>0.12 → 0.23</b><span>share of hidden facts drawn out, after the notebook rework</span></div>
-  <div><b>2.0 → 2.8</b><span>areas of each person's life covered, latest round</span></div>
-  <div><b>32% → 16%</b><span>questions that asked two things at once</span></div>
+  <div class="card"><div class="num">1</div>
+    <h3>Let the voice model lead</h3>
+    <div class="row before"><span class="tag b">Before</span><p>The note-taker wrote every question and the voice read it out. Replies took 2–8 seconds, and sometimes two questions came out at once.</p></div>
+    <div class="row"><span class="tag n">Now</span><p>The voice model answers on its own, because it can hear when someone has finished. The note-taker sends a hint for the next question.</p></div>
+  </div>
+
+  <div class="card"><div class="num">2</div>
+    <h3>Leave behaviour to the model, not code</h3>
+    <div class="row before"><span class="tag b">Before</span><p>Code rules stopped repeats, capped topics and trimmed long questions. Each one broke a normal conversation somewhere.</p></div>
+    <div class="row"><span class="tag n">Now</span><p>The prompt describes what a good interviewer does, and the model decides. Code only moves and saves data.</p></div>
+  </div>
+
+  <div class="card"><div class="num">3</div>
+    <h3>Keep notes in their own words</h3>
+    <div class="row before"><span class="tag b">Before</span><p>It saved labelled facts: a value, a rule, a story. Much of it was about the call ("didn't like being interrupted"), not the person.</p></div>
+    <div class="row"><span class="tag n">Now</span><p>A small folder of short notes (work, family, views) in their words, tidied against the transcript after every call.</p></div>
+  </div>
+
+  <div class="card"><div class="num">4</div>
+    <h3>Ask about what makes them different</h3>
+    <div class="row before"><span class="tag b">Before</span><p>In my own test call it asked five questions about how I prioritise work. Anyone would have said the same.</p></div>
+    <div class="row"><span class="tag n">Now</span><p>It starts with what the person is known for, sketches the rest of their life, and digs only where an answer is unusual.</p></div>
+  </div>
+
+  <div class="card"><div class="num">5</div>
+    <h3>Make the screen calm</h3>
+    <div class="row before"><span class="tag b">Before</span><p>The first screen looked like a debugging tool, and people performed for it.</p></div>
+    <div class="row"><span class="tag n">Now</span><p>Type your name and talk. Notes appear beside the conversation as they're written. Come back later and it picks up where you left off.</p></div>
+  </div>
+
+  <div class="card check">
+    <h3>How I check a change</h3>
+    <p>Ten simulated people with hidden facts are interviewed by the real system. Another model answers questions about each person from the notes alone, and a model from a different company grades the answers.</p>
+    <div class="stat"><b>2.0 → 2.8</b><span>areas of each person's life covered<br>in the latest round, no facts lost</span></div>
+  </div>
+
 </div>
 </main>
 
-<footer><span>One Durable Object per person on Cloudflare Workers, people in D1; the same code runs as a plain Node server. Text model calls go through OpenRouter; the judge is never from the same company as the interviewer.</span><span style="white-space:nowrap">Experiment log: THINKING.md</span></footer>
+<footer><span>TypeScript on Cloudflare Workers · Voice: OpenAI GPT-Live · Notes: Claude Sonnet via OpenRouter</span><span>Full experiment log: THINKING.md</span></footer>
 </div>
 </body>
 </html>

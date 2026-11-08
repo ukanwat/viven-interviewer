@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>The eval harness: how I know a change made the interviewer better</title>
+<style>
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  :root { --ink: #16181d; --muted: #6b6f78; --line: #e6e4df; --accent: #c2691a; --indigo: #2f3a8f; --paper: #fbfaf7; }
+  body { font: 9.1pt/1.45 Charter, "Iowan Old Style", Georgia, serif; color: var(--ink); background: #fff; }
+  .page { width: 210mm; height: 297mm; display: flex; flex-direction: column; overflow: hidden; }
+
+  header { background: var(--indigo); color: #fff; padding: 10mm 16mm 7.5mm; position: relative; overflow: hidden; }
+  header::after { content: ""; position: absolute; right: -30mm; top: -30mm; width: 90mm; height: 90mm; border-radius: 50%;
+    background: radial-gradient(circle at center, rgba(194,105,26,0.6), rgba(194,105,26,0) 70%); }
+  .eyebrow { font: 600 7.2pt/1 -apple-system, "Helvetica Neue", Arial, sans-serif; letter-spacing: 1.6px; text-transform: uppercase; color: #f0b27a; }
+  h1 { font: 700 19pt/1.15 -apple-system, "SF Pro Display", "Helvetica Neue", Arial, sans-serif; margin: 2.2mm 0 2mm; letter-spacing: -0.4px; max-width: 160mm; }
+  .intro { font-size: 9.6pt; line-height: 1.45; color: #dfe2f5; max-width: 170mm; margin: 0; position: relative; z-index: 1; }
+
+  main { padding: 6mm 16mm 0; display: flex; flex-direction: column; gap: 4.5mm; flex: 1; }
+  h2 { font: 700 7.4pt/1 -apple-system, "Helvetica Neue", Arial, sans-serif; letter-spacing: 1.4px; text-transform: uppercase; color: var(--accent); margin: 0 0 2mm; }
+  figure { margin: 0; background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 2.5mm 3mm 2mm; }
+  figcaption { font: 7.6pt/1.35 -apple-system, "Helvetica Neue", Arial, sans-serif; color: var(--muted); text-align: center; margin-top: 1mm; }
+  svg text { font-family: -apple-system, "Helvetica Neue", Arial, sans-serif; }
+
+  .three { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4mm; }
+  .card { border: 1px solid var(--line); border-radius: 10px; padding: 3mm 3.6mm; background: #fff; }
+  .card h3 { font: 700 9.6pt/1.25 -apple-system, "Helvetica Neue", Arial, sans-serif; margin: 0 0 0.6mm; }
+  .card .q { font-style: italic; color: var(--muted); font-size: 8.4pt; margin: 0 0 1.6mm; }
+  .card p { margin: 0; }
+
+  .two { display: grid; grid-template-columns: 1.05fr 1fr; gap: 5mm; }
+  table { width: 100%; border-collapse: collapse; font: 8.4pt/1.3 -apple-system, "Helvetica Neue", Arial, sans-serif; }
+  th { text-align: right; font-weight: 700; color: var(--muted); font-size: 7.4pt; padding: 0 0 1.2mm; }
+  th:first-child, td:first-child { text-align: left; }
+  td { text-align: right; padding: 1.1mm 0; border-top: 1px solid var(--line); }
+  td.up { color: var(--indigo); font-weight: 700; }
+  td.down { color: #a3462a; font-weight: 700; }
+  .note { font-size: 8.2pt; color: #4a4e57; margin: 1.6mm 0 0; }
+  ul { margin: 0; padding-left: 4mm; }
+  li { margin: 0 0 1.2mm; }
+
+  footer { margin: auto 16mm 0; padding: 2.5mm 0 6mm; border-top: 1px solid var(--line); display: flex; justify-content: space-between; gap: 6mm;
+    font: 7.2pt/1.4 -apple-system, "Helvetica Neue", Arial, sans-serif; color: var(--muted); }
+  code { font: 7pt "SF Mono", Menlo, monospace; color: var(--ink); }
+</style>
+</head>
+<body>
+<div class="page">
+
+<header>
+  <div class="eyebrow">Viven AI · Eval harness · November 2026</div>
+  <h1>How I know a change made the interviewer better</h1>
+  <p class="intro">Your question on the call: if a prompt change takes capture from 50% to 70%, how do I know nothing else broke, that people didn't leave or drift off, and how would I know when everything has been captured? The harness answers that by running the real interviewer against simulated people whose knowledge I wrote down in advance.</p>
+</header>
+
+<main>
+<figure>
+<svg viewBox="0 0 680 252" width="100%">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#5b5f68"/></marker>
+    <marker id="o" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#c2691a"/></marker>
+    <linearGradient id="gv" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3f4bb0"/><stop offset="1" stop-color="#2f3a8f"/></linearGradient>
+    <linearGradient id="gn" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d9802f"/><stop offset="1" stop-color="#c2691a"/></linearGradient>
+    <filter id="s" x="-20%" y="-20%" width="140%" height="160%"><feDropShadow dx="0" dy="1.2" stdDeviation="1.6" flood-opacity="0.13"/></filter>
+  </defs>
+
+  <g filter="url(#s)">
+    <rect x="14" y="30" width="150" height="96" rx="10" fill="#fff" stroke="#d8d5ce"/>
+    <rect x="196" y="30" width="140" height="96" rx="10" fill="url(#gn)"/>
+    <rect x="368" y="30" width="150" height="96" rx="10" fill="#fff" stroke="#d8d5ce"/>
+    <rect x="550" y="30" width="118" height="96" rx="10" fill="url(#gv)"/>
+    <rect x="196" y="160" width="140" height="66" rx="10" fill="#fff" stroke="#c2691a"/>
+    <rect x="368" y="160" width="150" height="66" rx="10" fill="#fff" stroke="#d8d5ce"/>
+    <rect x="532" y="160" width="136" height="66" rx="10" fill="#fff" stroke="#d8d5ce"/>
+  </g>
+  <rect x="14" y="160" width="150" height="66" rx="10" fill="none" stroke="#9aa0c8" stroke-dasharray="4 3"/>
+
+  <g font-size="7.4" font-weight="700" letter-spacing="1" fill="#9a9ea6">
+    <text x="14" y="20">1 · PEOPLE</text><text x="196" y="20">2 · TALK</text><text x="368" y="20">3 · GRADE</text><text x="550" y="20">4 · DECIDE</text>
+  </g>
+
+  <g font-size="8" text-anchor="middle" fill="#5b5f68">
+    <text x="89" y="50" font-size="10.5" font-weight="700" fill="#16181d">10 simulated people</text>
+    <text x="89" y="66">terse, hostile, vague, busy…</text>
+    <text x="89" y="78">10–12 hidden facts each,</text>
+    <text x="89" y="90">some told only if probed</text>
+    <text x="89" y="102">or once they trust you</text>
+    <text x="89" y="116">5 outsider questions + gold answers</text>
+
+    <text x="266" y="50" font-size="10.5" font-weight="700" fill="#fff">The interviewer</text>
+    <g fill="#fde7d2">
+    <text x="266" y="66">the real code, via the API</text>
+    <text x="266" y="78">text in place of voice</text>
+    <text x="266" y="94">they get annoyed, may leave,</text>
+    <text x="266" y="106">and say "call me later"</text>
+    <text x="266" y="118">halfway, then come back</text>
+    </g>
+
+    <text x="443" y="50" font-size="10.5" font-weight="700" fill="#16181d">Graders</text>
+    <text x="443" y="63" font-size="7.6">a model from another company</text>
+    <text x="443" y="78">every question it asked</text>
+    <text x="443" y="90">notes checked against transcript</text>
+    <text x="443" y="102">hidden facts: said? saved?</text>
+    <text x="443" y="114">twin answers gold questions</text>
+
+    <text x="609" y="50" font-size="10.5" font-weight="700" fill="#fff">Compare A vs B</text>
+    <g fill="#cdd2f3">
+    <text x="609" y="66">same people, same seed</text>
+    <text x="609" y="78">95% range per score</text>
+    <text x="609" y="94">one main score;</text>
+    <text x="609" y="106">guard scores may</text>
+    <text x="609" y="118">not get worse</text>
+    </g>
+
+    <text x="266" y="180" font-size="10.5" font-weight="700" fill="#16181d">Improve</text>
+    <text x="266" y="195">failures from dev people only</text>
+    <text x="266" y="207">become one small prompt edit;</text>
+    <text x="266" y="219">held-out people confirm it</text>
+
+    <text x="443" y="180" font-size="10.5" font-weight="700" fill="#16181d">Real calls</text>
+    <text x="443" y="195">pulled from the site every 2 h</text>
+    <text x="443" y="207">no gold answers, so scored on</text>
+    <text x="443" y="219">coverage (see below)</text>
+
+    <text x="600" y="180" font-size="10.5" font-weight="700" fill="#16181d">Review</text>
+    <text x="600" y="195">a viewer: I mark pass/fail,</text>
+    <text x="600" y="207">correct the judge,</text>
+    <text x="600" y="219">tag the failure</text>
+
+    <text x="89" y="180" font-size="10.5" font-weight="700" fill="#2f3a8f">Can I trust it?</text>
+    <text x="89" y="195">judge vs my own labels</text>
+    <text x="89" y="207">same grading run twice</text>
+    <text x="89" y="219">noise from seed to seed</text>
+  </g>
+
+  <line x1="165" y1="78" x2="194" y2="78" stroke="#5b5f68" stroke-width="1.3" marker-end="url(#a)"/>
+  <line x1="337" y1="78" x2="366" y2="78" stroke="#5b5f68" stroke-width="1.3" marker-end="url(#a)"/>
+  <line x1="519" y1="78" x2="548" y2="78" stroke="#5b5f68" stroke-width="1.3" marker-end="url(#a)"/>
+  <line x1="443" y1="158" x2="443" y2="128" stroke="#5b5f68" stroke-width="1.3" marker-end="url(#a)"/>
+  <line x1="609" y1="128" x2="609" y2="158" stroke="#5b5f68" stroke-width="1.3" marker-end="url(#a)"/>
+  <path d="M600,228 L600,242 L266,242 L266,230" stroke="#c2691a" stroke-width="1.4" stroke-dasharray="4 3" fill="none" marker-end="url(#o)"/>
+  <line x1="266" y1="158" x2="266" y2="128" stroke="#c2691a" stroke-width="1.4" stroke-dasharray="4 3" marker-end="url(#o)"/>
+  <text x="433" y="238" font-size="7.8" text-anchor="middle" fill="#c2691a" font-weight="600">what failed, in my words and the judge's</text>
+</svg>
+<figcaption>One loop: run, grade, compare, read the failures, change one thing, run again. Judge calls are cached, so regrading old runs costs nothing.</figcaption>
+</figure>
+
+<section>
+<h2>The three things it measures</h2>
+<div class="three">
+  <div class="card"><h3>How much was captured</h3><p class="q">"you captured 50%… now 70%"</p>
+    <p>Share of each person's hidden facts they actually said, and share that reached the notes, with vital facts counted double. Then the twin test: another model answers the gold questions from the notes alone, and the judge marks it right, partly right, wrong or "don't know".</p></div>
+  <div class="card"><h3>What else broke</h3><p class="q">"did people drop off, go off on a tangent?"</p>
+    <p>Guard scores that may not get worse: walked out, peak annoyance, re-asking, two questions at once, pressing after pushback, praise, repeating their answer back, notes the transcript doesn't support, twin answers that were made up.</p></div>
+  <div class="card"><h3>Whether to trust the numbers</h3><p class="q">"are you evaluating the right things?"</p>
+    <p>The judge is checked against my labels (catches the failure, stays quiet when there isn't one), graded twice to see how often labels flip, and run on two seeds to find the smallest change these ten people can show.</p></div>
+</div>
+</section>
+
+<div class="two">
+<section>
+<h2>A real round: base vs. one prompt edit</h2>
+<table>
+  <tr><th>5 dev people × 2 seeds, graded blind</th><th>base</th><th>edit</th></tr>
+  <tr><td>Hidden facts they said</td><td>0.29</td><td class="up">0.32</td></tr>
+  <tr><td>Hidden facts saved in notes</td><td>0.29</td><td class="up">0.32</td></tr>
+  <tr><td>Areas of their life covered</td><td>2.0</td><td class="up">2.8</td></tr>
+  <tr><td>Filler lines per conversation</td><td>7.8</td><td class="up">6.9</td></tr>
+  <tr><td>Re-asks per conversation</td><td>0.2</td><td class="down">0.5</td></tr>
+</table>
+<p class="note">The edit: move on once a topic has their view and one real case. It was merged, but the guard caught re-asks going up, and one person (Ray) got worse. That is the "what else broke" question answered with numbers.</p>
+</section>
+
+<section>
+<h2>For real people, and what's not done</h2>
+<ul>
+  <li><b>Real calls have no answer key.</b> So the judge writes the questions people would ask this person's twin, answers them from the notes, and checks each answer against everything they said. On simulated people I can check that this tracks the gold score.</li>
+  <li><b>Held-out people</b> are set aside for confirming edits, but haven't been run yet: the credit ran out.</li>
+  <li><b>My hand labels</b> for checking the judge are the next step. The tooling is built.</li>
+  <li><b>Tangents</b> are tested by people who drift (Meera wanders to her students), not by a score of their own yet.</li>
+</ul>
+</section>
+</div>
+</main>
+
+<footer><span><code>node eval/run.ts sim · grade · compare · view · triage · meta · improve · pull</code> &nbsp;·&nbsp; 12 tests in CI</span><span style="white-space:nowrap">Every run log: eval/FINDINGS · THINKING.md</span></footer>
+</div>
+</body>
+</html>
