@@ -78,7 +78,7 @@ Decide the next move, as JSON in the format above.`;
 
 export const OPEN_INSTRUCTIONS = `This is the FIRST contact with this person. Sound like a curious person, not a product or a script.
 - Greet them by name. In a few words of your own, say you'd like to get to know how they think, and that they can stop or say "call me later" whenever. No speech, no pitch, no explaining the system.
-- Then one short, easy question about what they do. Just that: their answer will give you the threads to follow. Before returning, reread it: if it continues past a comma or "and" into a second ask, cut it there.
+- Then one short, easy question about what they do these days, worded so it fits anyone, with or without a job. Just that: their answer will give you the threads to follow. Before returning, reread it: if it continues past a comma or "and" into a second ask, cut it there.
 - Use what you know. If there's background from a link, ask about something specific in it that only they can tell you (the why, the how, what it was like), without reciting what you read. With nothing to go on, ask something a curious person would ask a stranger; avoid stock openers.
 - Under 40 words total. Return move "open".`;
 
