@@ -2,169 +2,86 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Viven Interviewer: design on one page</title>
+<title>How the Viven interviewer works, and why</title>
 <style>
   @page { size: A4; margin: 0; }
   * { box-sizing: border-box; }
   html, body { margin: 0; }
-  body { font: 8.3pt/1.36 -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif; color: #1d1d1f; background: #fff; }
-  .page { width: 210mm; height: 297mm; padding: 10mm 12mm 8mm; display: flex; flex-direction: column; gap: 2.8mm; overflow: hidden; }
-  header { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px solid #1d1d1f; padding-bottom: 2mm; }
-  h1 { font-size: 17pt; margin: 0; letter-spacing: -0.3px; }
-  header .sub { color: #555; font-size: 8.4pt; margin-top: 1mm; }
-  header .meta { white-space: nowrap; text-align: right; color: #666; font-size: 7.6pt; }
-  .q { background: #f4f1ea; border-left: 3px solid #b8892b; padding: 2mm 3mm; font-size: 8.8pt; }
-  .q b { color: #7a5a14; }
-  h2 { font-size: 9.4pt; text-transform: uppercase; letter-spacing: 0.6px; margin: 0 0 1.4mm; color: #333; }
-  figure { margin: 0; border: 1px solid #ddd; border-radius: 6px; padding: 2mm 2mm 1mm; }
-  figcaption { font-size: 7.4pt; color: #666; padding: 0 1mm; }
-  svg text { font-family: -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif; }
-  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 2.4mm 5mm; }
-  .d { break-inside: avoid; }
-  .d h3 { font-size: 8.9pt; margin: 0 0 0.6mm; }
-  .d h3 span { display: inline-block; width: 4.4mm; height: 4.4mm; line-height: 4.4mm; text-align: center; border-radius: 50%; background: #1d1d1f; color: #fff; font-size: 7pt; margin-right: 1.2mm; vertical-align: 1px; }
-  .d p { margin: 0; }
-  .ev { color: #2f6b3a; }
-  .no { color: #9a3b2e; }
-  .bottom { display: grid; grid-template-columns: 1.15fr 1fr; gap: 5mm; }
-  ul { margin: 0; padding-left: 4mm; }
-  li { margin: 0 0 0.5mm; }
-  footer { margin-top: auto; border-top: 1px solid #ddd; padding-top: 1.4mm; color: #777; font-size: 7.2pt; display: flex; justify-content: space-between; }
+  body { font: 9.3pt/1.45 Georgia, "Times New Roman", serif; color: #222; background: #fff; }
+  .page { width: 210mm; height: 297mm; padding: 14mm 17mm 10mm; display: flex; flex-direction: column; overflow: hidden; }
+  h1 { font: 700 18pt/1.2 -apple-system, "Helvetica Neue", Arial, sans-serif; margin: 0 0 1.5mm; letter-spacing: -0.2px; }
+  .by { font: 8pt -apple-system, "Helvetica Neue", Arial, sans-serif; color: #777; margin-bottom: 5mm; }
+  p { margin: 0 0 2.4mm; }
+  .lead { font-size: 10pt; }
+  figure { margin: 0 0 2mm; }
+  figcaption { font: 7.8pt -apple-system, "Helvetica Neue", Arial, sans-serif; color: #777; text-align: center; margin-top: 1mm; }
+  svg text { font-family: -apple-system, "Helvetica Neue", Arial, sans-serif; }
+  h2 { font: 700 10pt/1.3 -apple-system, "Helvetica Neue", Arial, sans-serif; margin: 3.2mm 0 1mm; }
+  h2 .n { color: #999; font-weight: 400; margin-right: 1.5mm; }
+  footer { margin-top: auto; padding-top: 2mm; border-top: 1px solid #ddd; font: 7.6pt -apple-system, "Helvetica Neue", Arial, sans-serif; color: #888; }
 </style>
 </head>
 <body>
 <div class="page">
 
-<header>
-  <div>
-    <h1>Viven Interviewer: design on one page</h1>
-    <div class="sub">A voice-first interviewer that gets what makes a person <i>themselves</i> into notes a digital twin can answer from.</div>
-  </div>
-  <div class="meta">Utkarsh Kanwat · Nov 2026<br>viven-interviewer.utkarshkanwat.com</div>
-</header>
+<h1>How the Viven interviewer works, and why</h1>
+<div class="by">Utkarsh Kanwat · November 2026 · viven-interviewer.utkarshkanwat.com</div>
 
-<div class="q"><b>The question I designed for:</b> how do you get tacit knowledge out of <i>any</i> human (an engineer, a nurse, a grandmother who cooks by feel), cheaply in their time, so they want to come back? <b>The metric:</b> how much of what a twin would need gets captured per minute, while they still enjoy it.</div>
+<p class="lead">The goal is simple to say: talk with someone for twenty minutes, by voice, and come away with notes good enough for a digital twin to answer the way they would. It should work for anyone, not just people who are good at explaining themselves. Five things shaped the design. Each one started as a mistake.</p>
 
 <figure>
-<svg viewBox="0 0 760 232" width="100%">
+<svg viewBox="0 0 640 145" width="100%">
   <defs>
     <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#444"/></marker>
-    <marker id="g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#b8892b"/></marker>
   </defs>
-  <!-- live loop band -->
-  <rect x="4" y="4" width="752" height="150" rx="8" fill="#fafafa" stroke="#e3e3e3"/>
-  <text x="14" y="20" font-size="10" font-weight="700" fill="#888" letter-spacing="1">DURING A CALL</text>
+  <rect x="10" y="40" width="100" height="56" rx="6" fill="#fff" stroke="#222" stroke-width="1.3"/>
+  <text x="60" y="73" font-size="12" font-weight="600" text-anchor="middle">Person</text>
 
-  <!-- person -->
-  <rect x="16" y="52" width="104" height="58" rx="8" fill="#fff" stroke="#1d1d1f" stroke-width="1.4"/>
-  <text x="68" y="76" font-size="12" font-weight="700" text-anchor="middle">Person</text>
-  <text x="68" y="92" font-size="9" text-anchor="middle" fill="#555">voice or typing,</text>
-  <text x="68" y="103" font-size="9" text-anchor="middle" fill="#555">any language</text>
+  <rect x="170" y="40" width="130" height="56" rx="6" fill="#fff" stroke="#222" stroke-width="1.3"/>
+  <text x="235" y="64" font-size="12" font-weight="600" text-anchor="middle">Voice model</text>
+  <text x="235" y="80" font-size="9" text-anchor="middle" fill="#666">OpenAI GPT-Live</text>
 
-  <!-- voice -->
-  <rect x="176" y="36" width="150" height="90" rx="8" fill="#eef4ff" stroke="#3b6fd8" stroke-width="1.4"/>
-  <text x="251" y="58" font-size="12" font-weight="700" text-anchor="middle">Voice model</text>
-  <text x="251" y="72" font-size="9" text-anchor="middle" fill="#3b6fd8">OpenAI GPT-Live · WebRTC</text>
-  <text x="251" y="90" font-size="9" text-anchor="middle" fill="#333">leads the turn: when to talk,</text>
-  <text x="251" y="102" font-size="9" text-anchor="middle" fill="#333">its own words, one question,</text>
-  <text x="251" y="114" font-size="9" text-anchor="middle" fill="#333">hears hesitation and tone</text>
+  <rect x="360" y="40" width="130" height="56" rx="6" fill="#fff" stroke="#222" stroke-width="1.3"/>
+  <text x="425" y="64" font-size="12" font-weight="600" text-anchor="middle">Note-taker</text>
+  <text x="425" y="80" font-size="9" text-anchor="middle" fill="#666">Claude Sonnet</text>
 
-  <!-- note-taker -->
-  <rect x="392" y="36" width="170" height="90" rx="8" fill="#f4f1ea" stroke="#b8892b" stroke-width="1.4"/>
-  <text x="477" y="58" font-size="12" font-weight="700" text-anchor="middle">Note-taker (the brain)</text>
-  <text x="477" y="72" font-size="9" text-anchor="middle" fill="#7a5a14">Claude Sonnet via OpenRouter</text>
-  <text x="477" y="90" font-size="9" text-anchor="middle" fill="#333">reads each full answer + notebook</text>
-  <text x="477" y="102" font-size="9" text-anchor="middle" fill="#333">writes/edits notes, private gap read:</text>
-  <text x="477" y="114" font-size="9" text-anchor="middle" fill="#333">"enough here? what's still blank?"</text>
+  <rect x="530" y="40" width="100" height="56" rx="6" fill="#f3f3f3" stroke="#222" stroke-width="1.3"/>
+  <text x="580" y="64" font-size="12" font-weight="600" text-anchor="middle">Notes</text>
+  <text x="580" y="80" font-size="9" text-anchor="middle" fill="#666">shown on screen</text>
 
-  <!-- notebook -->
-  <rect x="616" y="36" width="128" height="90" rx="8" fill="#fff" stroke="#1d1d1f" stroke-width="1.4"/>
-  <text x="680" y="58" font-size="12" font-weight="700" text-anchor="middle">Notebook</text>
-  <text x="680" y="74" font-size="9" text-anchor="middle" fill="#555" font-family="Menlo, monospace">work/…</text>
-  <text x="680" y="86" font-size="9" text-anchor="middle" fill="#555" font-family="Menlo, monospace">family/son</text>
-  <text x="680" y="98" font-size="9" text-anchor="middle" fill="#555" font-family="Menlo, monospace">views/…</text>
-  <text x="680" y="114" font-size="9" text-anchor="middle" fill="#555">folder tree of notes</text>
+  <line x1="112" y1="58" x2="168" y2="58" stroke="#444" stroke-width="1.3" marker-end="url(#a)"/>
+  <line x1="168" y1="80" x2="112" y2="80" stroke="#444" stroke-width="1.3" marker-end="url(#a)"/>
+  <text x="140" y="34" font-size="9" text-anchor="middle" fill="#555">talk</text>
 
-  <!-- arrows -->
-  <line x1="122" y1="70" x2="174" y2="70" stroke="#444" stroke-width="1.4" marker-end="url(#a)"/>
-  <line x1="174" y1="94" x2="122" y2="94" stroke="#444" stroke-width="1.4" marker-end="url(#a)"/>
-  <text x="148" y="64" font-size="8" text-anchor="middle" fill="#666">audio</text>
-  <text x="148" y="108" font-size="8" text-anchor="middle" fill="#666">~1 s reply</text>
+  <line x1="302" y1="58" x2="358" y2="58" stroke="#444" stroke-width="1.3" marker-end="url(#a)"/>
+  <text x="330" y="34" font-size="9" text-anchor="middle" fill="#555">their answer</text>
+  <path d="M425,98 C425,130 235,130 235,98" stroke="#444" stroke-width="1.3" stroke-dasharray="4 3" fill="none" marker-end="url(#a)"/>
+  <text x="330" y="140" font-size="9" text-anchor="middle" fill="#555">a hint for the next question</text>
 
-  <line x1="328" y1="66" x2="390" y2="66" stroke="#444" stroke-width="1.4" marker-end="url(#a)"/>
-  <text x="359" y="60" font-size="8" text-anchor="middle" fill="#666">transcript</text>
-  <path d="M390,100 L328,100" stroke="#b8892b" stroke-width="1.4" stroke-dasharray="4 3" fill="none" marker-end="url(#g)"/>
-  <text x="359" y="114" font-size="8" text-anchor="middle" fill="#7a5a14">silent brief</text>
-  <text x="359" y="124" font-size="8" text-anchor="middle" fill="#7a5a14">"for next turn"</text>
-
-  <line x1="564" y1="81" x2="614" y2="81" stroke="#444" stroke-width="1.4" marker-end="url(#a)"/>
-  <text x="589" y="75" font-size="8" text-anchor="middle" fill="#666">ops</text>
-
-  <text x="380" y="146" font-size="8.5" text-anchor="middle" fill="#666">Text mode: the same brain also writes the question. One Durable Object per person runs it all in order. The notebook shows live on screen.</text>
-
-  <!-- after-call + eval band -->
-  <rect x="4" y="162" width="372" height="66" rx="8" fill="#fafafa" stroke="#e3e3e3"/>
-  <text x="14" y="178" font-size="10" font-weight="700" fill="#888" letter-spacing="1">AFTER A CALL</text>
-  <text x="14" y="196" font-size="9.2" fill="#333">Consolidation pass re-reads notebook vs transcript: merge,</text>
-  <text x="14" y="209" font-size="9.2" fill="#333">fix, reorganise, "still most worth learning". Next call</text>
-  <text x="14" y="222" font-size="9.2" fill="#333">resumes from the next gap, never restarts.</text>
-
-  <rect x="384" y="162" width="372" height="66" rx="8" fill="#f2f8f3" stroke="#cfe3d3"/>
-  <text x="394" y="178" font-size="10" font-weight="700" fill="#2f6b3a" letter-spacing="1">EVAL LOOP (OFFLINE)</text>
-  <text x="394" y="196" font-size="9.2" fill="#333">10 simulated people (GPT) with hidden facts → same API →</text>
-  <text x="394" y="209" font-size="9.2" fill="#333">twin answers outsider questions from notes only → judge</text>
-  <text x="394" y="222" font-size="9.2" fill="#333">(another family) → paired A/B, dev vs held-out people.</text>
-  <line x1="700" y1="128" x2="700" y2="160" stroke="#2f6b3a" stroke-width="1.2" stroke-dasharray="3 3" marker-end="url(#a)"/>
+  <line x1="492" y1="68" x2="528" y2="68" stroke="#444" stroke-width="1.3" marker-end="url(#a)"/>
 </svg>
-<figcaption>The voice model talks; the note-taker listens, writes, and quietly steers. Three model families, so none grades its own work.</figcaption>
+<figcaption>The voice model does the talking. The note-taker listens, writes the notes, and suggests where to go next.</figcaption>
 </figure>
 
-<div>
-<h2>Decisions and why</h2>
-<div class="cols">
+<h2><span class="n">1</span>The voice model talks, the note-taker listens</h2>
+<p>At first the note-taker wrote every question and the voice model read it out. Replies took two to eight seconds, and sometimes the voice model said its own line and then the scripted one, so two questions came out at once. Now the voice model answers on its own, in about a second, because it can hear when someone has finished. The note-taker reads each answer, updates the notes, and sends a quiet hint for the next question. It doesn't always take the hint, and that's fine: a late question is worse than a different one.</p>
 
-<div class="d"><h3><span>1</span>The voice model leads; the brain only briefs it</h3>
-<p>The voice model hears tone and hesitation; my server only hears silence. So it decides when to speak and how, and the brain sends a silent "for your next turn" note. <span class="ev">Reply time 2.4–7.8 s → 0.9–1.5 s; no more two questions spliced together.</span> Cost: the brain can't control exact words. A late question is worse than a different one.</p></div>
+<h2><span class="n">2</span>No behaviour rules in code</h2>
+<p>I added code to stop repeated questions, cap how long it stays on one topic, and trim long questions. Each rule broke a normal conversation somewhere. It cut questions off mid-sentence, blocked a fair follow-up, and left a topic the person was enjoying. I removed them. The prompt now describes what a good interviewer does, and the model decides. Code only moves data and saves it.</p>
 
-<div class="d"><h3><span>2</span>Model judgement over code rules</h3>
-<p>Every rule I coded (dig caps, repeat detector, trimming, filler regex) broke something human in testing: cut sentences, blocked a fair re-angle, cut off someone enjoying a thread. Now code only moves data and checks shape; behaviour is one shared purpose plus eight craft principles. The model gets <i>facts</i> about the turn, not orders.</p></div>
+<h2><span class="n">3</span>Notes in the person's own words</h2>
+<p>The first version saved labelled facts: a value, a rule, a story. The labels didn't help anyone, and a lot of what got saved was about the call ("didn't like being interrupted") rather than the person. Now it keeps a small folder of short notes, such as work, family and views, written in their words. After each call it rereads everything against the transcript and tidies it up.</p>
 
-<div class="d"><h3><span>3</span>Memory is a notebook, not a database or RAG</h3>
-<p>v1 stored typed items (story, value, rule…). <span class="no">The categories were mine, not theirs, and it stored the conversation ("dislikes being cut off") instead of the person.</span> Now: a folder tree of short notes in their words, each folder described, rewritten only when seen in full. A few hours of talk fits in context, so retrieval would only add ways to miss things. <span class="ev">Facts drawn out 0.12 → 0.23.</span></p></div>
+<h2><span class="n">4</span>Ask about what makes them different</h2>
+<p>In my own test call it asked five questions about how I prioritise my work. Every answer was saved, but anyone would have said the same. A twin learns nothing from that. Now it starts with what the person is known for, since that's what people will ask their twin. Then it gets a rough picture of the rest of their life, and only digs in where an answer is unusual. After each answer it privately asks itself whether the topic is covered or what's still missing, and moves on when it's covered.</p>
 
-<div class="d"><h3><span>4</span>Only the delta, and what people will ask first</h3>
-<p>A base model already knows the typical answer, so only what makes <i>this</i> person different is worth their time. A real call went five questions deep on "how do you prioritise". <span class="no">It was faithful but useless: anyone would say that.</span> So it now starts with what they're known for (what the twin's askers want), sketches the map of their life, and only goes deep where an answer is surprising.</p></div>
+<h2><span class="n">5</span>A screen that doesn't feel like a test</h2>
+<p>The first screen looked like a debugging tool, and that makes people perform. Now you type your name and start talking. The notes appear next to the conversation as they're written, so you can see what it understood. There is one button to end, and when you come back it picks up where you left off.</p>
 
-<div class="d"><h3><span>5</span>A private "enough yet?" read on every answer</h3>
-<p>Standing rules lost to per-turn fields every time. So each answer gets a private read: is it complete, what would a fuller one add, and does this topic have their view plus one real case? Then move on. If the last questions all sat in one area, the next one goes elsewhere. <span class="ev">Areas of life covered 2.0 → 2.8 per conversation, with no loss of facts (blind-graded).</span></p></div>
+<h2>How I check changes</h2>
+<p>I don't trust a prompt change until it's tested. Ten simulated people, each with hidden facts about their life, are interviewed by the real system. Afterwards a separate model answers questions about each person using only the notes, and a model from another company grades the answers. The latest round covered more of each person's life (2.8 areas instead of 2.0) without losing any facts. Most big rewrites I tried made things worse. Small, precise wording changes were what helped.</p>
 
-<div class="d"><h3><span>6</span>The interface is part of the interview</h3>
-<p>Debug-looking screens make people perform. So: "What's your name?" → Start talking (or type). The notebook fills in live beside the conversation, so people <i>see</i> they're understood: the cheapest trust-builder I found. One End button; "call me later" by voice; coming back resumes from the next gap.</p></div>
-
-</div>
-</div>
-
-<div class="bottom">
-<div>
-<h2>How I know (and what didn't work)</h2>
-<ul>
-<li><b>Real people first:</b> my own voice calls in English and Hinglish shaped decisions 1, 4 and 6. A competitor (TwinCafe) captures one expertise topic and saves a raw transcript; its twin hedges on anything personal.</li>
-<li><b>Harness:</b> simulated people with hidden facts and "asks" an outsider would put to the twin; a judge from another model family; paired comparisons with confidence intervals; dev/held-out split so edits aren't fitted to the people I read; blind grading; cached judge calls.</li>
-<li class="no"><b>Lost:</b> prompt rewrites ("go broad" made it dig <i>deeper</i>); quoted example words (it opened every line with "Right."); "one question mark" (it wrote "X, and Y?").</li>
-<li class="ev"><b>Won:</b> a few precise words on one thing at a time, checked by sampling the real call before and after.</li>
-</ul>
-</div>
-<div>
-<h2>Stack, and what's next</h2>
-<ul>
-<li>TypeScript, one codebase: Node server <i>or</i> Cloudflare Workers + one Durable Object per person + D1 (free hosting).</li>
-<li>Vercel AI SDK via OpenRouter: retries, streaming, prompt caching (81% of input tokens cached; turn 5.4 s → 3.8 s).</li>
-<li><b>Next:</b> ask "what would people ask this twin that the notes can't answer?" and chase the top gap; let people fix notes in place; stop a topic when its notes stop changing; the twin test on real people with their own questions.</li>
-</ul>
-</div>
-</div>
-
-<footer><span>Full experiment log: THINKING.md · Eval: eval/ and FINDINGS · Code: src/</span><span>Built in Nov 2026 for Viven AI</span></footer>
+<footer>Built with TypeScript on Cloudflare Workers. Voice: OpenAI GPT-Live. Notes: Claude Sonnet through OpenRouter. The full experiment log is in THINKING.md.</footer>
 </div>
 </body>
 </html>
