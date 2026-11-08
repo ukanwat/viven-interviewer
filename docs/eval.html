@@ -8,16 +8,25 @@
   * { box-sizing: border-box; }
   html, body { margin: 0; }
   body { font: 9.3pt/1.45 Georgia, "Times New Roman", serif; color: #222; background: #fff; }
-  .page { width: 210mm; height: 297mm; padding: 14mm 17mm 10mm; display: flex; flex-direction: column; overflow: hidden; }
+  .page { width: 210mm; height: 297mm; padding: 12mm 17mm 9mm; display: flex; flex-direction: column; overflow: hidden; }
   h1 { font: 700 18pt/1.2 -apple-system, "Helvetica Neue", Arial, sans-serif; margin: 0 0 1.5mm; letter-spacing: -0.2px; }
-  .by { font: 8pt -apple-system, "Helvetica Neue", Arial, sans-serif; color: #777; margin-bottom: 5mm; }
-  p { margin: 0 0 2.4mm; }
+  .by { font: 8pt -apple-system, "Helvetica Neue", Arial, sans-serif; color: #777; margin-bottom: 4mm; }
+  p { margin: 0 0 2mm; }
   .lead { font-size: 10pt; }
-  figure { margin: 0 0 2mm; }
-  figcaption { font: 7.8pt -apple-system, "Helvetica Neue", Arial, sans-serif; color: #777; text-align: center; margin-top: 1mm; }
+  figure { margin: 0 0 1mm; }
+  figcaption { font: 7.8pt -apple-system, "Helvetica Neue", Arial, sans-serif; color: #777; text-align: center; margin-top: 0.5mm; }
   svg text { font-family: -apple-system, "Helvetica Neue", Arial, sans-serif; }
-  h2 { font: 700 10pt/1.3 -apple-system, "Helvetica Neue", Arial, sans-serif; margin: 3.2mm 0 1mm; }
+  h2 { font: 700 10pt/1.3 -apple-system, "Helvetica Neue", Arial, sans-serif; margin: 2.6mm 0 1.2mm; }
   h2 .n { color: #999; font-weight: 400; margin-right: 1.5mm; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 7mm; }
+  table { width: 100%; border-collapse: collapse; font: 8.2pt/1.3 -apple-system, "Helvetica Neue", Arial, sans-serif; }
+  th { text-align: left; font-weight: 600; color: #777; font-size: 7.4pt; padding: 0 2mm 1mm 0; border-bottom: 1px solid #222; }
+  td { padding: 1mm 2mm 1mm 0; border-bottom: 1px solid #e4e4e4; vertical-align: top; }
+  td.r, th.r { text-align: right; padding-right: 0; padding-left: 3mm; white-space: nowrap; }
+  td:first-child { white-space: nowrap; }
+  td b { font-weight: 700; }
+  .g { color: #888; }
+  .small { font-size: 8.4pt; color: #444; margin-top: 1.5mm; }
   footer { margin-top: auto; padding-top: 2mm; border-top: 1px solid #ddd; font: 7.6pt -apple-system, "Helvetica Neue", Arial, sans-serif; color: #888; }
 </style>
 </head>
@@ -27,54 +36,103 @@
 <h1>How the Viven interviewer is tested</h1>
 <div class="by">Utkarsh Kanwat · November 2026 · eval/ in the repo</div>
 
-<p class="lead">The question to answer: if a prompt change takes capture from 50% to 70%, how do I know it really did, and that nothing else broke on the way, like people getting annoyed and leaving? Real conversations can't tell you, because nobody knows what the person could have said. So I test against simulated people whose answers I wrote down first.</p>
+<p class="lead">Real conversations can't show what was missed, because nobody knows what the person could have said. So the real interviewer talks to simulated people whose facts I wrote down first, and every prompt change is scored on how many came out and what else got worse.</p>
 
 <figure>
-<svg viewBox="0 0 640 145" width="100%">
+<svg viewBox="0 0 640 128" width="100%">
   <defs>
     <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#444"/></marker>
   </defs>
-  <rect x="10" y="40" width="120" height="56" rx="6" fill="#f3f3f3" stroke="#222" stroke-width="1.3"/>
-  <text x="70" y="64" font-size="12" font-weight="600" text-anchor="middle">Simulated people</text>
-  <text x="70" y="80" font-size="9" text-anchor="middle" fill="#666">with hidden facts</text>
-
-  <rect x="180" y="40" width="120" height="56" rx="6" fill="#fff" stroke="#222" stroke-width="1.3"/>
-  <text x="240" y="64" font-size="12" font-weight="600" text-anchor="middle">Interviewer</text>
-  <text x="240" y="80" font-size="9" text-anchor="middle" fill="#666">the real code</text>
-
-  <rect x="350" y="40" width="120" height="56" rx="6" fill="#fff" stroke="#222" stroke-width="1.3"/>
-  <text x="410" y="64" font-size="12" font-weight="600" text-anchor="middle">Judge</text>
-  <text x="410" y="80" font-size="9" text-anchor="middle" fill="#666">another company's model</text>
-
-  <rect x="520" y="40" width="110" height="56" rx="6" fill="#fff" stroke="#222" stroke-width="1.3"/>
-  <text x="575" y="64" font-size="12" font-weight="600" text-anchor="middle">Compare</text>
-  <text x="575" y="80" font-size="9" text-anchor="middle" fill="#666">old vs new prompt</text>
-
-  <line x1="132" y1="68" x2="178" y2="68" stroke="#444" stroke-width="1.3" marker-end="url(#a)"/>
-  <text x="155" y="34" font-size="9" text-anchor="middle" fill="#555">talk</text>
-  <line x1="302" y1="68" x2="348" y2="68" stroke="#444" stroke-width="1.3" marker-end="url(#a)"/>
-  <text x="325" y="34" font-size="9" text-anchor="middle" fill="#555">transcript, notes</text>
-  <line x1="472" y1="68" x2="518" y2="68" stroke="#444" stroke-width="1.3" marker-end="url(#a)"/>
-  <path d="M575,98 C575,132 240,132 240,98" stroke="#444" stroke-width="1.3" stroke-dasharray="4 3" fill="none" marker-end="url(#a)"/>
-  <text x="408" y="141" font-size="9" text-anchor="middle" fill="#555">read what failed, change one thing, run again</text>
+  <rect x="10" y="30" width="120" height="52" rx="6" fill="#f3f3f3" stroke="#222" stroke-width="1.3"/>
+  <text x="70" y="52" font-size="12" font-weight="600" text-anchor="middle">Simulated people</text>
+  <text x="70" y="68" font-size="9" text-anchor="middle" fill="#666">with hidden facts</text>
+  <rect x="180" y="30" width="120" height="52" rx="6" fill="#fff" stroke="#222" stroke-width="1.3"/>
+  <text x="240" y="52" font-size="12" font-weight="600" text-anchor="middle">Interviewer</text>
+  <text x="240" y="68" font-size="9" text-anchor="middle" fill="#666">the real code</text>
+  <rect x="350" y="30" width="120" height="52" rx="6" fill="#fff" stroke="#222" stroke-width="1.3"/>
+  <text x="410" y="52" font-size="12" font-weight="600" text-anchor="middle">Judge</text>
+  <text x="410" y="68" font-size="9" text-anchor="middle" fill="#666">another company's model</text>
+  <rect x="520" y="30" width="110" height="52" rx="6" fill="#fff" stroke="#222" stroke-width="1.3"/>
+  <text x="575" y="52" font-size="12" font-weight="600" text-anchor="middle">Compare</text>
+  <text x="575" y="68" font-size="9" text-anchor="middle" fill="#666">old vs new prompt</text>
+  <line x1="132" y1="56" x2="178" y2="56" stroke="#444" stroke-width="1.3" marker-end="url(#a)"/>
+  <text x="155" y="24" font-size="9" text-anchor="middle" fill="#555">talk</text>
+  <line x1="302" y1="56" x2="348" y2="56" stroke="#444" stroke-width="1.3" marker-end="url(#a)"/>
+  <text x="325" y="24" font-size="9" text-anchor="middle" fill="#555">transcript, notes</text>
+  <line x1="472" y1="56" x2="518" y2="56" stroke="#444" stroke-width="1.3" marker-end="url(#a)"/>
+  <path d="M575,84 C575,116 240,116 240,84" stroke="#444" stroke-width="1.3" stroke-dasharray="4 3" fill="none" marker-end="url(#a)"/>
+  <text x="408" y="125" font-size="9" text-anchor="middle" fill="#555">read what failed, change one thing, run again</text>
 </svg>
-<figcaption>A loop: run the interviewer on the same people, grade it, compare with the last version, and fix what went wrong.</figcaption>
 </figure>
 
-<h2><span class="n">1</span>People with an answer key</h2>
-<p>There are ten simulated people: a retired school principal, a terse engineer, a farmer who takes a while to trust you, a busy founder, and so on. Each has ten to twelve hidden facts. Some they share freely, some only if asked, some only if pushed gently, and some only once they trust the interviewer. Each also has five questions an outsider might ask their twin, with the right answers. They behave like people: they get annoyed by repeated or double questions, they can walk out, and halfway they say "call me later" and come back in a new session. They talk to the same code the website runs, through its API, in text instead of voice.</p>
+<div class="two">
+<section>
+<h2><span class="n">1</span>The test set</h2>
+<table>
+  <tr><td>Simulated people</td><td class="r"><b>10</b> <span class="g">(5 tune, 5 held back)</span></td></tr>
+  <tr><td>Hidden facts</td><td class="r"><b>104</b> <span class="g">(56 important)</span></td></tr>
+  <tr><td>… shared freely</td><td class="r">11</td></tr>
+  <tr><td>… only if asked</td><td class="r">37</td></tr>
+  <tr><td>… only if probed</td><td class="r">34</td></tr>
+  <tr><td>… only once they trust you</td><td class="r">22</td></tr>
+  <tr><td>Outsider questions + answers</td><td class="r"><b>51</b></td></tr>
+  <tr><td>Answers per run</td><td class="r">12, "call me later" after 6</td></tr>
+</table>
+<p class="small">From a retired principal and a Hinglish-speaking grandmother to a wary ICU nurse and a farmer slow to trust. They get annoyed and can walk out.</p>
+</section>
 
-<h2><span class="n">2</span>What gets graded</h2>
-<p>A model from a different company than the interviewer's does the grading. It checks how many hidden facts the person said and how many made it into the notes, counting the important ones double. Then another model answers the outsider questions using only the notes, and the judge marks each answer right, partly right, wrong, or "don't know". It also checks every question the interviewer asked (repeated, two questions in one, pressing after a no, praise) and whether every note is backed by something the person actually said.</p>
+<section>
+<h2><span class="n">2</span>What gets scored</h2>
+<table>
+  <tr><th>Score</th><th>Meaning</th></tr>
+  <tr><td><b>Twin test</b></td><td>outsider questions answered right from notes alone (main score)</td></tr>
+  <tr><td>Facts said</td><td>hidden facts the person said</td></tr>
+  <tr><td>Facts saved</td><td>hidden facts that reached the notes</td></tr>
+  <tr><td>Areas covered</td><td>parts of their life the notes cover</td></tr>
+  <tr><td>Guards</td><td>walk-outs, annoyance, re-asks, double questions, praise, pushing after a no, unsupported notes, made-up answers. None may get worse.</td></tr>
+</table>
+</section>
+</div>
 
-<h2><span class="n">3</span>Did something else break?</h2>
-<p>A change is judged on one main score, but a list of guard scores must not get worse: people walking out, how annoyed they got, re-asked questions, notes that aren't backed by the transcript, made-up answers. Both versions run on the same people with the same seeds, and the result comes with a range, so small differences aren't mistaken for progress. In one real round, a change that made it move on sooner covered more of each person's life (2.8 areas instead of 2.0) and drew out slightly more facts, but the guards showed re-asked questions going up and one person getting worse. I kept the change and the problem stayed on the list.</p>
+<div class="two">
+<section>
+<h2><span class="n">3</span>Rounds that changed the design</h2>
+<table>
+  <tr><th>Change</th><th>Score</th><th class="r">Before</th><th class="r">After</th></tr>
+  <tr><td>Notes as a folder tree</td><td>facts drawn out</td><td class="r">0.12</td><td class="r"><b>0.23</b></td></tr>
+  <tr><td></td><td>important facts</td><td class="r">0.08</td><td class="r"><b>0.18</b></td></tr>
+  <tr><td></td><td>vs plain baseline</td><td class="r">0.18</td><td class="r"><b>0.23</b></td></tr>
+  <tr><td>Voice model leads</td><td>reply time</td><td class="r">2.4–7.8 s</td><td class="r"><b>0.9–1.5 s</b></td></tr>
+  <tr><td>One-question opener</td><td>two-part questions</td><td class="r">32%</td><td class="r"><b>16%</b></td></tr>
+  <tr><td></td><td>single openers</td><td class="r">0 / 5</td><td class="r"><b>10 / 10</b></td></tr>
+</table>
+<p class="small">Baseline: same model, one sensible prompt. My first design lost to it by digging into one topic.</p>
+</section>
 
-<h2><span class="n">4</span>Checking the checker</h2>
-<p>A judge can be wrong too. The same conversations are graded twice to see how often its labels flip, the same people are run on two seeds to see how big a change has to be before it shows, and a review page lets me mark conversations myself and compare my marks with the judge's. Half the people are held back: prompt changes come from failures on the first five, and only count if they also help the other five.</p>
+<section>
+<h2><span class="n">4</span>Latest round, by how hard the fact was</h2>
+<table>
+  <tr><th>Facts said</th><th class="r">Before</th><th class="r">After</th></tr>
+  <tr><td>shared freely</td><td class="r">1.00</td><td class="r">1.00</td></tr>
+  <tr><td>only if asked</td><td class="r">0.12</td><td class="r"><b>0.19</b></td></tr>
+  <tr><td>only if probed</td><td class="r">0.34</td><td class="r">0.34</td></tr>
+  <tr><td>only once they trust you</td><td class="r">0.05</td><td class="r"><b>0.09</b></td></tr>
+  <tr><td><b>all facts</b></td><td class="r">0.28</td><td class="r"><b>0.32</b></td></tr>
+  <tr><td>areas of life covered</td><td class="r">2.0</td><td class="r"><b>2.8</b></td></tr>
+  <tr><td>re-asks per conversation <span class="g">(guard)</span></td><td class="r">0.2</td><td class="r"><b>0.5</b> ✗</td></tr>
+</table>
+<p class="small">10 conversations per side, graded blind. Trust facts are the biggest gap. The guard caught re-asks going up.</p>
+</section>
+</div>
 
-<h2>Real conversations</h2>
-<p>Real people have no answer key. For them, the judge writes the questions people would likely ask their twin, answers them from the notes, and checks each answer against everything they said. New conversations from the website are pulled in every two hours for review. Still to do: the held-back people haven't been run yet because the credit ran out, and my own marks for checking the judge aren't done.</p>
+<h2><span class="n">5</span>How much to trust these numbers</h2>
+<table>
+  <tr><td style="width:46mm"><b>Different judge</b></td><td>From a different company than the interviewer, so it isn't grading its own kind of writing.</td></tr>
+  <tr><td><b>Ranges, not single numbers</b></td><td>Same people and seeds on both sides. With 5 people per side, small changes come out "can't tell".</td></tr>
+  <tr><td><b>Held-back people</b></td><td>Changes come from failures on 5 people and count only if they help the other 5. <span class="g">Not run yet: the credit ran out.</span></td></tr>
+  <tr><td><b>Checking the judge</b></td><td>Graded twice to see how often labels flip; my marks vs the judge's on a review page. <span class="g">My marks aren't done yet.</span></td></tr>
+  <tr><td><b>Real conversations</b></td><td>No answer key: the judge writes likely outsider questions, answers them from the notes, checks against the transcript.</td></tr>
+</table>
 
 <footer>Run with node eval/run.ts (sim, grade, compare, view, meta). Grading is cached, so regrading old runs costs nothing. Every round is written up in THINKING.md.</footer>
 </div>
