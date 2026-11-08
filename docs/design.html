@@ -7,132 +7,81 @@
   @page { size: A4; margin: 0; }
   * { box-sizing: border-box; }
   html, body { margin: 0; }
-  :root { --ink: #16181d; --muted: #6b6f78; --line: #e6e4df; --accent: #c2691a; --indigo: #2f3a8f; --paper: #fbfaf7; }
-  body { font: 9.6pt/1.5 Charter, "Iowan Old Style", Georgia, serif; color: var(--ink); background: #fff; }
-  .sans { font-family: -apple-system, "SF Pro Text", "Helvetica Neue", Arial, sans-serif; }
-  .page { width: 210mm; height: 297mm; display: flex; flex-direction: column; overflow: hidden; }
-
-  header { background: var(--ink); color: #fff; padding: 12mm 16mm 9mm; position: relative; overflow: hidden; }
-  header::after { content: ""; position: absolute; right: -30mm; top: -30mm; width: 90mm; height: 90mm; border-radius: 50%;
-    background: radial-gradient(circle at center, rgba(194,105,26,0.55), rgba(194,105,26,0) 70%); }
-  .eyebrow { font: 600 7.2pt/1 -apple-system, "Helvetica Neue", Arial, sans-serif; letter-spacing: 1.6px; text-transform: uppercase; color: #f0b27a; }
-  h1 { font: 700 21pt/1.15 -apple-system, "SF Pro Display", "Helvetica Neue", Arial, sans-serif; margin: 2.5mm 0 2.5mm; letter-spacing: -0.4px; max-width: 150mm; }
-  .intro { font-size: 10pt; line-height: 1.5; color: #d9dbe0; max-width: 165mm; margin: 0; position: relative; z-index: 1; }
-
-  main { padding: 8mm 16mm 0; display: flex; flex-direction: column; gap: 6mm; flex: 1; }
-  figure { margin: 0; background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 3mm 4mm 2.5mm; }
-  figcaption { font: 7.8pt -apple-system, "Helvetica Neue", Arial, sans-serif; color: var(--muted); text-align: center; }
+  body { font: 9.3pt/1.45 Georgia, "Times New Roman", serif; color: #222; background: #fff; }
+  .page { width: 210mm; height: 297mm; padding: 14mm 17mm 10mm; display: flex; flex-direction: column; overflow: hidden; }
+  h1 { font: 700 18pt/1.2 -apple-system, "Helvetica Neue", Arial, sans-serif; margin: 0 0 1.5mm; letter-spacing: -0.2px; }
+  .by { font: 8pt -apple-system, "Helvetica Neue", Arial, sans-serif; color: #777; margin-bottom: 5mm; }
+  p { margin: 0 0 2.4mm; }
+  .lead { font-size: 10pt; }
+  figure { margin: 0 0 2mm; }
+  figcaption { font: 7.8pt -apple-system, "Helvetica Neue", Arial, sans-serif; color: #777; text-align: center; margin-top: 1mm; }
   svg text { font-family: -apple-system, "Helvetica Neue", Arial, sans-serif; }
-
-  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; }
-  .card { border: 1px solid var(--line); border-radius: 10px; padding: 3.6mm 4mm 3.4mm; position: relative; background: #fff; }
-  .num { position: absolute; right: 3.5mm; top: 1mm; font: 800 24pt/1 -apple-system, "Helvetica Neue", Arial, sans-serif; color: #f1ede6; }
-  .card h3 { font: 700 10.2pt/1.25 -apple-system, "Helvetica Neue", Arial, sans-serif; margin: 0 0 2mm; position: relative; }
-  .row { display: grid; grid-template-columns: 12.5mm 1fr; gap: 1mm; margin-top: 1.2mm; }
-  .tag { font: 700 6.6pt/1.9 -apple-system, "Helvetica Neue", Arial, sans-serif; letter-spacing: 0.8px; text-transform: uppercase; }
-  .tag.b { color: #a3a6ad; }
-  .tag.n { color: var(--accent); }
-  .row p { margin: 0; }
-  .row.before p { color: #555a63; }
-  .card.check { background: var(--indigo); border-color: var(--indigo); color: #fff; }
-  .card.check h3 { color: #fff; }
-  .card.check p { margin: 0; color: #dfe2f5; }
-  .stat { display: flex; align-items: baseline; gap: 2mm; margin-top: 2.4mm; font-family: -apple-system, "Helvetica Neue", Arial, sans-serif; }
-  .stat b { font-size: 17pt; font-weight: 800; color: #fff; letter-spacing: -0.5px; }
-  .stat span { font-size: 7.6pt; color: #c3c8ee; line-height: 1.3; }
-
-  footer { margin: auto 16mm 0; padding: 3mm 0 7mm; border-top: 1px solid var(--line); display: flex; justify-content: space-between;
-    font: 7.4pt -apple-system, "Helvetica Neue", Arial, sans-serif; color: var(--muted); }
+  h2 { font: 700 10pt/1.3 -apple-system, "Helvetica Neue", Arial, sans-serif; margin: 3.2mm 0 1mm; }
+  h2 .n { color: #999; font-weight: 400; margin-right: 1.5mm; }
+  footer { margin-top: auto; padding-top: 2mm; border-top: 1px solid #ddd; font: 7.6pt -apple-system, "Helvetica Neue", Arial, sans-serif; color: #888; }
 </style>
 </head>
 <body>
 <div class="page">
 
-<header>
-  <div class="eyebrow">Viven AI · Interviewer · November 2026</div>
-  <h1>How the interviewer works, and why it's built this way</h1>
-  <p class="intro">The goal: talk with someone for twenty minutes, by voice, and come away with notes good enough for a digital twin to answer the way they would. It has to work for anyone, not just people who explain themselves well. Five things shaped the design. Each one started as a mistake.</p>
-</header>
+<h1>How the Viven interviewer works, and why</h1>
+<div class="by">Utkarsh Kanwat · November 2026 · viven-interviewer.utkarshkanwat.com</div>
 
-<main>
+<p class="lead">The goal is simple to say: talk with someone for twenty minutes, by voice, and come away with notes good enough for a digital twin to answer the way they would. It should work for anyone, not just people who are good at explaining themselves. Five things shaped the design. Each one started as a mistake.</p>
+
 <figure>
-<svg viewBox="0 0 680 134" width="100%">
+<svg viewBox="0 0 640 145" width="100%">
   <defs>
-    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#5b5f68"/></marker>
-    <marker id="o" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#c2691a"/></marker>
-    <linearGradient id="gv" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3f4bb0"/><stop offset="1" stop-color="#2f3a8f"/></linearGradient>
-    <linearGradient id="gn" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d9802f"/><stop offset="1" stop-color="#c2691a"/></linearGradient>
-    <filter id="s" x="-20%" y="-20%" width="140%" height="160%"><feDropShadow dx="0" dy="1.5" stdDeviation="2" flood-opacity="0.14"/></filter>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#444"/></marker>
   </defs>
+  <rect x="10" y="40" width="100" height="56" rx="6" fill="#fff" stroke="#222" stroke-width="1.3"/>
+  <text x="60" y="73" font-size="12" font-weight="600" text-anchor="middle">Person</text>
 
-  <g filter="url(#s)">
-    <rect x="10" y="30" width="112" height="54" rx="27" fill="#fff" stroke="#d8d5ce"/>
-    <rect x="186" y="26" width="140" height="62" rx="12" fill="url(#gv)"/>
-    <rect x="390" y="26" width="140" height="62" rx="12" fill="url(#gn)"/>
-    <rect x="574" y="30" width="96" height="54" rx="10" fill="#fff" stroke="#d8d5ce"/>
-  </g>
-  <text x="66" y="62" font-size="12.5" font-weight="700" text-anchor="middle" fill="#16181d">Person</text>
-  <text x="256" y="53" font-size="12.5" font-weight="700" text-anchor="middle" fill="#fff">Voice model</text>
-  <text x="256" y="70" font-size="9" text-anchor="middle" fill="#cdd2f3">OpenAI GPT-Live</text>
-  <text x="460" y="53" font-size="12.5" font-weight="700" text-anchor="middle" fill="#fff">Note-taker</text>
-  <text x="460" y="70" font-size="9" text-anchor="middle" fill="#fbe2c9">Claude Sonnet</text>
-  <text x="622" y="54" font-size="12.5" font-weight="700" text-anchor="middle" fill="#16181d">Notes</text>
-  <text x="622" y="69" font-size="8.5" text-anchor="middle" fill="#6b6f78">on screen, live</text>
+  <rect x="170" y="40" width="130" height="56" rx="6" fill="#fff" stroke="#222" stroke-width="1.3"/>
+  <text x="235" y="64" font-size="12" font-weight="600" text-anchor="middle">Voice model</text>
+  <text x="235" y="80" font-size="9" text-anchor="middle" fill="#666">OpenAI GPT-Live</text>
 
-  <line x1="124" y1="49" x2="184" y2="49" stroke="#5b5f68" stroke-width="1.4" marker-end="url(#a)"/>
-  <line x1="184" y1="65" x2="124" y2="65" stroke="#5b5f68" stroke-width="1.4" marker-end="url(#a)"/>
-  <text x="154" y="20" font-size="8.8" text-anchor="middle" fill="#6b6f78">talk, ~1 s replies</text>
-  <line x1="328" y1="57" x2="388" y2="57" stroke="#5b5f68" stroke-width="1.4" marker-end="url(#a)"/>
-  <text x="358" y="20" font-size="8.8" text-anchor="middle" fill="#6b6f78">their answer</text>
-  <line x1="532" y1="57" x2="572" y2="57" stroke="#5b5f68" stroke-width="1.4" marker-end="url(#a)"/>
-  <path d="M460,90 C460,122 256,122 256,90" stroke="#c2691a" stroke-width="1.5" stroke-dasharray="4 3" fill="none" marker-end="url(#o)"/>
-  <text x="358" y="124" font-size="8.8" text-anchor="middle" fill="#c2691a" font-weight="600">a quiet hint for the next question</text>
+  <rect x="360" y="40" width="130" height="56" rx="6" fill="#fff" stroke="#222" stroke-width="1.3"/>
+  <text x="425" y="64" font-size="12" font-weight="600" text-anchor="middle">Note-taker</text>
+  <text x="425" y="80" font-size="9" text-anchor="middle" fill="#666">Claude Sonnet</text>
+
+  <rect x="530" y="40" width="100" height="56" rx="6" fill="#f3f3f3" stroke="#222" stroke-width="1.3"/>
+  <text x="580" y="64" font-size="12" font-weight="600" text-anchor="middle">Notes</text>
+  <text x="580" y="80" font-size="9" text-anchor="middle" fill="#666">shown on screen</text>
+
+  <line x1="112" y1="58" x2="168" y2="58" stroke="#444" stroke-width="1.3" marker-end="url(#a)"/>
+  <line x1="168" y1="80" x2="112" y2="80" stroke="#444" stroke-width="1.3" marker-end="url(#a)"/>
+  <text x="140" y="34" font-size="9" text-anchor="middle" fill="#555">talk</text>
+
+  <line x1="302" y1="58" x2="358" y2="58" stroke="#444" stroke-width="1.3" marker-end="url(#a)"/>
+  <text x="330" y="34" font-size="9" text-anchor="middle" fill="#555">their answer</text>
+  <path d="M425,98 C425,130 235,130 235,98" stroke="#444" stroke-width="1.3" stroke-dasharray="4 3" fill="none" marker-end="url(#a)"/>
+  <text x="330" y="140" font-size="9" text-anchor="middle" fill="#555">a hint for the next question</text>
+
+  <line x1="492" y1="68" x2="528" y2="68" stroke="#444" stroke-width="1.3" marker-end="url(#a)"/>
 </svg>
 <figcaption>The voice model does the talking. The note-taker listens, writes the notes, and suggests where to go next.</figcaption>
 </figure>
 
-<div class="grid">
+<h2><span class="n">1</span>The voice model talks, the note-taker listens</h2>
+<p>At first the note-taker wrote every question and the voice model read it out. Replies took two to eight seconds, and sometimes the voice model said its own line and then the scripted one, so two questions came out at once. Now the voice model answers on its own, in about a second, because it can hear when someone has finished. The note-taker reads each answer, updates the notes, and sends a quiet hint for the next question. It doesn't always take the hint, and that's fine: a late question is worse than a different one.</p>
 
-  <div class="card"><div class="num">1</div>
-    <h3>Let the voice model lead</h3>
-    <div class="row before"><span class="tag b">Before</span><p>The note-taker wrote every question and the voice read it out. Replies took 2–8 seconds, and sometimes two questions came out at once.</p></div>
-    <div class="row"><span class="tag n">Now</span><p>The voice model answers on its own, because it can hear when someone has finished. The note-taker sends a hint for the next question.</p></div>
-  </div>
+<h2><span class="n">2</span>No behaviour rules in code</h2>
+<p>I added code to stop repeated questions, cap how long it stays on one topic, and trim long questions. Each rule broke a normal conversation somewhere. It cut questions off mid-sentence, blocked a fair follow-up, and left a topic the person was enjoying. I removed them. The prompt now describes what a good interviewer does, and the model decides. Code only moves data and saves it.</p>
 
-  <div class="card"><div class="num">2</div>
-    <h3>Leave behaviour to the model, not code</h3>
-    <div class="row before"><span class="tag b">Before</span><p>Code rules stopped repeats, capped topics and trimmed long questions. Each one broke a normal conversation somewhere.</p></div>
-    <div class="row"><span class="tag n">Now</span><p>The prompt describes what a good interviewer does, and the model decides. Code only moves and saves data.</p></div>
-  </div>
+<h2><span class="n">3</span>Notes in the person's own words</h2>
+<p>The first version saved labelled facts: a value, a rule, a story. The labels didn't help anyone, and a lot of what got saved was about the call ("didn't like being interrupted") rather than the person. Now it keeps a small folder of short notes, such as work, family and views, written in their words. After each call it rereads everything against the transcript and tidies it up.</p>
 
-  <div class="card"><div class="num">3</div>
-    <h3>Keep notes in their own words</h3>
-    <div class="row before"><span class="tag b">Before</span><p>It saved labelled facts: a value, a rule, a story. Much of it was about the call ("didn't like being interrupted"), not the person.</p></div>
-    <div class="row"><span class="tag n">Now</span><p>A small folder of short notes (work, family, views) in their words, tidied against the transcript after every call.</p></div>
-  </div>
+<h2><span class="n">4</span>Ask about what makes them different</h2>
+<p>In my own test call it asked five questions about how I prioritise my work. Every answer was saved, but anyone would have said the same. A twin learns nothing from that. Now it starts with what the person is known for, since that's what people will ask their twin. Then it gets a rough picture of the rest of their life, and only digs in where an answer is unusual. After each answer it privately asks itself whether the topic is covered or what's still missing, and moves on when it's covered.</p>
 
-  <div class="card"><div class="num">4</div>
-    <h3>Ask about what makes them different</h3>
-    <div class="row before"><span class="tag b">Before</span><p>In my own test call it asked five questions about how I prioritise work. Anyone would have said the same.</p></div>
-    <div class="row"><span class="tag n">Now</span><p>It starts with what the person is known for, sketches the rest of their life, and digs only where an answer is unusual.</p></div>
-  </div>
+<h2><span class="n">5</span>A screen that doesn't feel like a test</h2>
+<p>The first screen looked like a debugging tool, and that makes people perform. Now you type your name and start talking. The notes appear next to the conversation as they're written, so you can see what it understood. There is one button to end, and when you come back it picks up where you left off.</p>
 
-  <div class="card"><div class="num">5</div>
-    <h3>Make the screen calm</h3>
-    <div class="row before"><span class="tag b">Before</span><p>The first screen looked like a debugging tool, and people performed for it.</p></div>
-    <div class="row"><span class="tag n">Now</span><p>Type your name and talk. Notes appear beside the conversation as they're written. Come back later and it picks up where you left off.</p></div>
-  </div>
+<h2>How I check changes</h2>
+<p>I don't trust a prompt change until it's tested. Ten simulated people, each with hidden facts about their life, are interviewed by the real system. Afterwards a separate model answers questions about each person using only the notes, and a model from another company grades the answers. The latest round covered more of each person's life (2.8 areas instead of 2.0) without losing any facts. Most big rewrites I tried made things worse. Small, precise wording changes were what helped.</p>
 
-  <div class="card check">
-    <h3>How I check a change</h3>
-    <p>Ten simulated people with hidden facts are interviewed by the real system. Another model answers questions about each person from the notes alone, and a model from a different company grades the answers.</p>
-    <div class="stat"><b>2.0 → 2.8</b><span>areas of each person's life covered<br>in the latest round, no facts lost</span></div>
-  </div>
-
-</div>
-</main>
-
-<footer><span>TypeScript on Cloudflare Workers · Voice: OpenAI GPT-Live · Notes: Claude Sonnet via OpenRouter</span><span>Full experiment log: THINKING.md</span></footer>
+<footer>Built with TypeScript on Cloudflare Workers. Voice: OpenAI GPT-Live. Notes: Claude Sonnet through OpenRouter. The full experiment log is in THINKING.md.</footer>
 </div>
 </body>
 </html>
