@@ -19,6 +19,28 @@
   h2 { font: 700 10pt/1.3 -apple-system, "Helvetica Neue", Arial, sans-serif; margin: 3.2mm 0 1mm; }
   h2 .n { color: #999; font-weight: 400; margin-right: 1.5mm; }
   footer { margin-top: auto; padding-top: 2mm; border-top: 1px solid #ddd; font: 7.6pt -apple-system, "Helvetica Neue", Arial, sans-serif; color: #888; }
+  .page { page-break-after: always; break-after: page; }
+  .page:last-child { page-break-after: auto; break-after: auto; }
+  ul, ol { margin: 0 0 1mm; padding-left: 4.5mm; }
+  li { margin: 0 0 0.7mm; }
+  li ul { margin-top: 0.5mm; }
+  .eg { color: #555; font-style: italic; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 7mm; }
+  table { width: 100%; border-collapse: collapse; font: 8.2pt/1.3 -apple-system, "Helvetica Neue", Arial, sans-serif; margin-top: 0.8mm; }
+  th { text-align: left; font-weight: 600; color: #777; font-size: 7.4pt; padding: 0 2mm 0.8mm 0; border-bottom: 1px solid #222; }
+  td { padding: 0.8mm 2mm 0.8mm 0; border-bottom: 1px solid #e4e4e4; vertical-align: top; }
+  td.r, th.r { text-align: right; padding-right: 0; padding-left: 3mm; white-space: nowrap; }
+  table.cmp { margin: 1mm 0 3mm; font-size: 8.4pt; }
+  table.cmp td { padding: 1.4mm 3mm 1.4mm 0; }
+  table.cmp td:first-child { font-weight: 600; width: 27mm; }
+  table.cmp th { font-size: 8pt; color: #222; }
+  .tight { padding: 12mm 17mm 9mm; font-size: 8.9pt; line-height: 1.38; }
+  .tight p { margin: 0 0 1.4mm; }
+  .tight .lead { font-size: 9.8pt; margin-bottom: 2mm; }
+  .tight h2 { margin: 2.6mm 0 0.8mm; }
+  .tight .by { margin-bottom: 4mm; }
+  .page:first-child { padding-top: 12mm; padding-bottom: 9mm; }
+  .page:first-child h2 { margin-top: 2.7mm; }
 </style>
 </head>
 <body>
@@ -81,7 +103,143 @@
 <h2>How I check changes</h2>
 <p>I don't trust a prompt change until it's tested. Ten simulated people, each with hidden facts about their life, are interviewed by the real system. Afterwards a separate model answers questions about each person using only the notes, and a model from another company grades the answers. The latest round covered more of each person's life (2.8 areas instead of 2.0) without losing any facts. Most big rewrites I tried made things worse. Small, precise wording changes were what helped.</p>
 
-<footer>Built with TypeScript on Cloudflare Workers. Voice: OpenAI GPT-Live. Notes: Claude Sonnet through OpenRouter. The full experiment log is in THINKING.md.</footer>
+<footer>Built with TypeScript on Cloudflare Workers. Voice: OpenAI GPT-Live. Notes: Claude Sonnet through OpenRouter. The full experiment log is in THINKING.md. · Page 1 of 3</footer>
+</div>
+
+<div class="page">
+<h1>How it differs from TwinCafe's Train</h1>
+<div class="by">From using TwinCafe's story interview on my own account, 6 November</div>
+
+<p class="lead">TwinCafe has the same goal: teach a twin how someone thinks. I used its Train page on my own account: told a story by voice, then asked the twin outsider questions. It's built around topics and recordings. This one is built around a conversation and notes.</p>
+
+<table class="cmp">
+  <tr><th></th><th>TwinCafe Train</th><th>This interviewer</th></tr>
+  <tr><td>Where it starts</td><td>You pick one of 12 topics generated from LinkedIn, all about your work.</td><td>No list. One easy question about what you do these days, then it follows your answers.</td></tr>
+  <tr><td>Changing topic</td><td>Stays on the chosen topic. When I asked to switch: "let's wrap this memory thread quickly".</td><td>Goes where you go. Sketches the rest of your life before digging into any part of it.</td></tr>
+  <tr><td>What gets saved</td><td>The raw transcript as one document, with speech-to-text errors and call chatter.</td><td>Short notes in your words, in folders (work, family, views), checked against the transcript after the call.</td></tr>
+  <tr><td>Finding gaps</td><td>After the fact: someone asks the twin, you see what it missed, then add material.</td><td>During the call: after every answer it asks what's missing and steers the next question there.</td></tr>
+  <tr><td>Coming back</td><td>Each story is a separate recording.</td><td>"Call me later" picks up from what you said last and the open gaps.</td></tr>
+  <tr><td>Personal side</td><td>On hobbies and my move the twin said "I haven't shared that". On "everything is urgent, what do you do?" it confidently gave a senior-engineer answer that wasn't mine.</td><td>Aims at that layer too, once the work side is in, because that's where a twin otherwise falls back to a generic person.</td></tr>
+</table>
+
+<p><b>What I took from them.</b> They're right about whose questions matter: the people who will talk to the twin, and they mostly come for the person's work. My early version asked about morning routines as eagerly as about someone's field. Now it starts with what people would ask the twin about, and asks open questions that invite long answers.</p>
+
+<h2>What happens during one call</h2>
+<ol>
+  <li><b>Start.</b> Type your name and talk. A link (LinkedIn, a website) is optional; it's read as background and marked "not said by them".</li>
+  <li><b>Talk.</b> The voice model (OpenAI GPT-Live over WebRTC) holds the conversation and replies in about a second.</li>
+  <li><b>After each answer</b>, in the background, the note-taker (Claude Sonnet) reads the answer with the notebook and:
+    <ul>
+      <li>judges whether the answer was complete and what a fuller one would add,</li>
+      <li>writes, moves or merges notes,</li>
+      <li>keeps a private list of up to 12 gaps, most valuable first,</li>
+      <li>sends the voice model a silent hint for the next question.</li>
+    </ul></li>
+  <li><b>On screen</b>, the notes appear beside the conversation as they're written.</li>
+  <li><b>"Call me later"</b> ends politely. The next call opens by name, mentions something real from last time, and continues from the gaps.</li>
+  <li><b>After the call</b>, the whole notebook is reread against the transcript to fix and fill notes, and a report lists what was learned, what's missing and what to ask next.</li>
+</ol>
+
+<h2>Where it runs</h2>
+<p>Each person gets their own small server process on Cloudflare (a Durable Object) that handles their calls one at a time and keeps their notes; the list of people is in a Cloudflare database. The same code also runs as a plain Node server with Postgres or files. The notebook fits in the model's context, so there's no search index; past about 100,000 characters the plan is to let the model browse the folders with list, read and search tools.</p>
+
+<footer>Page 2 of 3</footer>
+</div>
+
+<div class="page tight">
+
+<h1>How the Viven interviewer is tested</h1>
+<div class="by">The eval harness, eval/ in the repo</div>
+
+<p class="lead">I can't know what a real person could have said. So I made people where I do know, and measure how much of it ends up in the notes, whether a twin could answer from them, and what else got worse.</p>
+
+<figure>
+<svg viewBox="0 0 640 112" width="100%">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#444"/></marker>
+  </defs>
+  <g stroke="#222" stroke-width="1.3">
+    <rect x="6" y="18" width="104" height="52" rx="6" fill="#f3f3f3"/>
+    <rect x="136" y="18" width="104" height="52" rx="6" fill="#fff"/>
+    <rect x="266" y="18" width="104" height="52" rx="6" fill="#fff"/>
+    <rect x="396" y="18" width="104" height="52" rx="6" fill="#fff"/>
+    <rect x="526" y="18" width="108" height="52" rx="6" fill="#fff"/>
+  </g>
+  <g text-anchor="middle">
+    <text x="58" y="40" font-size="11" font-weight="600">1 Fake person</text><text x="58" y="56" font-size="8.5" fill="#666">with an answer key</text>
+    <text x="188" y="40" font-size="11" font-weight="600">2 Interview</text><text x="188" y="56" font-size="8.5" fill="#666">the real code</text>
+    <text x="318" y="40" font-size="11" font-weight="600">3 Judge</text><text x="318" y="56" font-size="8.5" fill="#666">another company</text>
+    <text x="448" y="40" font-size="11" font-weight="600">4 Compare</text><text x="448" y="56" font-size="8.5" fill="#666">old vs new prompt</text>
+    <text x="580" y="40" font-size="11" font-weight="600">5 Fix one thing</text><text x="580" y="56" font-size="8.5" fill="#666">from the failures</text>
+  </g>
+  <g stroke="#444" stroke-width="1.3">
+    <line x1="112" y1="44" x2="134" y2="44" marker-end="url(#a)"/>
+    <line x1="242" y1="44" x2="264" y2="44" marker-end="url(#a)"/>
+    <line x1="372" y1="44" x2="394" y2="44" marker-end="url(#a)"/>
+    <line x1="502" y1="44" x2="524" y2="44" marker-end="url(#a)"/>
+  </g>
+  <path d="M580,72 C580,104 188,104 188,72" stroke="#444" stroke-width="1.3" stroke-dasharray="4 3" fill="none" marker-end="url(#a)"/>
+  <text x="384" y="108" font-size="8.5" text-anchor="middle" fill="#555">run again on the same people</text>
+</svg>
+</figure>
+
+<h2><span class="n">1</span>A fake person with an answer key</h2>
+<p>There are 10 made-up people, from Meera, a 58-year-old retired school principal in Pune, to a wary ICU nurse. Each has two things the interviewer never sees:</p>
+<ul>
+  <li><b>About 10 hidden facts</b> (104 in all). <span class="eg">Meera: "she judges a school by its toilets, not its results."</span> Each is tagged by how hard it is to get: shared freely (11), only if asked (37), only if probed (34), only once they trust you (22). Important ones are flagged.</li>
+  <li><b>5 questions an outsider might ask their twin</b>, with the right answers. <span class="eg">"How would she handle an angry parent?"</span></li>
+</ul>
+
+<h2><span class="n">2</span>The fake person talks to the real interviewer</h2>
+<p>A GPT model plays Meera. It's given her facts and personality, and told to give a fact only when the conversation earns it. It talks to the same code the website runs, in text instead of voice.</p>
+<ul>
+  <li>Each turn it rates its own annoyance from 1 to 5; at 5 it walks out. After 6 answers it says "call me later" and comes back in a new session, to test the resume.</li>
+</ul>
+
+<h2><span class="n">3</span>A judge grades it</h2>
+<p>The judge is from a different company (DeepSeek, falling back to Gemini), so it isn't grading its own kind of writing. It scores:</p>
+<ul>
+  <li><b>Facts:</b> for each hidden fact, did Meera say it, and did it reach the notes?</li>
+  <li><b>Twin test</b> (the main score): another model gets only the notes and answers the 5 questions; each answer is marked right, partly right, wrong or "don't know".</li>
+  <li><b>Every interviewer line:</b> a repeat, two questions in one, praise, pushing after a no?</li>
+  <li><b>Notes:</b> is every note backed by something she actually said?</li>
+</ul>
+
+<h2><span class="n">4</span>Compare two versions</h2>
+<p>Old and new prompt talk to the same people with the same seed (a number that makes the fake person's random choices repeat), compared person by person.</p>
+<ul>
+  <li>Each score comes with a 95% range. If the range crosses zero, the report says "can't tell", not "better".</li>
+  <li>Guard scores (walk-outs, annoyance, repeats, made-up answers) must not get worse, even if the main score rises.</li>
+</ul>
+
+<h2><span class="n">5</span>Read the failures, change one thing, repeat</h2>
+<p>A viewer shows each conversation beside its grades. I read where it went wrong, make one small prompt edit, and run again. Five people are for finding problems; five are held back to confirm the fix.</p>
+
+<div class="two">
+<section>
+<h2>Real example: the latest round</h2>
+<p>The change: move on once a topic has their view and one real case. 5 people × 2 seeds, graded blind.</p>
+<table>
+  <tr><th>Score</th><th class="r">Before</th><th class="r">After</th></tr>
+  <tr><td>Areas of life covered</td><td class="r">2.0</td><td class="r"><b>2.8</b></td></tr>
+  <tr><td>Facts drawn out</td><td class="r">0.28</td><td class="r"><b>0.32</b></td></tr>
+  <tr><td>… only once they trust you</td><td class="r">0.05</td><td class="r">0.09</td></tr>
+  <tr><td>Re-asked questions (guard)</td><td class="r">0.2</td><td class="r"><b>0.5</b> ✗</td></tr>
+</table>
+<p style="margin-top:1.2mm">More breadth, but re-asks went up: the "did something else break" check.</p>
+</section>
+
+<section>
+<h2>Real people, and trusting the judge</h2>
+<ul>
+  <li><b>Real people have no answer key.</b> The judge writes likely outsider questions, answers them from the notes and checks each against the transcript. Hosted conversations are pulled in every 2 hours.</li>
+  <li>Conversations are graded twice to see how often labels flip, and two seeds show how big a change must be to beat luck.</li>
+  <li><b>Not done yet:</b> my own hand marks to compare with the judge's, and the run on the five held-back people.</li>
+</ul>
+</section>
+</div>
+
+<footer>node eval/run.ts sim · grade · compare · view. Grading is cached, so regrading is free. Rounds are in THINKING.md. · Page 3 of 3</footer>
 </div>
 </body>
 </html>
