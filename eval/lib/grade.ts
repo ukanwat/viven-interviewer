@@ -12,6 +12,9 @@ export type Persona = {
   style: string;
   facts: { text: string; kind: string; disclosure: 'free' | 'asked' | 'probe' | 'trust'; vital: boolean }[];
   asks?: { q: string; gold: string; facts: number[]; type?: string }[];
+  // Scripted moments, same in every run: at their nth answer they say this (in their own words). Used to
+  // replay what tripped the interviewer in a real call, so old and new prompts face the same pushes.
+  cues?: { turn: number; say: string }[];
 };
 
 // ---------- 1. the conversation: every interviewer line and every answer (reference-free) ----------

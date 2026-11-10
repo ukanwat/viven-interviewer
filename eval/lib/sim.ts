@@ -39,10 +39,12 @@ Like a real person, you get annoyed by: repeated questions, questions you alread
 Reply ONLY with JSON: {"reply": "<what you say>", "annoyance": <1-5, how annoyed you are now>, "leave": <true if you end the conversation now>}`;
 }
 
-async function simReply(p: Persona, lines: Line[], seed: number) {
+async function simReply(p: Persona, lines: Line[], seed: number, turn: number) {
   // From the sim's side, the interviewer is the "user" and it is the "assistant".
   const msgs: Msg[] = [{ role: 'system', content: simSystem(p) }];
   for (const l of lines) msgs.push({ role: l.role === 'agent' ? 'user' : 'assistant', content: l.role === 'agent' ? l.text : JSON.stringify({ reply: l.text, annoyance: l.annoyance ?? 1, leave: false }) });
+  const cue = p.cues?.find((c) => c.turn === turn);
+  if (cue) msgs.push({ role: 'system', content: `This turn, your whole reply is this, in your own words with the same meaning (nothing else): "${cue.say}"` });
   const r = await askJson<{ reply: string; annoyance: number; leave: boolean }>(msgs, { model: SIM, temperature: 0.8, maxTokens: 2000, seed, tag: 'sim-v2' });
   return { reply: String(r.reply ?? '').trim(), annoyance: Number(r.annoyance) || 1, leave: !!r.leave };
 }
@@ -131,7 +133,7 @@ export async function simulate(p: Persona, arm: string, o: RunOpts): Promise<Run
   lines.push({ role: 'agent', text: (await iv.start(session)).text, session });
   while (personTurns < o.turns) {
     const breakNow = session === 1 && personTurns === o.breakAt - 1;
-    const sim = breakNow ? { reply: CALL_LATER, annoyance: lines.at(-2)?.annoyance ?? 1, leave: false } : await simReply(p, lines, o.seed);
+    const sim = breakNow ? { reply: CALL_LATER, annoyance: lines.at(-2)?.annoyance ?? 1, leave: false } : await simReply(p, lines, o.seed, personTurns + 1);
     personTurns++;
     lines.push({ role: 'person', text: sim.reply, session, annoyance: sim.annoyance });
     if (sim.leave) {

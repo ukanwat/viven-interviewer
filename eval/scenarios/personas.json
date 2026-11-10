@@ -1204,6 +1204,28 @@
      9
     ]
    }
+  ],
+  "cues": [
+   {
+    "turn": 2,
+    "say": "Isn't that exactly what I'm trying to figure out? Do you have any thoughts?"
+   },
+   {
+    "turn": 3,
+    "say": "You tell me. What should it actually do for them?"
+   },
+   {
+    "turn": 4,
+    "say": "Why are you asking me that? It feels like you already asked me something like that."
+   },
+   {
+    "turn": 7,
+    "say": "Hold on. Who are you exactly, and why do you want to know all this?"
+   },
+   {
+    "turn": 8,
+    "say": "So if you were me, what would you build first?"
+   }
   ]
  }
 ]
