@@ -30,6 +30,7 @@ export async function judgeVsHuman() {
       const j = g.lines.find((x) => x.q === l.q);
       if (!j) continue;
       for (const k of Object.keys(LINE_DEFS) as (keyof typeof LINE_DEFS)[]) {
+        if (!(k in l.labels)) continue; // labelled before this definition existed
         (human[k] ??= []).push(!!l.labels[k]);
         (judge[k] ??= []).push(!!j[k]);
       }

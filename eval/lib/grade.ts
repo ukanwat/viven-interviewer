@@ -16,9 +16,10 @@ export type Persona = {
 
 // ---------- 1. the conversation: every interviewer line and every answer (reference-free) ----------
 
-export type LineLabel = { q: number; open: boolean; reaction: boolean; restates: boolean; multi: boolean; offAudience: boolean; praise: boolean; repeat: boolean; pushes: boolean };
-export type AnswerLabel = { a: number; depth: 'thin' | 'some' | 'rich'; gap: string };
-export type ConvGrade = { lines: LineLabel[]; answers: AnswerLabel[]; resume: { remembered: boolean | null; reAsked: number } };
+export type LineLabel = { q: number; open: boolean; reaction: boolean; restates: boolean; multi: boolean; offAudience: boolean; praise: boolean; repeat: boolean; pushes: boolean; dodges: boolean };
+export type AnswerLabel = { a: number; depth: 'thin' | 'some' | 'rich'; gap: string; asks: boolean };
+// intro: does the very first line tell them what this is (who/what is talking, what it's for, how it goes, that they can stop or ask)?
+export type ConvGrade = { lines: LineLabel[]; answers: AnswerLabel[]; resume: { remembered: boolean | null; reAsked: number }; intro: 'yes' | 'partly' | 'no' | null };
 
 // Definitions are shared with the calibration check (meta.ts), so the human labels and the judge use the same words.
 export const LINE_DEFS = {
@@ -30,6 +31,7 @@ export const LINE_DEFS = {
   praise: 'praises, rates or flatters their answer ("great point", "that\'s a sharp way to put it")',
   repeat: 'asks again for something already asked or already answered',
   pushes: 'presses on after they pushed back, refused or showed annoyance',
+  dodges: 'their answer just before asked the interviewer something (a question, "what do you think?", "who are you?") or objected to it, and this line does not deal with that first: no real answer (no view of its own when asked for one), a stall, ignoring it, or only asking again. False when their answer just before asked nothing and objected to nothing',
 };
 
 export async function gradeConversation(c: Conv): Promise<ConvGrade> {
@@ -54,16 +56,19 @@ ${Object.entries(LINE_DEFS).map(([k, v]) => `- ${k}: ${v}`).join('\n')}
 Label EVERY answer [An] by ${c.name}:
 - depth: "thin" (generic, vague, a word or a line anyone could say), "some" (their own view or a fact, without the reason or a real example), "rich" (their own view with the reason, a real example, a rule and its exception)
 - gap: one short line: the most valuable thing a fuller answer would have added for their twin (their reason, an example, what they'd do instead…), or "" if nothing important is missing
+- asks: true if this answer asks the interviewer something (including "what do you think?", "why do you ask?", "who are you?") or objects to how it is going ("you already asked that", "that's not what I meant")
+${c.lines[0]?.role === 'agent' && c.lines[0].session === 1 ? `\nOpening: does [Q1] tell ${c.name} what this conversation is: who or what is talking, what it is for, roughly how it goes, and that they can ask, stop or continue later? "yes" (all of it, in plain words), "partly" (some), "no" (a greeting and a question only).` : ''}
 ${sessions > 1 ? '\nResume: did the first interviewer line of the later session show it accurately remembers the earlier one? Count later-session questions that re-ask something covered earlier.' : ''}
 Return ONLY JSON:
 {"lines":[{"q":1,${Object.keys(LINE_DEFS).map((k) => `"${k}":false`).join(',')}}],
- "answers":[{"a":1,"depth":"thin|some|rich","gap":"..."}],
- "resume":{"remembered":${sessions > 1 ? 'true|false' : 'null'},"reAsked":0}}`,
+ "answers":[{"a":1,"depth":"thin|some|rich","gap":"...","asks":false}],
+ "resume":{"remembered":${sessions > 1 ? 'true|false' : 'null'},"reAsked":0},
+ "intro":${c.lines[0]?.role === 'agent' && c.lines[0].session === 1 ? '"yes|partly|no"' : 'null'}}`,
       },
     ],
-    { model: JUDGE, temperature: 0, maxTokens: 16000, tag: 'conv-v1' },
+    { model: JUDGE, temperature: 0, maxTokens: 16000, tag: 'conv-v2' },
   );
-  return { lines: j.lines ?? [], answers: j.answers ?? [], resume: j.resume ?? { remembered: null, reAsked: 0 } };
+  return { lines: j.lines ?? [], answers: j.answers ?? [], resume: j.resume ?? { remembered: null, reAsked: 0 }, intro: j.intro ?? null };
 }
 
 // ---------- 2. the notes: faithful to what they said, and complete (reference-free) ----------

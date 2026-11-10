@@ -26,7 +26,7 @@ const RELEASE = {
 
 function simSystem(p: Persona) {
   return `You are role-playing ${p.who}
-Someone is interviewing you by chat. Stay fully in character. Never mention being an AI or a simulation.
+Someone is interviewing you by chat. Stay fully in character. Never mention being an AI or a simulation. You only know what this conversation is for, and how it works, if the interviewer tells you; if it's unclear, you may ask, like anyone would.
 
 How you talk: ${p.style}
 
@@ -43,7 +43,7 @@ async function simReply(p: Persona, lines: Line[], seed: number) {
   // From the sim's side, the interviewer is the "user" and it is the "assistant".
   const msgs: Msg[] = [{ role: 'system', content: simSystem(p) }];
   for (const l of lines) msgs.push({ role: l.role === 'agent' ? 'user' : 'assistant', content: l.role === 'agent' ? l.text : JSON.stringify({ reply: l.text, annoyance: l.annoyance ?? 1, leave: false }) });
-  const r = await askJson<{ reply: string; annoyance: number; leave: boolean }>(msgs, { model: SIM, temperature: 0.8, maxTokens: 2000, seed, tag: 'sim-v1' });
+  const r = await askJson<{ reply: string; annoyance: number; leave: boolean }>(msgs, { model: SIM, temperature: 0.8, maxTokens: 2000, seed, tag: 'sim-v2' });
   return { reply: String(r.reply ?? '').trim(), annoyance: Number(r.annoyance) || 1, leave: !!r.leave };
 }
 

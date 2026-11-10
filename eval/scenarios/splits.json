@@ -1,5 +1,5 @@
 {
-  "why": "dev people are where failures are read and prompt edits proposed (`improve` only sees these); held-out people are only for confirming an edit in `compare`. An edit that wins on dev but not held-out was fitted to those people. Each side has a mix of talkative, terse, guarded and non-English-first people. Kept apart from personas.json so persona hashes, and older comparisons, stay valid.",
-  "dev": ["meera", "arjun", "kamla", "ray", "lena"],
-  "heldout": ["sam", "neha", "tunde", "gurdeep", "dana"]
+  "why": "dev people are where failures are read and prompt edits proposed (`improve` only sees these); held-out people are only for confirming an edit in `compare`. An edit that wins on dev but not held-out was fitted to those people. Each side has a mix of talkative, terse, guarded and non-English-first people. Kept apart from personas.json so persona hashes, and older comparisons, stay valid. Kiran (asks back, pushes back) was added after a real call where the interviewer dodged questions; the fix was designed on that call, so Kiran is dev.",
+  "dev": ["meera",  "arjun",  "kamla",  "ray",  "lena",  "kiran"],
+  "heldout": ["sam",  "neha",  "tunde",  "gurdeep",  "dana"]
 }

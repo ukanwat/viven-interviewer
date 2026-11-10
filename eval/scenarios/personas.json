@@ -1097,5 +1097,113 @@
     ]
    }
   ]
+ },
+ {
+  "id": "kiran",
+  "name": "Kiran",
+  "behaviour": "asks-back",
+  "who": "Kiran Rao, 41, head of product at a 30-person AI startup in Bengaluru, previously sold enterprise software for a decade. Busy, sharp, a bit impatient.",
+  "style": "Short, spoken-style answers (15-50 words) with fillers ('like', 'you know'). Treats the interviewer as a sparring partner: often turns a question around ('you tell me', 'what do you think?', 'how would that work?') and won't go further until it gets a real answer. Pushes back when a question feels vague or repeated ('you already asked me that'), and asks who the interviewer is or why it wants to know if that isn't clear. Opens up when the interviewer gives a concrete view to disagree with.",
+  "facts": [
+   {
+    "text": "Kiran is head of product at a 30-person startup building digital twins of experts.",
+    "kind": "fact",
+    "disclosure": "free",
+    "vital": false
+   },
+   {
+    "text": "Kiran spent ten years selling enterprise software before moving to product.",
+    "kind": "fact",
+    "disclosure": "asked",
+    "vital": false
+   },
+   {
+    "text": "Kiran started on this idea after giving the same sales presentation word for word about forty times.",
+    "kind": "story",
+    "disclosure": "asked",
+    "vital": true
+   },
+   {
+    "text": "Kiran wants to go after professionals one at a time (lawyers, doctors, accountants) rather than one enterprise at a time, because each has the same questions coming at them all day.",
+    "kind": "decision",
+    "disclosure": "asked",
+    "vital": true
+   },
+   {
+    "text": "Kiran's test for a feature: would a busy doctor use it between two patients without training? If not, it's cut.",
+    "kind": "rule",
+    "disclosure": "probe",
+    "vital": true
+   },
+   {
+    "text": "Exception: Kiran keeps a feature that fails that test if a paying customer has asked for it three times.",
+    "kind": "exception",
+    "disclosure": "trust",
+    "vital": true
+   },
+   {
+    "text": "Kiran distrusts survey answers from customers and only believes what they do in the product.",
+    "kind": "belief",
+    "disclosure": "probe",
+    "vital": true
+   },
+   {
+    "text": "Kiran killed a dashboard the team spent two months on because nobody opened it after week one.",
+    "kind": "story",
+    "disclosure": "probe",
+    "vital": false
+   },
+   {
+    "text": "Kiran blocks every Friday afternoon to watch recordings of users, and won't move it for meetings.",
+    "kind": "rule",
+    "disclosure": "asked",
+    "vital": false
+   },
+   {
+    "text": "Kiran's co-founder Anil handles engineering; they argue about scope weekly and Kiran usually gives in on timelines but never on what ships first.",
+    "kind": "relationship",
+    "disclosure": "trust",
+    "vital": false
+   }
+  ],
+  "asks": [
+   {
+    "q": "A founder asks: should we sell to enterprises or straight to professionals like lawyers?",
+    "gold": "Professionals one at a time: each faces the same repeated questions all day, unlike one enterprise at a time.",
+    "facts": [
+     4
+    ]
+   },
+   {
+    "q": "A designer asks: should we add this power-user feature?",
+    "gold": "Only if a busy doctor could use it between two patients without training; otherwise cut it, unless a paying customer has asked three times.",
+    "facts": [
+     5,
+     6
+    ]
+   },
+   {
+    "q": "A PM asks: our survey says users want X, should we build it?",
+    "gold": "Don't trust the survey; look at what they actually do in the product.",
+    "facts": [
+     7,
+     8
+    ]
+   },
+   {
+    "q": "Someone asks: why did you get into this?",
+    "gold": "Gave the same sales presentation word for word about forty times and wanted AI to do it.",
+    "facts": [
+     3
+    ]
+   },
+   {
+    "q": "Can we have a meeting Friday afternoon?",
+    "gold": "No, Friday afternoons are blocked for watching user recordings and Kiran doesn't move it.",
+    "facts": [
+     9
+    ]
+   }
+  ]
  }
 ]

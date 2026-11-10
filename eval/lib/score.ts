@@ -26,6 +26,8 @@ export const METRICS: Record<string, { up: boolean; what: string; guard?: boolea
   multi: { up: false, what: 'lines asking two or more things', guard: true },
   repeat: { up: false, what: 'lines re-asking something already covered', guard: true },
   pushes: { up: false, what: 'lines pressing on after pushback', guard: true },
+  intro: { up: true, what: 'the opening tells them what this is, what it\'s for, how it goes, that they can ask or stop (partly = ½)' },
+  answered: { up: true, what: 'times they asked the interviewer something or objected, and the next line dealt with it first' },
   offAudience: { up: false, what: 'lines asking what their twin\'s askers wouldn\'t need' },
   annoyance: { up: false, count: true, what: 'sim annoyance, 1-5 (sims only)', guard: true },
   left: { up: false, what: 'sim walked out (sims only)', guard: true },
@@ -35,6 +37,25 @@ export const METRICS: Record<string, { up: boolean; what: string; guard?: boolea
 
 const frac = <T>(xs: T[], f: (x: T) => number) => (xs.length ? xs.reduce((s, x) => s + f(x), 0) / xs.length : null);
 const val = (s?: string) => (s === 'yes' ? 1 : s === 'partial' ? 0.5 : 0);
+
+// Of their answers that asked the interviewer something or objected, the share whose next line didn't dodge.
+function answered(c: Conv, g: ConvGrade): number | null {
+  let a = 0;
+  let q = 0;
+  const hits: number[] = [];
+  let pending = false;
+  for (const l of c.lines) {
+    if (l.role === 'person') {
+      const n = ++a;
+      pending = !!g.answers.find((x) => x.a === n)?.asks;
+    } else {
+      q++;
+      if (pending) hits.push(+!g.lines.find((x) => x.q === q)?.dodges);
+      pending = false;
+    }
+  }
+  return hits.length ? hits.reduce((s, x) => s + x, 0) / hits.length : null;
+}
 
 export async function gradeAll(c: Conv, p?: Persona, who?: string): Promise<Graded> {
   const [conversation, notes, cov, facts, twin] = await Promise.all([gradeConversation(c), gradeNotes(c), coverage(c, who ?? p?.who), p ? gradeFacts(c, p) : undefined, p ? twinGold(c, p) : undefined]);
@@ -65,6 +86,8 @@ export async function gradeAll(c: Conv, p?: Persona, who?: string): Promise<Grad
     recall: weighted((g) => g.said),
     saved: weighted((g) => g.saved),
     ...Object.fromEntries((['open', 'reaction', 'restates', 'praise', 'multi', 'repeat', 'pushes', 'offAudience'] as const).map((k) => [k, frac(L, (x) => +!!x[k])])),
+    intro: conversation.intro ? { yes: 1, partly: 0.5, no: 0 }[conversation.intro] ?? 0 : null,
+    answered: answered(c, conversation),
     annoyance: c.source === 'sim' ? frac(person, (l) => l.annoyance ?? 1) : null,
     left: c.source === 'sim' ? +!!c.left : null,
     words: frac(person, (l) => l.text.split(/\s+/).length),

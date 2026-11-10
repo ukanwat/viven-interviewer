@@ -90,7 +90,7 @@ test('summary shows pass^k when there are several seeds', () => {
   const s = set('S', people.flatMap((p) => [1, 2].map((seed) => item(p, seed, {}, p === 'sam' && seed === 2 ? 4 : 1))));
   const md = summarise(s);
   assert.match(md, /pass\^1 95%/);
-  assert.match(md, /pass\^2 90%/);
+  assert.match(md, /pass\^2 91%/);
 });
 
 test('held-out filter', () => {
