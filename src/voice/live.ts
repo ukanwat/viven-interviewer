@@ -44,7 +44,8 @@ How you talk:
 - Sound like a native speaker of whatever language you speak. In Hindi or Hinglish, speak like someone who grew up in Delhi: a natural Indian accent and everyday spoken Hindi (the words people actually use, English words where people would use them), never formal or textbook Hindi, never a foreign accent.${VOICES[voice] ? ` Your voice is a ${VOICES[voice] === 'female' ? 'woman' : 'man'}'s: in Hindi use ${VOICES[voice] === 'female' ? 'feminine' : 'masculine'} forms when talking about yourself (${VOICES[voice] === 'female' ? '"kar sakti hoon", "samajh gayi"' : '"kar sakta hoon", "samajh gaya"'}).` : ''}
 - If they just check the line or say a filler, reply in a couple of words and wait.
 - If they ask you something or push back, that comes before any question or note: answer it or fix it, as in principle 6. Asked what you think, say what you think.
-- If they want to stop or talk later: a short warm goodbye (one line on something about them that surprised you), no new question.
+- If they want to stop for now or talk later: unless they're annoyed or want to stop for good, first ask in one line when would suit them for the next call, and wait for the answer. Then a short warm goodbye: confirm the day and time if they gave one (they can add it to their calendar from the page), and one line on something about them that surprised you. No new question.
+- Their local time at the start of this call: ${brain.localTime(Date.now(), p.tz)}.
 
 Turn-taking: you judge when ${p.name} has finished. People pause mid-thought, trail off ("and…", "so…"), or stop to find a word, especially when putting into words something they never have. That is not the end of their turn: keep listening. Take the turn only when the thought sounds complete; when in doubt, wait. After a question that needs thought, a few seconds of silence is them thinking: let it sit, don't fill it or rephrase. Backchannels rarely; mostly stay quiet while they talk. If they start talking while you speak, stop and listen.
 
@@ -61,11 +62,12 @@ function historyInput(p: Person, opening: Decision) {
     renderSources(p, 4000) && `Notes from tools they connected (read by an assistant, NOT said by them; shows the what, ask about the why; say where you saw it): \n${renderSources(p, 4000)}`,
     connectedLabels(p).length ? `Tools they connected: ${connectedLabels(p).join(', ')}.` : '',
     Object.keys(p.notes).length ? `Their notes so far (what you already know; do not re-ask):\n${renderTree(p).slice(0, 6000)}` : '',
+    p.nextCall?.plan ? `Your plan for this call (you prepared it before the call): ${p.nextCall.plan}` : '',
     p.open?.length ? `What's still missing for their twin (private gaps file; never re-ask what's in the notes): ${p.open.join('; ')}` : '',
   ]
     .filter(Boolean)
     .join('\n');
-  if (Object.keys(p.notes).length || p.summary || p.background?.brief || Object.keys(p.sources ?? {}).length) input.push(msg('developer', brief));
+  if (Object.keys(p.notes).length || p.summary || p.background?.brief || Object.keys(p.sources ?? {}).length || p.nextCall?.plan) input.push(msg('developer', brief));
   // Seed the last few real turns so the voice model has the thread (Live accepts history only at start).
   const prior = p.turns.slice(0, -1).slice(-10); // last turn is the opener we're about to say
   for (const t of prior) input.push(t.role === 'agent' ? msg('assistant', t.text) : msg('user', t.text));
@@ -349,5 +351,6 @@ export function publicPerson(p: Person) {
     status: p.status,
     reports: p.reports,
     hasGolden: !!p.sealedGolden?.length,
+    nextCall: p.nextCall && { at: p.nextCall.at, said: p.nextCall.said },
   };
 }

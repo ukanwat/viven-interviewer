@@ -5,7 +5,9 @@ import { api, code, esc, renderNotebook, notesCount } from '/ui.js';
 const $ = (id) => document.getElementById(id);
 const show = (view) => ['start', 'callView', 'after'].forEach((v) => $(v).classList.toggle('hidden', v !== view));
 
-if (new URLSearchParams(location.search).has('lab')) $('lab').classList.remove('hidden');
+const params = new URLSearchParams(location.search);
+if (params.has('lab')) $('lab').classList.remove('hidden');
+const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
 const state = { mode: 'voice', person: null, sessionId: null, call: null, startedAt: 0, timer: null, openNotes: new Set(), marks: {}, markTimer: null };
 
 // ---------- start ----------
@@ -34,6 +36,11 @@ async function lookup() {
 $('call').addEventListener('click', () => start('voice'));
 $('typeBtn').addEventListener('click', () => start('text'));
 $('name').addEventListener('keydown', (e) => e.key === 'Enter' && start('voice'));
+// From a calendar invite: their name is already in the link.
+if (params.get('name')) {
+  $('name').value = params.get('name');
+  lookup();
+}
 
 async function start(mode) {
   const name = $('name').value.trim();
@@ -125,7 +132,7 @@ function meter(streams) {
 
 // ---------- text ----------
 async function startText(name, topic, golden, link) {
-  const r = await api('/api/text/start', { name, topic, golden, link });
+  const r = await api('/api/text/start', { name, topic, golden, link, tz });
   state.person = r.person;
   state.sessionId = r.sessionId;
   renderPerson(r.person, true);
@@ -185,7 +192,7 @@ async function startVoice(name, topic, golden, link) {
 
   await new Promise((resolve, reject) => {
     const timeout = setTimeout(() => reject(new Error('Could not connect the call. Try again.')), 30000);
-    ws.onopen = () => ws.send(JSON.stringify({ type: 'start', name, topic, golden, link, sdp: pc.localDescription.sdp }));
+    ws.onopen = () => ws.send(JSON.stringify({ type: 'start', name, topic, golden, link, tz, sdp: pc.localDescription.sdp }));
     ws.onerror = () => reject(new Error('Could not reach the server.'));
     ws.onclose = () => {
       clearTimeout(timeout);
@@ -365,6 +372,7 @@ async function afterView() {
   $('afterTitle').textContent = `Thanks, ${p.name.split(' ')[0]}.`;
   $('afterSummary').textContent = p.expertise || '';
   renderNotebook($('afterNotes'), p);
+  renderNext(p);
   const blob = new Blob([notesMarkdown(p)], { type: 'text/markdown' });
   $('download').href = URL.createObjectURL(blob);
   $('download').download = `${p.id}-notes.md`;
@@ -399,6 +407,47 @@ function renderReport(r, p) {
     ${list('Notes not supported by what they said', r.judge.notesIssues)}
     <p class="muted small">Reviewed by a model from a different family than the one that interviewed and took the notes.</p>
   </details>`;
+}
+
+// ---------- next call ----------
+// The time they agreed on the call (editable), and a calendar invite that links back here.
+const pad = (n) => String(n).padStart(2, '0');
+const localInput = (ms) => {
+  const d = new Date(ms);
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+};
+function renderNext(p) {
+  $('nextAt').value = p.nextCall ? localInput(p.nextCall.at) : '';
+  $('nextNote').textContent = p.nextCall ? `${p.nextCall.said === 'set on the page' ? 'Set here.' : 'From what you said.'} It gets ready a few minutes before.` : 'Pick a time and it will be ready for you.';
+}
+$('nextBox').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const at = $('nextAt').value ? new Date($('nextAt').value).getTime() : NaN;
+  if (!(at > Date.now())) return ($('nextNote').textContent = 'Pick a time in the future.');
+  const p = state.person;
+  try {
+    const r = await api('/api/next', { id: p.id, at, tz });
+    state.person = r.person;
+    renderNext(r.person);
+  } catch (err) {
+    return ($('nextNote').textContent = err.message);
+  }
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([ics(p.name, at)], { type: 'text/calendar' }));
+  a.download = 'next-conversation.ics';
+  a.click();
+});
+function ics(name, at) {
+  const utc = (ms) => new Date(ms).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+  const url = `${location.origin}/?name=${encodeURIComponent(name)}`;
+  return [
+    'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Interviewer//EN', 'METHOD:PUBLISH',
+    'BEGIN:VEVENT', `UID:${utc(at)}-${encodeURIComponent(name)}@interviewer`, `DTSTAMP:${utc(Date.now())}`,
+    `DTSTART:${utc(at)}`, `DTEND:${utc(at + 20 * 60_000)}`,
+    'SUMMARY:Conversation with your interviewer', `DESCRIPTION:We'll pick up where we left off: ${url}`, `URL:${url}`,
+    'BEGIN:VALARM', 'ACTION:DISPLAY', 'DESCRIPTION:Conversation with your interviewer', 'TRIGGER:-PT10M', 'END:VALARM',
+    'END:VEVENT', 'END:VCALENDAR',
+  ].join('\r\n');
 }
 
 function notesMarkdown(p) {

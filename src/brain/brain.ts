@@ -9,6 +9,7 @@ import {
   RESUME_INSTRUCTIONS,
   WRAP_INSTRUCTIONS,
   SUMMARY_PROMPT,
+  PREP_INSTRUCTIONS,
 } from './prompts.ts';
 import { personId } from './ids.ts';
 import { applyNoteOps, notesOf, renderNotes } from './notes.ts';
@@ -54,6 +55,8 @@ export function endSession(p: Person, sessionId: string, reason: string) {
     s.endReason = reason;
   }
   p.status = reason === 'done' ? 'done' : 'paused';
+  // The agreed call has happened (it was prepared for) or its time has passed.
+  if (p.nextCall && (p.nextCall.preparedAt || p.nextCall.at < Date.now())) delete p.nextCall;
 }
 
 // Older records kept typed items; they get notes rebuilt from their transcript on load (room.ts).
@@ -76,7 +79,8 @@ export function renderContext(p: Person, sessionId?: string): string {
   if (p.topicHint) lines.push(`Topic they asked for: ${p.topicHint}`);
   if (p.expertise) lines.push(`Who they are: ${p.expertise}`);
   lines.push(`Language they use: ${p.language}`);
-  lines.push(`Today: ${new Date().toISOString().slice(0, 10)}, conversation ${p.sessions.length || 1}.`);
+  lines.push(`Their local time now: ${localTime(Date.now(), p.tz)}. Conversation ${p.sessions.length || 1}.`);
+  if (p.nextCall) lines.push(`Next call agreed for: ${localTime(p.nextCall.at, p.tz)}.${p.nextCall.plan ? `\nYour plan for this call (prepared before it): ${p.nextCall.plan}` : ''}`);
   if (p.background?.brief)
     lines.push(`\n== Background from a link they gave (public web, NOT said by them) ==\n${p.background.brief}\nThey shared this link so you'd know a bit about them: use it to ask more specific questions (you can say you had a look). It may be out of date or incomplete, so ask rather than assume, and never put it in the notes: only what they say counts.`);
   const tools = connectedLabels(p);
@@ -104,12 +108,23 @@ export function renderContext(p: Person, sessionId?: string): string {
   return lines.join('\n');
 }
 
+// "Tue, 10 Nov 2026, 18:00 GMT+05:30" in their time zone (UTC if unknown).
+export function localTime(at: number, tz?: string) {
+  const opts: Intl.DateTimeFormatOptions = { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZoneName: 'longOffset' };
+  try {
+    return new Intl.DateTimeFormat('en-GB', { ...opts, timeZone: tz || 'UTC' }).format(at);
+  } catch {
+    return new Intl.DateTimeFormat('en-GB', { ...opts, timeZone: 'UTC' }).format(at);
+  }
+}
+
 // ---------- the turn ----------
 
 type TurnOut = {
   read: { label: AnswerLabel; why: string; gap?: string };
   language?: string;
   who?: string | null;
+  nextCall?: string | null;
   notes?: NoteOp[];
   gaps?: string[];
   next: { move: Move; ack?: string; question: string; reason: string };
@@ -120,7 +135,10 @@ function turnFacts(p: Person, sessionId: string): string {
   const sessTurns = p.turns.filter((x) => x.sessionId === sessionId && x.role === 'person').length;
   return [
     `Their turns this session: ${sessTurns}.`,
-    'If they want to stop or talk later: move "wrap". If they asked you something: move "answer", then continue.',
+    p.nextCall && p.nextCall.at > Date.now()
+      ? 'If they want to stop or talk later: move "wrap" (a next call is already agreed).'
+      : 'If they want to stop for now or talk later: move "schedule" and ask when would suit them for the next call; once they name a time or decline, move "wrap". If they are annoyed or want to stop for good: move "wrap" straight away.',
+    'If they asked you something: move "answer", then continue.',
   ].join('\n');
 }
 
@@ -196,6 +214,8 @@ function applyTurn(p: Person, out: TurnOut, sessionId: string, channel: Channel,
   const label = out.read.label;
   if (out.language) p.language = out.language;
   if (out.who && out.who !== 'null') p.expertise = out.who;
+  const at = out.nextCall ? Date.parse(out.nextCall) : NaN;
+  if (at > Date.now()) p.nextCall = { at, said: lastPersonText(p) };
   if (Array.isArray(out.gaps)) p.open = out.gaps.filter((x) => typeof x === 'string' && x.trim()).slice(0, 12);
 
   const lastPersonTurn = [...p.turns].reverse().find((t) => t.role === 'person')!;
@@ -242,7 +262,24 @@ async function speak(p: Person, sessionId: string, channel: Channel, instr: stri
   return { label: 'rich', move, say, question: next.question ?? '', reason: next.reason ?? '', changes: [] };
 }
 
+const lastPersonText = (p: Person) => [...p.turns].reverse().find((t) => t.role === 'person')?.text.slice(0, 200);
+
 // ---------- background upkeep ----------
+
+// Shortly before an agreed call: refresh the summary and write a plan to open the call with.
+export async function prepare(p: Person, opts: { signal?: AbortSignal } = {}) {
+  if (!p.nextCall) return;
+  await refreshSummary(p, opts).catch(() => {});
+  const plan = await chat(
+    [
+      { role: 'system', content: PRINCIPLES, cache: true },
+      { role: 'user', content: `${renderContext(p)}\n\n${PREP_INSTRUCTIONS}` },
+    ],
+    { model: MODELS.brain, temperature: 0.4, maxTokens: 400, signal: opts.signal },
+  );
+  p.nextCall.plan = plan.trim();
+  p.nextCall.preparedAt = Date.now();
+}
 
 export async function refreshSummary(p: Person, opts: { signal?: AbortSignal } = {}) {
   const ctx = renderContext(p);

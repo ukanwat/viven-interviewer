@@ -90,9 +90,24 @@ export class PersonRoom extends DurableObject<Env> {
     this.store = new D1Store(env.DB);
   }
 
+  // The DO alarm is the room's wake-up before an agreed call; it remembers whose room it is.
+  private makeRoom(id: string) {
+    return new Room(id, this.store, connect, (at) => {
+      if (at == null) void this.ctx.storage.deleteAlarm();
+      else void this.ctx.storage.put('id', id).then(() => this.ctx.storage.setAlarm(at));
+    });
+  }
+
+  async alarm() {
+    const id = await this.ctx.storage.get<string>('id');
+    if (!id) return;
+    this.room ??= this.makeRoom(id);
+    await this.room.wake();
+  }
+
   async fetch(req: Request): Promise<Response> {
     const id = req.headers.get('x-person-id') ?? '';
-    this.room ??= new Room(id, this.store, connect);
+    this.room ??= this.makeRoom(id);
     if (req.headers.get('Upgrade') === 'websocket') {
       const [client, server] = Object.values(new WebSocketPair());
       server.accept();

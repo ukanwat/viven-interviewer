@@ -241,3 +241,6 @@ body[data-mode='voice'] .composer:focus-within { opacity: 1; }
 .src-note span { color: var(--ink-2); }
 .src-note .x { position: absolute; top: 6px; right: 6px; border: 0; background: transparent; color: var(--muted); font-size: 16px; line-height: 1; padding: 2px 6px; cursor: pointer; }
 .src-note .x:hover { color: var(--ink); }
+
+.next-box { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: -20px 0 36px; font-size: 14px; color: var(--ink-2); }
+.next-box input { font: inherit; padding: 6px 8px; border: 1px solid var(--line-2); border-radius: 8px; background: transparent; color: var(--ink); }

@@ -37,9 +37,19 @@ const connect: Connect = (url, headers) =>
     ws.on('error', (e) => console.error('sideband error', e.message));
   });
 const rooms = new Map<string, Room>();
+// Wake-ups before agreed calls are in-process timers here (lost on restart; Workers use a Durable Object alarm).
+const timers = new Map<string, ReturnType<typeof setTimeout>>();
 const room = (id: string) => {
   let r = rooms.get(id);
-  if (!r) rooms.set(id, (r = new Room(id, store, connect)));
+  if (!r)
+    rooms.set(
+      id,
+      (r = new Room(id, store, connect, (at) => {
+        clearTimeout(timers.get(id));
+        timers.delete(id);
+        if (at != null) timers.set(id, setTimeout(() => void room(id).wake(), Math.min(Math.max(0, at - Date.now()), 2 ** 31 - 1)));
+      })),
+    );
   return r;
 };
 const PUBLIC = join(import.meta.dirname, '../public');

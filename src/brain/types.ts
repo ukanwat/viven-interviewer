@@ -38,6 +38,7 @@ export type Move =
   | 'explain' // hostile/question: purpose + choice, no pressure
   | 'reflect' // play back a rule ("so the rule is X, except when Y?") to confirm and invite correction
   | 'answer' // they asked something: answer briefly, then continue
+  | 'schedule' // they want to stop for now: ask when suits them for the next call
   | 'wrap'; // ending: recap + thank + when to continue
 
 // Memory: a tree of short markdown notes, keyed by path ("work/agents/how-they-review").
@@ -93,6 +94,9 @@ export type Person = {
   // Sealed golden set for self-tests: never shown to the brain.
   sealedGolden?: string[];
   reports?: SessionReport[];
+  tz?: string; // their browser's time zone, so "tomorrow at 6" means their 6
+  // The next call they agreed to. Shortly before it, the room wakes itself and gets ready (plan).
+  nextCall?: { at: number; said?: string; plan?: string; preparedAt?: number };
 };
 
 export type SessionReport = {

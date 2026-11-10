@@ -18,6 +18,11 @@ type Reply = { status: number; body: unknown };
 const ok = (body: unknown): Reply => ({ status: 200, body });
 const err = (status: number, error: string): Reply => ({ status, body: { error } });
 
+// How long before an agreed call the room wakes to get ready.
+export const PREP_LEAD_MS = 10 * 60_000;
+// The platform's timer: wake this room at `at` (one per room; a new time replaces the old), or cancel.
+export type Alarm = (at: number | null) => void;
+
 export class Room {
   id: string;
   private store: PersonStore;
@@ -26,11 +31,14 @@ export class Room {
   private loaded = false;
   private chain: Promise<unknown> = Promise.resolve();
   private active?: CallHandle; // the live call, if any, so new context can reach it
+  private alarm?: Alarm;
+  private alarmAt?: number | null;
 
-  constructor(id: string, store: PersonStore, connect: Connect) {
+  constructor(id: string, store: PersonStore, connect: Connect, alarm?: Alarm) {
     this.id = id;
     this.store = store;
     this.connect = connect;
+    this.alarm = alarm;
   }
 
   private serial<T>(fn: () => Promise<T>): Promise<T> {
@@ -53,9 +61,10 @@ export class Room {
     return this.person;
   }
 
-  private async getOrCreate(name: string, topic = '', golden?: string[], link?: string): Promise<Person> {
+  private async getOrCreate(name: string, topic = '', golden?: string[], link?: string, tz?: string): Promise<Person> {
     let p = await this.get();
     if (!p) p = this.person = brain.newPerson(name, topic);
+    if (tz) p.tz = String(tz).slice(0, 64);
     else if (topic && !p.topicHint) p.topicHint = topic;
     if (golden?.length) p.sealedGolden = golden;
     if (link) await lookUp(p, link).catch((e) => console.error('lookup failed', (e as Error).message));
@@ -78,7 +87,28 @@ export class Room {
   }
 
   private save() {
-    if (this.person) this.store.save(this.person);
+    if (!this.person) return;
+    this.store.save(this.person);
+    // Keep the wake-up in step with the agreed call: set it, move it, or cancel it.
+    const n = this.person.nextCall;
+    const at = n && !n.preparedAt ? Math.max(Date.now() + 1000, n.at - PREP_LEAD_MS) : null;
+    if (this.alarm && at !== this.alarmAt) {
+      this.alarmAt = at;
+      this.alarm(at);
+    }
+  }
+
+  // The alarm fired: shortly before the agreed call, catch up on their tools and plan the call.
+  async wake() {
+    return this.serial(async () => {
+      const p = await this.get();
+      this.alarmAt = undefined;
+      if (!p?.nextCall || p.nextCall.preparedAt) return;
+      if (p.nextCall.at - Date.now() > PREP_LEAD_MS + 60_000) return this.save(); // moved later: re-arm
+      for (const c of p.connections ?? []) if (c.status === 'ready' && c.tokens) await sources.read(p, c, {}).catch(() => {});
+      await brain.prepare(p).catch((e) => console.error('prepare failed', (e as Error).message));
+      this.save();
+    });
   }
 
   // JSON API for one person. `route` is the part after /api/.
@@ -111,7 +141,7 @@ export class Room {
     return this.serial(async () => {
       if (route === 'text/start') {
         if (!b.name?.trim() || personId(b.name) !== this.id) return err(400, 'name required');
-        const p = await this.getOrCreate(b.name, b.topic, b.golden, b.link);
+        const p = await this.getOrCreate(b.name, b.topic, b.golden, b.link, b.tz);
         const s = brain.startSession(p, 'text');
         const d = await brain.opener(p, s.id, 'text');
         this.save();
@@ -163,6 +193,16 @@ export class Room {
         this.save();
         return ok({ person: publicPerson(p) });
       }
+      if (route === 'next') {
+        // Set or change the next call from the page; null clears it.
+        const at = b.at == null ? NaN : Number(b.at);
+        if (b.at == null) delete p.nextCall;
+        else if (at > Date.now()) p.nextCall = { at, said: p.nextCall?.at === at ? p.nextCall.said : 'set on the page' };
+        else return err(400, 'pick a time in the future');
+        if (b.tz) p.tz = String(b.tz).slice(0, 64);
+        this.save();
+        return ok({ person: publicPerson(p) });
+      }
       if (route === 'report') {
         const r = await sessionReport(p, b.sessionId);
         p.reports = [...(p.reports ?? []).filter((x) => x.sessionId !== (b.sessionId ?? 'all')), { sessionId: b.sessionId ?? 'all', at: Date.now(), report: r }];
@@ -189,7 +229,7 @@ export class Room {
         if (m.type === 'start' && !handle) {
           if (!m.name?.trim() || !m.sdp || personId(m.name) !== room.id) return notify({ type: 'error', message: 'name and offer required' });
           try {
-            const p = await room.getOrCreate(m.name, m.topic, m.golden, m.link);
+            const p = await room.getOrCreate(m.name, m.topic, m.golden, m.link, m.tz);
             const c = await startCall({ store: saver, connect: room.connect, person: p, offerSdp: m.sdp, voice: m.voice, notify });
             handle = c.handle;
             room.active = c.handle;
